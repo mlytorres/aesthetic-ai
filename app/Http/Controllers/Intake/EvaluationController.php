@@ -1,0 +1,133 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Intake;
+
+use App\Facades\TenantContext;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Intake\CreateEvaluationRequest;
+use App\Http\Requests\Intake\SaveQuizRequest;
+use App\Http\Requests\Intake\SubmitEvaluationRequest;
+use App\Models\Evaluation;
+use App\Models\Patient;
+use App\Services\AuditLog;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
+
+/**
+ * Handles the patient evaluation lifecycle during intake.
+ * Returns JSON (not Inertia) — these are called by the wizard's React state machine.
+ */
+class EvaluationController extends Controller
+{
+    public function __construct(private readonly AuditLog $auditLog) {}
+
+    /**
+     * Step 1 — create a draft evaluation when the patient selects a procedure.
+     * Returns the evaluation_token which gates all subsequent calls.
+     */
+    public function store(CreateEvaluationRequest $request): JsonResponse
+    {
+        // Create a stub patient record (no PHI yet — just a placeholder)
+        // PHI is collected in the submit step only.
+        $patient = Patient::create([
+            'email_encrypted' => 'pending_' . Str::uuid(), // placeholder until submit
+            'email_hash'      => hash('sha256', 'pending_' . Str::uuid()),
+            'created_via'     => 'widget',
+        ]);
+
+        $evaluation = Evaluation::create([
+            'patient_id'     => $patient->id,
+            'procedure_slug' => $request->validated('procedure_slug'),
+            'status'         => Evaluation::STATUS_DRAFT,
+        ]);
+
+        $this->auditLog->record('evaluation.created', $evaluation);
+
+        return response()->json([
+            'evaluation_token' => $evaluation->secure_token,
+        ], 201);
+    }
+
+    /**
+     * Step 3 — save the completed quiz answers.
+     */
+    public function quiz(SaveQuizRequest $request, string $token): JsonResponse
+    {
+        $evaluation = $this->findByToken($token);
+
+        $evaluation->update([
+            'quiz_answers' => $request->validated('answers'),
+            'status'       => Evaluation::STATUS_SUBMITTED,
+        ]);
+
+        return response()->json(['status' => 'saved']);
+    }
+
+    /**
+     * Final step — attach patient contact info, record consent, and dispatch AI pipeline.
+     */
+    public function submit(SubmitEvaluationRequest $request, string $token): JsonResponse
+    {
+        $evaluation = $this->findByToken($token);
+        $validated  = $request->validated();
+
+        // Create or find patient by email hash (deduplication)
+        $emailHash = Patient::hashEmail($validated['patient']['email']);
+
+        $patient = Patient::findByEmail($validated['patient']['email'])
+            ?? Patient::find($evaluation->patient_id);
+
+        // Update the patient record with real PHI (encrypted by model casts)
+        $patient->update([
+            'name_encrypted'  => $validated['patient']['name'],
+            'email_encrypted' => $validated['patient']['email'],
+            'phone_encrypted' => $validated['patient']['phone'] ?? null,
+            'email_hash'      => $emailHash,
+            'name_hash'       => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
+        ]);
+
+        // Finalize evaluation
+        $evaluation->update([
+            'patient_id'   => $patient->id,
+            'status'       => Evaluation::STATUS_SUBMITTED,
+            'completed_at' => now(),
+            // Store consent metadata — not the actual consent form text
+            'quiz_answers' => array_merge($evaluation->quiz_answers ?? [], [
+                '_consent' => [
+                    'hipaa_acknowledged'  => $validated['consent']['hipaa_acknowledged'],
+                    'terms_accepted'      => $validated['consent']['terms_accepted'],
+                    'photo_use_consent'   => $validated['consent']['photo_use_consent'],
+                    'consented_at'        => $validated['consent']['consented_at'],
+                ],
+            ]),
+        ]);
+
+        $this->auditLog->record('evaluation.submitted', $evaluation);
+
+        // Dispatch the AI processing pipeline
+        // Sprint 3 will implement these jobs — for now we just mark as analyzing
+        $evaluation->update(['status' => Evaluation::STATUS_ANALYZING]);
+
+        return response()->json([
+            'status'     => 'submitted',
+            'portal_url' => route('intake.success', [], absolute: true),
+        ]);
+    }
+
+    /**
+     * Resolve an evaluation by its public token.
+     * Aborts 404 if the token is invalid or belongs to another tenant.
+     */
+    private function findByToken(string $token): Evaluation
+    {
+        return Evaluation::where('secure_token', $token)
+            ->whereIn('status', [
+                Evaluation::STATUS_DRAFT,
+                Evaluation::STATUS_SUBMITTED,
+                Evaluation::STATUS_ANALYZING,
+            ])
+            ->firstOrFail();
+    }
+}

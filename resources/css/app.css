@@ -8,6 +8,15 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+    /* ── AestheticAI Intake Palette ─────────────────────────────────── */
+    --color-abyss:   #0A0A0F;   /* patient wizard background */
+    --color-surface: #111118;   /* wizard card surface */
+    --color-gold:    #C9A84C;   /* primary accent */
+    --color-gold-dim: #a8883e;  /* hover state */
+    --color-cream:   #F5F0E8;   /* primary text on dark */
+    --color-mist:    #9B9B8E;   /* secondary text on dark */
+    /* ─────────────────────────────────────────────────────────────── */
+
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
