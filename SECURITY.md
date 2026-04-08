@@ -235,6 +235,116 @@ Before merging any PR that touches patient data:
 
 ---
 
+## HTTP Security Headers
+
+All responses from the AestheticAI application must include the following headers. These are enforced at the CloudFront/ALB layer and verified in middleware.
+
+```
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: (see below)
+```
+
+### Content Security Policy (CSP)
+
+```
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' https://cdn.aestheticai.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob: https://*.amazonaws.com;
+  media-src blob:;
+  connect-src 'self' https://app.aestheticai.com https://rekognition.us-east-1.amazonaws.com;
+  frame-ancestors 'none';
+  upgrade-insecure-requests;
+```
+
+**Embed widget pages** (iFrame context) relax `frame-ancestors` to allow clinic domains:
+```
+Content-Security-Policy: frame-ancestors https://*.aestheticai.com [clinic-allowlisted-domains]
+```
+
+---
+
+## CORS Policy
+
+The embed widget loads from `app.aestheticai.com` but is embedded on clinic-owned domains. CORS is handled as follows:
+
+| Endpoint | Allowed Origins | Credentials |
+|----------|----------------|-------------|
+| `/embed/*` (widget load) | Any (public) | No |
+| `/api/evaluations` | Allowlisted clinic domains + `*.aestheticai.com` | Yes |
+| `/api/v1/*` (REST API) | `*.aestheticai.com` only | Yes |
+| `/webhooks/*` | None (server-to-server only) | No |
+
+**Implementation — Laravel:**
+```php
+// config/cors.php
+'paths' => ['api/*', 'embed/*'],
+'allowed_origins_patterns' => [
+    '#^https://[a-z0-9-]+\.aestheticai\.com$#',
+    // Clinic custom domains added dynamically per tenant settings
+],
+'allowed_methods' => ['GET', 'POST', 'PATCH'],
+'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With'],
+'exposed_headers' => [],
+'max_age' => 3600,
+'supports_credentials' => true,
+```
+
+---
+
+## Rate Limiting
+
+Throttling is applied at multiple levels to protect against abuse and enumeration attacks.
+
+| Endpoint Group | Limit | Window | Response |
+|---------------|-------|--------|----------|
+| Widget embed load | 60 req | per IP/min | 429 |
+| Evaluation create | 5 req | per IP/15 min | 429 |
+| Photo upload | 10 req | per evaluation | 429 |
+| Magic link request | 3 req | per IP/hour | 429 |
+| Coordinator login | 10 attempts | per IP/15 min | 429 + lockout |
+| REST API (authenticated) | 300 req | per token/min | 429 |
+| Webhook delivery (inbound) | 100 req | per tenant/min | 429 |
+
+**Implementation:**
+```php
+// routes/api.php
+Route::middleware(['throttle:evaluation-create'])->group(function () {
+    Route::post('/evaluations', [EvaluationController::class, 'store']);
+});
+
+// app/Providers/RouteServiceProvider.php
+RateLimiter::for('evaluation-create', function (Request $request) {
+    return Limit::perMinutes(15, 5)
+        ->by($request->ip())
+        ->response(fn() => response()->json(['error' => 'Too many submissions. Please try again later.'], 429));
+});
+```
+
+All 429 responses must **not** reveal the exact rate limit values or internal identifiers.
+
+---
+
+## Third-Party Subprocessors
+
+All subprocessors that may handle PHI must have a signed BAA. Current subprocessors:
+
+| Service | Purpose | HIPAA BAA | PHI Exposure |
+|---------|---------|-----------|-------------|
+| AWS (RDS, S3, ECS, SES, KMS, Rekognition) | Core infrastructure + AI | ✅ Required | Photos, encrypted PHI |
+| SendGrid | Transactional email | ✅ Required | Name, email in notifications |
+| Twilio | SMS notifications | ✅ Required | Phone number |
+| Pusher / Laravel Echo | Real-time dashboard updates | ⚠️ Minimal PHI — only eval tokens | Reference tokens only |
+| Sentry | Error monitoring | ✅ Required | Must be configured to scrub PHI from stack traces |
+
+**Developer note:** Before adding any new third-party service that could touch PHI, get explicit approval from the security reviewer and verify BAA availability.
+
+---
+
 ## Compliance Checklist
 
 **Before launching any new clinic:**

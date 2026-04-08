@@ -1,0 +1,56 @@
+---
+config:
+  theme: base
+title: AestheticAI — Coordinator Views Lead (Magic Link)
+---
+sequenceDiagram
+    autonumber
+
+    actor Coordinator
+    participant Email as Email Client
+    participant Browser as Browser
+    participant MagicLink as MagicLinkService
+    participant Auth as AuthMiddleware
+    participant API as Laravel API
+    participant AuditLog as AuditLog Service
+    participant S3 as AWS S3
+    participant DB as PostgreSQL
+
+    Email-->>Coordinator: "New Rhinoplasty Evaluation — Score: 87"
+    Coordinator->>Email: Clicks portal link
+
+    Browser->>API: GET /portal/clinic/{raw_token}
+    API->>MagicLink: validate(raw_token)
+    MagicLink->>DB: Lookup token_hash = SHA256(raw_token)
+
+    alt Token expired or used
+        MagicLink-->>Browser: 401 MAGIC_LINK_EXPIRED
+        Browser-->>Coordinator: "Link expired — log in to continue"
+    else Token valid
+        MagicLink->>DB: Mark token used_at = now()
+        MagicLink->>Auth: Establish coordinator session
+        AuditLog->>DB: Record 'coordinator.portal.accessed'
+        API-->>Browser: Redirect to /dashboard/evaluations/{id}
+    end
+
+    Browser->>API: GET /api/evaluations/{id}
+    Auth->>Auth: Verify session + tenant scope
+
+    API->>DB: Fetch evaluation (tenant-scoped)
+    API->>DB: Fetch patient (decrypt PHI in memory)
+    AuditLog->>DB: Record 'evaluation.dashboard.viewed'
+
+    API->>S3: Generate signed URLs (15-min expiry)
+    S3-->>API: Signed URLs
+
+    API-->>Browser: Evaluation detail + signed photo URLs
+    Browser-->>Coordinator: Dashboard rendered
+
+    Coordinator->>Browser: Views photos
+    AuditLog->>DB: Record 'evaluation.photos.viewed'
+
+    Coordinator->>Browser: Marks as "Contacted" + adds note
+    Browser->>API: PATCH /api/evaluations/{id}/status
+    API->>DB: Update status + coordinator_notes
+    AuditLog->>DB: Record 'evaluation.status.changed'
+    API-->>Browser: 200 OK

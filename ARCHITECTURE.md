@@ -29,12 +29,12 @@
 ┌───────────▼──────────┐                 ┌────────────▼──────────────┐
 │    Data Layer        │                 │    AI Processing Layer     │
 │                      │                 │                            │
-│  PostgreSQL (RLS)    │                 │  Laravel Horizon (Redis)   │
-│  ├── tenants         │                 │  ├── PhotoValidationJob    │
-│  ├── patients        │                 │  ├── LandmarkExtractionJob │
-│  ├── evaluations     │                 │  ├── ProportionAnalysisJob │
-│  ├── audit_logs      │                 │  ├── RecommendationJob     │
-│  └── webhooks        │                 │  └── NotificationJob       │
+│  PostgreSQL (RLS)    │                 │  Laravel Horizon (Redis)        │
+│  ├── tenants         │                 │  ├── ValidatePhotoQualityJob    │
+│  ├── patients        │                 │  ├── ExtractFacialLandmarksJob  │
+│  ├── evaluations     │                 │  ├── CalculateProportionsJob    │
+│  ├── audit_logs      │                 │  ├── GenerateRecommendationsJob │
+│  └── webhooks        │                 │  └── NotifyClinicNewEvalJob     │
 │                      │                 │                            │
 │  S3 (KMS encrypted)  │                 │  AWS Rekognition           │
 │  └── patient-photos/ │                 │  Custom ML Models          │
@@ -326,3 +326,56 @@ ECS Fargate (Laravel + Octane)
 - Faster feedback loop for patient (instant, not after upload)
 - Reduces AI processing failures from poor quality inputs
 - Implementation: MediaPipe Face Detection + custom quality heuristics in WebAssembly
+
+**Trade-offs:**
+- Adds ~2 MB to initial widget bundle (WASM model) — acceptable for the UX gain
+- Mobile WebAssembly support is near-universal as of 2024
+
+---
+
+### ADR-005: MediaPipe for Client-Side Face Detection
+
+**Decision:** Use Google MediaPipe Face Detection (WASM) for the in-browser photo quality and angle validation step.
+
+**Rationale:**
+- Runs entirely in the browser — no photos leave the device during validation
+- Provides face bounding box and keypoints sufficient for angle guidance overlay
+- Apache 2.0 license, actively maintained
+- ~1.8 MB WASM bundle (acceptable for a full-screen intake flow)
+- Avoids sending potentially blurry/unusable photos to S3 and AWS Rekognition
+
+**Trade-offs:**
+- Requires a browser that supports WebAssembly (covers >97% of mobile browsers)
+- First-time load includes model download — mitigated by CDN caching
+- MediaPipe is a runtime dependency, not a build-time one — version pinned via CDN URL
+
+**Alternatives considered:**
+- TensorFlow.js face-api: heavier bundle, slower inference on low-end phones
+- Server-side pre-validation: adds a round-trip and exposes a pre-upload endpoint to abuse
+- No client validation: too many poor-quality photos would degrade AI pipeline results
+
+---
+
+## Caching Strategy
+
+Redis (ElastiCache) serves two roles: queue backend and response cache. Cache TTLs are chosen conservatively for PHI sensitivity.
+
+| Cache Key | TTL | Invalidated By | Notes |
+|-----------|-----|---------------|-------|
+| `tenant:{slug}` | 15 min | Tenant settings update | Tenant resolution on every request |
+| `procedures:{tenant_id}` | 60 min | Procedure config change | Procedure list for quiz engine |
+| `quiz_definition:{procedure_slug}` | 60 min | Quiz config update | Quiz branching definition |
+| `lead_score:{eval_id}` | Until analysis complete | Score recalculation job | Avoid re-computing during dashboard load |
+| `evaluation_list:{tenant_id}` | 30 sec | Any evaluation status change | Dashboard list — short TTL for coordinator UX |
+
+**PHI is never cached.** Patient names, emails, phone numbers, and photos are never written to Redis. The evaluation list cache contains only IDs, scores, priorities, and statuses.
+
+```php
+// Example: Tenant resolution caching
+Cache::remember("tenant:{$slug}", now()->addMinutes(15), fn() =>
+    Tenant::where('slug', $slug)->firstOrFail()
+);
+
+// Cache MUST be tagged for selective invalidation
+Cache::tags(["tenant:{$tenantId}"])->flush(); // On tenant settings change
+```

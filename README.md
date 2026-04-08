@@ -83,6 +83,19 @@ aesthetic-ai/
 ├── ARCHITECTURE.md            # System design & data flow
 ├── SECURITY.md                # HIPAA compliance & threat model
 ├── API.md                     # External API contracts
+│
+├── docs/
+│   ├── technical/
+│   │   ├── database-schema.md # Full table specs, indexes, RLS policies
+│   │   ├── sequences.md       # Sequence diagrams (intake, AI pipeline, webhooks)
+│   │   └── diagrams/          # Standalone .mermaid files
+│   │       ├── erd.mermaid
+│   │       ├── patient-intake.mermaid
+│   │       ├── ai-pipeline.mermaid
+│   │       ├── coordinator-flow.mermaid
+│   │       └── webhook-delivery.mermaid
+│   ├── product/               # PRD, user stories, wireframe notes
+│   └── compliance/            # BAA templates, HIPAA controls
 ├── INTEGRATIONS.md            # CRM webhook & embed guide
 ├── ROADMAP.md                 # Phased development plan
 ├── CONTRIBUTING.md            # Dev workflow & coding standards
@@ -130,17 +143,27 @@ php artisan horizon
 
 ## Documentation Index
 
-- [Architecture](./ARCHITECTURE.md) — System design, multi-tenancy, data flow
-- [Agents](./AGENTS.md) — AI agent definitions for vibe coding
-- [Skills](./SKILLS.md) — Reusable AI skill modules
-- [Security](./SECURITY.md) — HIPAA compliance controls
-- [API Reference](./API.md) — Internal and external API contracts
-- [Integrations](./INTEGRATIONS.md) — CRM webhooks and embed SDK
+### Strategy & Planning
+- [Architecture](./ARCHITECTURE.md) — System design, multi-tenancy, data flow, ADRs, caching
+- [Security](./SECURITY.md) — HIPAA compliance, CORS, CSP, rate limiting, subprocessors
 - [Roadmap](./ROADMAP.md) — MVP → Scale phased plan
-- [Contributing](./CONTRIBUTING.md) — Dev standards and workflow
+
+### API & Integrations
+- [API Reference](./API.md) — All endpoints, auth, error codes, webhook events
+- [Integrations](./INTEGRATIONS.md) — CRM webhooks, embed SDK, native HubSpot/Nextech
+
+### Database & Diagrams
+- [Database Schema](./docs/technical/database-schema.md) — Full table specs, indexes, RLS policies
+- [ERD](./docs/technical/diagrams/erd.mermaid) — Entity relationship diagram
+- [Sequence Diagrams](./docs/technical/sequences.md) — Patient intake, AI pipeline, coordinator flow, webhook delivery
+
+### AI & Development
+- [Agents](./AGENTS.md) — AI agent definitions (Backend, Frontend, Security, DevOps, QA, etc.)
+- [Skills](./SKILLS.md) — Reusable AI skill modules
+- [Contributing](./CONTRIBUTING.md) — Dev standards, branching, testing, deployment
 
 ---
 
 ## License
 
-Proprietary — Miami Life Cosmetic Center © 2025
+Proprietary — Miami Life Cosmetic Center © 2026

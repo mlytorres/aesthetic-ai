@@ -1,0 +1,53 @@
+---
+config:
+  theme: base
+title: AestheticAI — Patient Intake Flow
+---
+sequenceDiagram
+    autonumber
+
+    actor Patient
+    participant Widget as Embed Widget<br/>(Browser)
+    participant API as Laravel API
+    participant S3 as AWS S3
+    participant Queue as Horizon Queue
+
+    Patient->>Widget: Opens clinic page with widget
+    Widget->>API: GET /embed/{clinic_slug}
+    API-->>Widget: Clinic config (theme, procedures)
+
+    Patient->>Widget: Selects procedure (Rhinoplasty)
+    Widget->>API: POST /api/evaluations
+    note right of API: Creates draft evaluation<br/>Returns secure token
+    API-->>Widget: { evaluation_token }
+
+    loop For each quiz step
+        Patient->>Widget: Answers question(s)
+        Widget->>API: POST /api/evaluations/{token}/quiz
+        API-->>Widget: { next_step, progress }
+    end
+
+    rect rgb(20, 40, 60)
+        note over Patient,S3: Photo Capture Step
+        Patient->>Widget: Grants camera permission
+        Widget->>Widget: MediaPipe quality check<br/>(client-side, no upload)
+
+        loop For each photo (front, left, right)
+            Patient->>Widget: Captures photo
+            Widget->>Widget: Blur + angle validation
+            Widget->>API: POST /api/evaluations/{token}/photos<br/>(multipart)
+            API->>API: Server-side quality check<br/>(Rekognition face detection)
+            API->>S3: Store encrypted (KMS)
+            S3-->>API: Stored at s3_key
+            API-->>Widget: { photo_id, quality_score }
+        end
+    end
+
+    Patient->>Widget: Enters name, email, phone
+    Patient->>Widget: Accepts HIPAA consent
+    Widget->>API: POST /api/evaluations/{token}/submit
+    API->>API: Encrypt PHI columns
+    API->>Queue: Dispatch AI pipeline jobs
+    API-->>Widget: { status: submitted, portal_url }
+
+    Widget-->>Patient: Success screen + portal link

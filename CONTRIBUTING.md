@@ -269,10 +269,10 @@ cd aesthetic-ai
 
 # Backend
 composer install
-cp .env.example .env.local
+cp .env.example .env
 php artisan key:generate
 
-# Configure .env.local:
+# Configure .env:
 # DB_CONNECTION=pgsql
 # DB_DATABASE=aesthetic_ai_dev
 # QUEUE_CONNECTION=redis
@@ -299,7 +299,7 @@ php artisan horizon
 ### Feature Flags (Local)
 
 ```env
-# .env.local — disable AI features for local dev
+# .env — disable AI features for local dev
 FEATURE_AI_VISION=false          # Use mock responses instead of Rekognition
 FEATURE_PHOTO_ANALYSIS=false     # Skip photo processing
 FEATURE_WEBHOOKS=false           # Don't fire external webhooks
@@ -322,6 +322,22 @@ Manual deploy after staging validation:
 ```
 GitHub Actions → Create release tag → Approval gate → ECS deploy (production)
 ```
+
+**Release tag convention:** `v{MAJOR}.{MINOR}.{PATCH}` — follows [Semantic Versioning](https://semver.org/).
+
+```bash
+# Examples:
+v1.0.0   # MVP launch (Phase 1 complete)
+v1.1.0   # New feature or procedure added
+v1.1.1   # Bug fix or patch
+v2.0.0   # Breaking API change or major platform shift
+
+# Tagging:
+git tag -a v1.0.0 -m "Phase 1 MVP — Rhinoplasty intake, Miami Life pilot"
+git push origin v1.0.0
+```
+
+Hotfix releases cherry-pick commits from `hotfix/*` branches and tag with a patch bump (e.g. `v1.0.1`). The hotfix must be merged to both `main` and `develop` after release.
 
 ### Database Migrations in Production
 

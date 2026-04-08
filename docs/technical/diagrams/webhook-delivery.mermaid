@@ -1,0 +1,48 @@
+---
+config:
+  theme: base
+title: AestheticAI — Webhook Delivery & Retry
+---
+sequenceDiagram
+    autonumber
+
+    participant Job as NotifyClinicNewEvalJob
+    participant WH as WebhookDispatcher
+    participant DB as PostgreSQL
+    participant Queue as Horizon Queue
+    participant CRM as Clinic CRM
+
+    Job->>WH: dispatch(evaluation, 'evaluation.analysis_complete')
+
+    WH->>WH: Build payload (no PHI — token reference only)
+    WH->>WH: Sign payload: HMAC-SHA256(secret, payload)
+    WH->>DB: Create webhook_deliveries { status: pending }
+
+    WH->>CRM: POST webhook_url<br/>X-AestheticAI-Signature: sha256=...
+
+    alt CRM responds 2xx within 10s
+        CRM-->>WH: 200 OK
+        WH->>DB: Update status=delivered, delivered_at=now()
+    else CRM timeout or non-2xx
+        CRM-->>WH: 500 / timeout
+        WH->>DB: attempt_count++, status=retrying
+        WH->>DB: next_retry_at = now() + backoff_delay
+
+        note over Queue,CRM: Retry: +30s / +2min / +10min / +1hr
+
+        loop Up to 5 total attempts
+            Queue->>WH: Re-dispatch at next_retry_at
+            WH->>CRM: POST webhook_url (resend)
+            alt Succeeds
+                CRM-->>WH: 200 OK
+                WH->>DB: status=delivered
+            else Still failing
+                WH->>DB: attempt_count++, schedule next retry
+            end
+        end
+
+        alt All 5 attempts failed
+            WH->>DB: status=failed
+            WH-->>WH: Send admin alert email to clinic
+        end
+    end

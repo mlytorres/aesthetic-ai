@@ -202,7 +202,7 @@ app.post('/webhook/aestheticai', express.raw({ type: 'application/json' }), (req
 
 ### Retry Policy
 
-If your endpoint returns a non-2xx response or times out, we retry with exponential backoff:
+If your endpoint returns a non-2xx response or times out (> 10 seconds), we retry with exponential backoff:
 
 ```
 Attempt 1: Immediate
@@ -211,6 +211,31 @@ Attempt 3: 2 minutes later
 Attempt 4: 10 minutes later
 Attempt 5: 1 hour later
 After 5 failures: Webhook marked as failed, notification sent to clinic admin
+```
+
+Your endpoint should respond with `200 OK` as quickly as possible and process the event asynchronously. Do not perform heavy operations (CRM API calls, database writes) synchronously in the webhook handler.
+
+### Rotating Your Webhook Secret
+
+If your webhook secret is ever compromised, rotate it immediately:
+
+1. Go to **Dashboard → Settings → Integrations → Webhook → Rotate Secret**
+2. A new secret is generated. Your **old secret remains valid for 24 hours** to allow a grace period for in-flight deliveries.
+3. Update your webhook handler with the new secret before the grace period expires.
+4. Confirm rotation by clicking **Verify New Secret** — this fires a test `ping` event signed with the new secret.
+
+During the rotation grace period, AestheticAI signs payloads with **both** secrets and includes both in the `X-AestheticAI-Signature` header as comma-separated values. Accept either:
+
+```php
+function verifyWithRotation(string $payload, string $header, string $oldSecret, string $newSecret): bool
+{
+    $signatures = explode(',', $header);
+    foreach ($signatures as $sig) {
+        if (verifyWebhookSignature($payload, trim($sig), $newSecret)) return true;
+        if (verifyWebhookSignature($payload, trim($sig), $oldSecret)) return true;
+    }
+    return false;
+}
 ```
 
 ---
@@ -224,6 +249,8 @@ GET /api/v1/evaluations
 Authorization: Bearer {your_api_token}
 X-Clinic-ID: {your_clinic_id}
 ```
+
+> **Why `X-Clinic-ID`?** The platform normally resolves your clinic via subdomain (e.g. `yourslug.aestheticai.com`). Direct REST API calls from your backend server do not go through a subdomain, so the `X-Clinic-ID` header is used instead for tenant resolution. This header is validated against the API token — a token cannot be used to access a different clinic's data.
 
 API tokens are generated in **Dashboard → Settings → API → Generate Token**
 

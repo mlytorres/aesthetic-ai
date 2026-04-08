@@ -1,0 +1,194 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: "#1a1a2e"
+    primaryTextColor: "#F5F0E8"
+    primaryBorderColor: "#C9A84C"
+    lineColor: "#C9A84C"
+    secondaryColor: "#16213e"
+    tertiaryColor: "#0f3460"
+title: AestheticAI — Entity Relationship Diagram
+---
+erDiagram
+
+    %% ──────────────────────────────────────────
+    %% CORE TENANT & SUBSCRIPTION
+    %% ──────────────────────────────────────────
+
+    plans {
+        uuid id PK
+        string slug UK
+        string name
+        int max_procedures
+        int max_evaluations_mo
+        string stripe_price_id
+        jsonb features
+    }
+
+    tenants {
+        uuid id PK
+        string slug UK
+        string name
+        uuid plan_id FK
+        string webhook_url
+        string webhook_secret
+        jsonb settings
+        timestamptz deleted_at
+    }
+
+    %% ──────────────────────────────────────────
+    %% STAFF & AUTH
+    %% ──────────────────────────────────────────
+
+    users {
+        uuid id PK
+        uuid tenant_id FK
+        string email
+        string name
+        string role
+        string password_hash
+        string totp_secret
+        timestamptz last_login_at
+        timestamptz deleted_at
+    }
+
+    api_tokens {
+        uuid id PK
+        uuid tenant_id FK
+        uuid created_by FK
+        string name
+        string token_hash UK
+        array scopes
+        timestamptz last_used_at
+        timestamptz expires_at
+        timestamptz revoked_at
+    }
+
+    magic_links {
+        uuid id PK
+        uuid tenant_id FK
+        uuid evaluation_id FK
+        string token_hash UK
+        timestamptz used_at
+        timestamptz expires_at
+    }
+
+    %% ──────────────────────────────────────────
+    %% PATIENT & CLINICAL DATA
+    %% ──────────────────────────────────────────
+
+    patients {
+        uuid id PK
+        uuid tenant_id FK
+        text name_encrypted
+        text email_encrypted
+        text phone_encrypted
+        text dob_encrypted
+        string name_hash
+        string email_hash
+        string external_crm_id
+        string created_via
+        timestamptz deleted_at
+    }
+
+    procedures {
+        string slug PK
+        string label
+        string category
+        jsonb photo_protocol
+        boolean active
+    }
+
+    quiz_definitions {
+        uuid id PK
+        string procedure_slug FK
+        int version
+        jsonb questions
+        boolean is_active
+    }
+
+    evaluations {
+        uuid id PK
+        uuid tenant_id FK
+        uuid patient_id FK
+        string procedure_slug FK
+        string status
+        jsonb quiz_answers
+        jsonb analysis_data
+        int lead_score
+        string priority
+        string secure_token UK
+        text coordinator_notes
+        string external_id
+        timestamptz completed_at
+        timestamptz deleted_at
+    }
+
+    photos {
+        uuid id PK
+        uuid tenant_id FK
+        uuid evaluation_id FK
+        string type
+        string s3_key
+        string s3_key_hash
+        int quality_score
+        string analysis_status
+        jsonb capture_metadata
+        timestamptz taken_at
+        timestamptz deleted_at
+    }
+
+    %% ──────────────────────────────────────────
+    %% AUDIT & INTEGRATIONS
+    %% ──────────────────────────────────────────
+
+    audit_log_entries {
+        bigint id PK
+        uuid tenant_id FK
+        uuid user_id FK
+        string action
+        string subject_type
+        uuid subject_id
+        jsonb metadata
+        inet ip_address
+        timestamptz created_at
+    }
+
+    webhook_deliveries {
+        uuid id PK
+        uuid tenant_id FK
+        uuid evaluation_id FK
+        string event
+        jsonb payload
+        string status
+        int attempt_count
+        timestamptz next_retry_at
+        jsonb last_response
+        timestamptz delivered_at
+    }
+
+    %% ──────────────────────────────────────────
+    %% RELATIONSHIPS
+    %% ──────────────────────────────────────────
+
+    plans                ||--o{  tenants              : "subscribed by"
+    tenants              ||--o{  users                : "employs"
+    tenants              ||--o{  patients             : "owns"
+    tenants              ||--o{  evaluations          : "owns"
+    tenants              ||--o{  api_tokens           : "issues"
+    tenants              ||--o{  webhook_deliveries   : "receives"
+    tenants              ||--o{  audit_log_entries    : "logged in"
+
+    users                ||--o{  api_tokens           : "created by"
+    users                ||--o{  audit_log_entries    : "generates"
+
+    patients             ||--o{  evaluations          : "submits"
+
+    procedures           ||--o{  quiz_definitions     : "has questions"
+    procedures           ||--o{  evaluations          : "targeted by"
+
+    evaluations          ||--|{  photos               : "contains"
+    evaluations          ||--o{  audit_log_entries    : "tracked by"
+    evaluations          ||--o{  webhook_deliveries   : "triggers"
+    evaluations          ||--o{  magic_links          : "accessed via"

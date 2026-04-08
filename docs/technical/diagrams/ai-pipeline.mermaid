@@ -1,0 +1,64 @@
+---
+config:
+  theme: base
+title: AestheticAI — AI Processing Pipeline
+---
+sequenceDiagram
+    autonumber
+
+    participant Queue as Horizon Queue
+    participant VPQ as ValidatePhotoQualityJob
+    participant EFL as ExtractFacialLandmarksJob
+    participant CP as CalculateProportionsJob
+    participant GR as GenerateRecommendationsJob
+    participant LS as LeadScoringService
+    participant NC as NotifyClinicNewEvalJob
+    participant Rekognition as AWS Rekognition
+    participant DB as PostgreSQL
+    participant Email as SES Email
+    participant WH as WebhookDispatcher
+
+    Queue->>VPQ: Dispatch after submit
+
+    VPQ->>Rekognition: DetectFaces (quality check)
+    Rekognition-->>VPQ: Face confidence score
+
+    alt Photo quality fails
+        VPQ->>DB: evaluation.status = 'failed'
+        VPQ->>Email: Notify clinic (manual review needed)
+    else Quality passes
+        VPQ->>Queue: Dispatch ExtractFacialLandmarksJob
+    end
+
+    Queue->>EFL: Process
+
+    EFL->>Rekognition: DetectFaces (landmark extraction)
+    Rekognition-->>EFL: 27 landmark points
+    EFL->>DB: Store landmarks in analysis_data JSONB
+    EFL->>Queue: Dispatch CalculateProportionsJob
+
+    Queue->>CP: Process
+
+    CP->>DB: Read landmarks from analysis_data
+    CP->>CP: Calculate facial thirds, fifths<br/>symmetry score, golden ratio deviation
+    CP->>DB: Update analysis_data with proportions
+    CP->>Queue: Dispatch GenerateRecommendationsJob
+
+    Queue->>GR: Process
+
+    GR->>DB: Read quiz_answers + analysis_data
+    GR->>GR: Rule-based recommendation engine<br/>(MVP — ML model in Phase 3)
+    GR->>LS: CalculateLeadScore(quiz, proportions, recommendations)
+    LS-->>GR: lead_score (0-100), priority
+    GR->>DB: Update: lead_score, priority, analysis_data.recommendations
+    GR->>DB: evaluation.status = 'complete'
+    GR->>Queue: Dispatch NotifyClinicNewEvalJob
+
+    Queue->>NC: Process
+
+    NC->>DB: Generate magic_link token (SHA-256)
+    NC->>DB: Store hashed token in magic_links
+    NC->>Email: Send coordinator notification
+    NC->>WH: Dispatch webhook (evaluation.analysis_complete)
+    WH->>DB: Create webhook_deliveries record
+    WH-->>WH: POST to clinic webhook URL (signed HMAC)
