@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
@@ -16,6 +17,15 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+
+// ─── Magic link authentication ────────────────────────────────────────────────
+// One-time coordinator login links sent in evaluation notification emails.
+// No auth middleware — this IS the authentication step.
+// Tenant resolved from subdomain so TenantContext is available.
+
+Route::middleware(['tenant'])->group(function (): void {
+    Route::get('/magic/{token}', MagicLinkController::class)->name('magic-link.use');
+});
 
 // ─── Clinic dashboard (authenticated staff) ───────────────────────────────────
 // 'tenant' runs after 'auth' so TenantMiddleware can fall back to the

@@ -13,7 +13,7 @@
 **Sprint 1 — Core Infrastructure:** ✅ **Complete**
 **Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
 **Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
-**Sprint 3 — AI Pipeline:** 🚧 **In Progress** (jobs built, wired to pipeline)
+**Sprint 3 — AI Pipeline:** ✅ **Complete**
 
 ---
 
@@ -155,7 +155,11 @@ Phase 4 — Scale (Months 11–18)
 - [x] `NewEvaluationMail` — Mailable with priority-tagged subject line
 - [x] `resources/views/emails/new-evaluation.blade.php` — luxury dark HTML email with lead score, priority badge, patient first name, CTA button
 - [x] `AuditLog::recordSystem()` — queue-safe audit logging (no HTTP context required)
-- [ ] Magic link / one-time token for coordinator direct access *(Sprint 3 remainder)*
+- [x] Magic link — `MagicLink::generate($evaluation, $recipientEmail)` per coordinator
+- [x] `MagicLinkController` — validates SHA-256 token, logs in matching User, redirects to evaluation with audit trail
+- [x] `GET /magic/{token}` route (outside auth middleware, inside tenant middleware)
+- [x] `PruneMagicLinksCommand` — `php artisan magic-links:prune`, scheduled hourly
+- [x] Migration `add_recipient_email_to_magic_links_table` — enables per-recipient user resolution
 
 ---
 

@@ -179,13 +179,15 @@
 
             <!-- CTA -->
             <div class="cta">
-                <a href="{{ $portalUrl }}">Review Evaluation →</a>
+                <a href="{{ $magicUrl }}">Review Evaluation →</a>
             </div>
 
             <p class="note">
-                This link opens the full evaluation in your secure coordinator portal,
-                including patient photos, AI proportion analysis, quiz answers,
-                and technique recommendations.
+                This link grants you <strong>one-time direct access</strong> to the evaluation
+                — no login required. It expires in <strong>15 minutes</strong>.<br><br>
+                If the link has expired, log in at
+                <a href="{{ config('app.url') }}" style="color:#C9A84C;">{{ parse_url(config('app.url'), PHP_URL_HOST) }}</a>
+                and find the evaluation in your queue.
             </p>
         </div>
 

@@ -6,6 +6,9 @@ namespace App\Jobs\AI;
 
 use App\Mail\NewEvaluationMail;
 use App\Models\Evaluation;
+use App\Models\MagicLink;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,8 +20,11 @@ use Illuminate\Support\Facades\Mail;
 /**
  * Notifies coordinator(s) that a new evaluation has completed AI analysis.
  *
- * Recipients: tenant.settings.coordinator_emails (configured in Clinic Settings).
- * Falls back to all users with role = 'coordinator' or 'owner' for this tenant.
+ * For each recipient a fresh magic link is generated (one-time, 15-min expiry)
+ * so they can access the evaluation directly from the email without logging in.
+ *
+ * Recipients: tenant.settings.coordinator_emails → falls back to all
+ * coordinator/owner users on the tenant.
  *
  * Queued on the 'notifications' queue — separate from the 'default' AI queue
  * so a slow email provider never blocks AI processing.
@@ -52,8 +58,7 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
             return;
         }
 
-        // Resolve coordinator email addresses from tenant settings
-        $recipients = $this->resolveRecipients($tenant, $evaluation);
+        $recipients = $this->resolveRecipients($tenant);
 
         if (empty($recipients)) {
             Log::info('NotifyClinicNewEvaluationJob: no recipients configured', [
@@ -63,30 +68,39 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
             return;
         }
 
+        $sentCount = 0;
+
         foreach ($recipients as $email) {
-            Mail::to($email)->send(new NewEvaluationMail($evaluation));
+            // Generate a fresh one-time magic link per recipient
+            [, $rawToken] = MagicLink::generate($evaluation, $email);
+
+            $magicUrl = url('/magic/' . $rawToken);
+
+            Mail::to($email)->send(new NewEvaluationMail($evaluation, $magicUrl));
+
+            $sentCount++;
         }
 
         Log::info('NotifyClinicNewEvaluationJob: notifications sent', [
             'evaluation_id' => $this->evaluationId,
-            'recipients'    => count($recipients),
+            'recipients'    => $sentCount,
         ]);
     }
 
     /**
      * @return array<string>
      */
-    private function resolveRecipients(\App\Models\Tenant $tenant, Evaluation $evaluation): array
+    private function resolveRecipients(Tenant $tenant): array
     {
-        // Priority 1: explicitly configured coordinator emails
+        // Priority 1: explicitly configured coordinator emails in tenant settings
         $configured = $tenant->settings['coordinator_emails'] ?? [];
 
         if (!empty($configured) && is_array($configured)) {
-            return $configured;
+            return array_filter($configured); // remove any empty strings
         }
 
         // Priority 2: all coordinator + owner users on this tenant
-        return \App\Models\User::withoutGlobalScopes()
+        return User::withoutGlobalScopes()
             ->where('tenant_id', $tenant->id)
             ->whereIn('role', ['coordinator', 'owner', 'admin'])
             ->pluck('email')

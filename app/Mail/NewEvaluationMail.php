@@ -14,13 +14,11 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Coordinator notification: new evaluation completed AI analysis.
  *
- * Sent to all coordinator_emails configured on the tenant.
- * Contains: patient name (if available), procedure, lead score,
- * priority tier, and a direct link to the evaluation detail page.
+ * Sent individually per recipient — each email contains a unique magic link
+ * (one-time, 15-min expiry) for direct authenticated access to the evaluation.
  *
- * PHI handling: email contains minimal PHI — only the patient's
- * first name (if consent given) and the procedure type.
- * Full PHI remains behind the authenticated dashboard.
+ * PHI: email contains only patient first name + procedure type.
+ * Full PHI remains behind the authenticated coordinator portal.
  */
 class NewEvaluationMail extends Mailable
 {
@@ -29,27 +27,28 @@ class NewEvaluationMail extends Mailable
     public string $procedure;
     public int|null $leadScore;
     public string $priority;
-    public string $portalUrl;
+    public string $magicUrl;
     public string $patientFirstName;
     public string $clinicName;
 
     public function __construct(
         public readonly Evaluation $evaluation,
+        string $magicUrl,
     ) {
-        $procedure  = $evaluation->procedure_slug;
-        $patient    = $evaluation->patient;
-        $tenant     = $evaluation->tenant;
+        $procedure = $evaluation->procedure_slug;
+        $patient   = $evaluation->patient;
+        $tenant    = $evaluation->tenant;
 
-        $this->procedure       = ucwords(str_replace('-', ' ', $procedure));
+        $this->procedure       = ucwords(str_replace(['-', '_'], ' ', $procedure));
         $this->leadScore       = $evaluation->lead_score;
         $this->priority        = ucfirst($evaluation->priority ?? 'standard');
         $this->clinicName      = $tenant?->name ?? 'Your Clinic';
-        $this->portalUrl       = config('app.url') . '/evaluations/' . $evaluation->id;
+        $this->magicUrl        = $magicUrl;
 
-        // Use only the first name from encrypted field — partial PHI exposure in email
+        // Use only the first name — partial PHI exposure in email body
         $fullName = $patient?->name_encrypted ?? null;
         $this->patientFirstName = $fullName
-            ? explode(' ', $fullName)[0]
+            ? explode(' ', trim($fullName))[0]
             : 'New Patient';
     }
 

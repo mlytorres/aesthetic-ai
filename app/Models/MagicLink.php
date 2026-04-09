@@ -25,6 +25,7 @@ class MagicLink extends Model
         'tenant_id',
         'evaluation_id',
         'token_hash',
+        'recipient_email',
         'used_at',
         'expires_at',
     ];
@@ -62,18 +63,21 @@ class MagicLink extends Model
      * Returns [MagicLink $model, string $rawToken].
      * The raw token is shown ONCE — it is not stored.
      *
+     * @param  string|null $recipientEmail  The coordinator email this link is for.
+     *                                      Used to log in the correct user on consumption.
      * @return array{0: MagicLink, 1: string}
      */
-    public static function generate(Evaluation $evaluation): array
+    public static function generate(Evaluation $evaluation, ?string $recipientEmail = null): array
     {
         $rawToken = Str::random(64);
         $hash     = hash('sha256', $rawToken);
 
         $link = static::create([
-            'tenant_id'     => $evaluation->tenant_id,
-            'evaluation_id' => $evaluation->id,
-            'token_hash'    => $hash,
-            'expires_at'    => now()->addMinutes(15),
+            'tenant_id'       => $evaluation->tenant_id,
+            'evaluation_id'   => $evaluation->id,
+            'token_hash'      => $hash,
+            'recipient_email' => $recipientEmail,
+            'expires_at'      => now()->addMinutes(15),
         ]);
 
         return [$link, $rawToken];
