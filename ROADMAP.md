@@ -13,7 +13,7 @@
 **Sprint 1 — Core Infrastructure:** ✅ **Complete**
 **Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
 **Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
-**Sprint 3 — AI Pipeline:** ⬜ **Not Started** (next up)
+**Sprint 3 — AI Pipeline:** 🚧 **In Progress** (jobs built, wired to pipeline)
 
 ---
 
@@ -134,24 +134,28 @@ Phase 4 — Scale (Months 11–18)
 
 ---
 
-### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8) ⬜ NEXT UP
+### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8) 🚧 IN PROGRESS
 
 **AI Jobs (Laravel Queue — Horizon):**
-- [ ] `ValidatePhotoQualityJob` — AWS Rekognition to confirm face detected, compute quality score (0–100)
-- [ ] `ExtractFacialLandmarksJob` — AWS Rekognition `DetectFaces` → store 27 landmark points in `analysis_data`
-- [ ] `CalculateProportionsJob` — facial thirds, fifths, symmetry ratios from landmarks
-- [ ] `GenerateBasicRecommendationsJob` — rule-based (not ML yet) from quiz answers + proportions
-- [ ] Jobs chained and dispatched from `EvaluationController::submit()` (currently stubbed as `STATUS_ANALYZING`)
+- [x] `ValidatePhotoQualityJob` — Rekognition face detect + quality score; simulation mode for dev (`FEATURE_AI_VISION=false`)
+- [x] `ExtractFacialLandmarksJob` — Rekognition `DetectFaces` → 28 landmark points stored in `analysis_data.landmarks`; realistic mock in dev
+- [x] `CalculateProportionsJob` — facial thirds, fifths, nasal symmetry, Goode's ratio, nasal width ratio, eye symmetry, overall harmony score (pure geometry, no API)
+- [x] `GenerateBasicRecommendationsJob` — rule-based recommendations from quiz + proportions; calls `LeadScoringService`, dispatches notification
+- [x] Jobs chained via `Bus::chain()` in `EvaluationController::submit()`; cancellable on photo validation failure
+- [x] `config/features.php` — feature flags for `ai_vision`, `lead_scoring`, `notifications`
 
 **Lead Scoring:**
-- [ ] `LeadScoringService` — calculate 0–100 score (timeline urgency + budget + quiz red flags + photo quality)
-- [ ] Priority assignment: Urgent (80+) / High (60–79) / Medium (40–59) / Standard (<40)
-- [ ] Store `lead_score` and `priority` on evaluation after scoring job completes
+- [x] `LeadScoringService` — 100-point weighted score: timeline 30%, budget 25%, AI harmony 20%, photo quality 10%, concerns 10%, referral 5%
+- [x] Priority tiers: Urgent (80+) / High (60–79) / Medium (40–59) / Standard (<40)
+- [x] Auto-boost: revision rhinoplasty or functional component → +1 tier
+- [x] Force-upgrade: budget ≥ $15k + timeline ≤ 3 months → minimum High
 
 **Notifications:**
-- [ ] `NotifyClinicNewEvaluationJob` — email to all `coordinator_emails` on tenant
-- [ ] Email template: "New Rhinoplasty Evaluation — Lead Score: {score}, Priority: {priority}"
-- [ ] Magic link / one-time token for coordinator to access the evaluation directly
+- [x] `NotifyClinicNewEvaluationJob` — sends to `coordinator_emails` from tenant settings (falls back to coordinator/owner users)
+- [x] `NewEvaluationMail` — Mailable with priority-tagged subject line
+- [x] `resources/views/emails/new-evaluation.blade.php` — luxury dark HTML email with lead score, priority badge, patient first name, CTA button
+- [x] `AuditLog::recordSystem()` — queue-safe audit logging (no HTTP context required)
+- [ ] Magic link / one-time token for coordinator direct access *(Sprint 3 remainder)*
 
 ---
 

@@ -9,11 +9,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Intake\CreateEvaluationRequest;
 use App\Http\Requests\Intake\SaveQuizRequest;
 use App\Http\Requests\Intake\SubmitEvaluationRequest;
+use App\Jobs\AI\CalculateProportionsJob;
+use App\Jobs\AI\ExtractFacialLandmarksJob;
+use App\Jobs\AI\GenerateBasicRecommendationsJob;
+use App\Jobs\AI\ValidatePhotoQualityJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
 use App\Services\AuditLog;
+use Illuminate\Bus\Batch;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Handles the patient evaluation lifecycle during intake.
@@ -68,6 +76,15 @@ class EvaluationController extends Controller
 
     /**
      * Final step — attach patient contact info, record consent, and dispatch AI pipeline.
+     *
+     * The AI pipeline is a chained job batch:
+     *   ValidatePhotoQualityJob
+     *     → ExtractFacialLandmarksJob
+     *       → CalculateProportionsJob
+     *         → GenerateBasicRecommendationsJob (scores lead, sends notification)
+     *
+     * The batch is cancellable — if photo validation fails, the whole chain is
+     * cancelled and the evaluation is marked 'failed'.
      */
     public function submit(SubmitEvaluationRequest $request, string $token): JsonResponse
     {
@@ -89,27 +106,49 @@ class EvaluationController extends Controller
             'name_hash'       => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
         ]);
 
-        // Finalize evaluation
+        // Finalize evaluation — attach consent metadata
         $evaluation->update([
             'patient_id'   => $patient->id,
-            'status'       => Evaluation::STATUS_SUBMITTED,
+            'status'       => Evaluation::STATUS_ANALYZING,
             'completed_at' => now(),
-            // Store consent metadata — not the actual consent form text
             'quiz_answers' => array_merge($evaluation->quiz_answers ?? [], [
                 '_consent' => [
-                    'hipaa_acknowledged'  => $validated['consent']['hipaa_acknowledged'],
-                    'terms_accepted'      => $validated['consent']['terms_accepted'],
-                    'photo_use_consent'   => $validated['consent']['photo_use_consent'],
-                    'consented_at'        => $validated['consent']['consented_at'],
+                    'hipaa_acknowledged' => $validated['consent']['hipaa_acknowledged'],
+                    'terms_accepted'     => $validated['consent']['terms_accepted'],
+                    'photo_use_consent'  => $validated['consent']['photo_use_consent'],
+                    'consented_at'       => $validated['consent']['consented_at'],
                 ],
             ]),
         ]);
 
         $this->auditLog->record('evaluation.submitted', $evaluation);
 
-        // Dispatch the AI processing pipeline
-        // Sprint 3 will implement these jobs — for now we just mark as analyzing
-        $evaluation->update(['status' => Evaluation::STATUS_ANALYZING]);
+        // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
+        $evaluationId = $evaluation->id;
+
+        Bus::chain([
+            new ValidatePhotoQualityJob($evaluationId),
+            new ExtractFacialLandmarksJob($evaluationId),
+            new CalculateProportionsJob($evaluationId),
+            new GenerateBasicRecommendationsJob($evaluationId),
+        ])
+        ->onQueue('ai')
+        ->catch(function (Throwable $e) use ($evaluationId): void {
+            Log::error('AI pipeline chain failed', [
+                'evaluation_id' => $evaluationId,
+                'error'         => $e->getMessage(),
+            ]);
+
+            // Mark evaluation failed if the chain breaks mid-way
+            Evaluation::withoutGlobalScopes()
+                ->where('id', $evaluationId)
+                ->whereNotIn('status', [
+                    Evaluation::STATUS_COMPLETE,
+                    Evaluation::STATUS_FAILED,
+                ])
+                ->update(['status' => Evaluation::STATUS_FAILED]);
+        })
+        ->dispatch();
 
         return response()->json([
             'status'     => 'submitted',

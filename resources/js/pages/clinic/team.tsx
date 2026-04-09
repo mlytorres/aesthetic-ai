@@ -77,7 +77,7 @@ export default function Team({ members, availableRoles }: Props) {
 	const handleDelete = (member: Member) => {
 		if (confirm(`Remove ${member.name} from the team?`)) {
 			setDeletingId(member.id);
-			router.delete(destroy({ user: member.id }).url());
+			router.delete(destroy.url({ user: member.id }));
 		}
 	};
 

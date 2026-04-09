@@ -125,7 +125,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
     const activeTab = filters.status;
 
     const navigateTab = (status: string) => {
-        router.get(index.url({ status }), {}, { preserveState: true, replace: true });
+        router.get(index.url({ query: { status } }), {}, { preserveState: true, replace: true });
     };
 
     return (

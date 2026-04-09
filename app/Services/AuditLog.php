@@ -37,7 +37,7 @@ class AuditLog
     public function __construct(private readonly Request $request) {}
 
     /**
-     * Record an audit event.
+     * Record an audit event (HTTP request context — use in controllers).
      *
      * @param string $action     Dot-separated namespace, e.g. 'evaluation.photos.viewed'
      * @param Model|null $subject  The entity being accessed or modified
@@ -63,6 +63,49 @@ class AuditLog
             // Never let audit log failure block the primary request.
             // But always log the failure itself.
             Log::critical('AuditLog write failed', [
+                'action'    => $action,
+                'exception' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Record a system-generated audit event (no HTTP context — use in queue jobs).
+     *
+     * Queue workers don't have an HTTP request, so ip_address and user_agent
+     * are set to system identifiers rather than null (which would look like
+     * a missing log entry in HIPAA audits).
+     *
+     * @param string $action
+     * @param Model|null $subject
+     * @param array<string, mixed> $metadata
+     */
+    public function recordSystem(
+        string $action,
+        ?Model $subject = null,
+        array $metadata = [],
+    ): void {
+        try {
+            // Resolve tenant_id from the subject model itself if available
+            $tenantId = null;
+            if ($subject instanceof Model && isset($subject->tenant_id)) {
+                $tenantId = $subject->tenant_id;
+            } elseif (TenantContext::isSet()) {
+                $tenantId = TenantContext::id();
+            }
+
+            AuditLogEntry::create([
+                'tenant_id'    => $tenantId,
+                'user_id'      => null,   // system action, no user
+                'action'       => $action,
+                'subject_type' => $subject ? class_basename($subject) : null,
+                'subject_id'   => $subject?->getKey(),
+                'metadata'     => array_merge($metadata, ['_source' => 'queue_job']),
+                'ip_address'   => '127.0.0.1',
+                'user_agent'   => 'AestheticAI/QueueWorker',
+            ]);
+        } catch (\Throwable $e) {
+            Log::critical('AuditLog::recordSystem write failed', [
                 'action'    => $action,
                 'exception' => $e->getMessage(),
             ]);
