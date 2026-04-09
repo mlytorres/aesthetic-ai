@@ -16,6 +16,10 @@ export interface QuizQuestion {
     options?: QuizOption[];
     required?: boolean;
     placeholder?: string;
+    // Branching: pre-resolved array indices from the backend
+    skipToOnTrue?: number;   // boolean type: where to jump when answer is true
+    skipToOnFalse?: number;  // boolean type: where to jump when answer is false
+    skipToAlways?: number;   // text / '*' branch: always jump here after answering
 }
 
 export interface QuizDefinition {

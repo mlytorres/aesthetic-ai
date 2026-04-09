@@ -30,11 +30,23 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
     const currentAnswer = state.quizAnswers[question.key] ?? null;
 
     const advance = (): void => {
-        // Check for branching
+        // ── Boolean branching ─────────────────────────────────────────────────
+        if (question.type === 'boolean') {
+            if (currentAnswer === true && question.skipToOnTrue !== undefined) {
+                setActiveIndex(question.skipToOnTrue);
+                return;
+            }
+            if (currentAnswer === false && question.skipToOnFalse !== undefined) {
+                setActiveIndex(question.skipToOnFalse);
+                return;
+            }
+        }
+
+        // ── Single-choice option-level branching ──────────────────────────────
         if (question.type === 'single' && question.options) {
             const selected = question.options.find((o) => o.value === currentAnswer);
             if (selected?.skipToEnd) {
-                setActiveIndex(questions.length); // jump to completion
+                setActiveIndex(questions.length); // jump to completion screen
                 return;
             }
             if (selected?.skipTo !== undefined) {
@@ -42,6 +54,14 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                 return;
             }
         }
+
+        // ── Wildcard / text branching ─────────────────────────────────────────
+        if (question.skipToAlways !== undefined) {
+            setActiveIndex(question.skipToAlways);
+            return;
+        }
+
+        // ── Default: linear advance ───────────────────────────────────────────
         setActiveIndex((i) => i + 1);
     };
 

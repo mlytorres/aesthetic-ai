@@ -50,10 +50,10 @@ class SecureFileService
         $disk = $this->disk();
 
         $disk->putFileAs(
-            directory: dirname($key),
-            file: $file,
-            name: basename($key),
-            options: $this->storageOptions(),
+            dirname($key),
+            $file,
+            basename($key),
+            $this->storageOptions(),
         );
 
         return $key;
@@ -68,9 +68,16 @@ class SecureFileService
      */
     public function getSignedUrl(string $s3Key): string
     {
-        return $this->disk()->temporaryUrl(
-            path: $s3Key,
-            expiration: now()->addMinutes(self::SIGNED_URL_EXPIRY_MINUTES),
+        $disk = $this->disk();
+
+        // Local disk (dev) does not support temporaryUrl — fall back to a plain URL.
+        if (config('features.ai_vision', false) === false) {
+            return $disk->url($s3Key);
+        }
+
+        return $disk->temporaryUrl(
+            $s3Key,
+            now()->addMinutes(self::SIGNED_URL_EXPIRY_MINUTES),
         );
     }
 

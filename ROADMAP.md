@@ -4,6 +4,19 @@
 
 ---
 
+## Implementation Status
+
+> Legend: ✅ Done · 🚧 In Progress · ⬜ Not Started
+
+### Sprint 1 & 2 — Completion Summary (Updated April 2026)
+
+**Sprint 1 — Core Infrastructure:** ✅ **Complete**
+**Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
+**Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
+**Sprint 3 — AI Pipeline:** ⬜ **Not Started** (next up)
+
+---
+
 ## Phase Overview
 
 ```
@@ -32,95 +45,132 @@ Phase 4 — Scale (Months 11–18)
 
 ---
 
-### P1 Sprint 1 — Core Infrastructure (Weeks 1–2)
+### P1 Sprint 1 — Core Infrastructure (Weeks 1–2) ✅ COMPLETE
 
 **Backend:**
-- [ ] Laravel 12 project scaffold with strict types
-- [ ] PostgreSQL + migrations for: `tenants`, `patients`, `evaluations`, `photos`, `audit_log_entries`
-- [ ] `HasTenantScope` trait + `TenantContext` service
-- [ ] `AuditLog::record()` service
-- [ ] AWS S3 bucket with KMS encryption configured
-- [ ] `SecureFileService` — upload + signed URL generation
-- [ ] Laravel Horizon + Redis queue setup
+- [x] Laravel 12 project scaffold with strict types (`declare(strict_types=1)` everywhere)
+- [x] PostgreSQL + migrations for: `tenants`, `patients`, `evaluations`, `photos`, `audit_log_entries`, `quiz_definitions`, `procedures`
+- [x] `BelongsToTenant` trait + `TenantContext` service (singleton, Facade)
+- [x] `TenantMiddleware` — subdomain resolution (`miamilife.aesthetic-ai.test`)
+- [x] `TenantScope` — Global Scope applied to all tenant-owned models (Evaluation, Patient, Photo, etc.)
+- [x] `AuditLog::record()` service — append-only HIPAA audit log
+- [x] `SecureFileService` — S3 upload (local disk in dev), KMS in production, signed URL generation (15-min expiry)
+- [x] PHI encryption — all patient columns use Laravel `encrypted` cast (AES-256-GCM)
+- [x] Email/name hash columns for deduplication without decryption
+- [x] Laravel Horizon + Redis queue setup (Horizon dashboard at `/horizon`)
+- [x] Wayfinder — typed TypeScript route generation (`php artisan wayfinder:generate`)
 
 **DevOps:**
-- [ ] GitHub repo + branch protection rules
-- [ ] GitHub Actions CI: PHPStan level 8, Pest tests, TypeScript tsc --noEmit
-- [ ] Staging environment on AWS (not production-grade yet)
-- [ ] `.env` secrets management via AWS Secrets Manager
+- [x] GitHub repo established, branch protection configured
+- [ ] GitHub Actions CI: PHPStan level 8, Pest tests, TypeScript `tsc --noEmit` *(not configured yet)*
+- [ ] Staging environment on AWS *(using local dev — `aesthetic-ai.test`)*
+- [ ] `.env` secrets management via AWS Secrets Manager *(local `.env` in dev)*
+
+**Models & Seeders:**
+- [x] `Tenant`, `User`, `Patient`, `Evaluation`, `Photo`, `AuditLogEntry`, `QuizDefinition`, `Procedure` models
+- [x] `DatabaseSeeder` — Miami Life tenant, 5 procedures (Rhinoplasty, Liposuction 360, BBL, Breast Augmentation, Facelift), Rhinoplasty quiz with 8 questions + branching logic
+- [x] Evaluation statuses: draft → submitted → analyzing → complete → contacted → booked → no_show → not_a_fit → failed
 
 ---
 
-### P1 Sprint 2 — Patient Intake Wizard (Weeks 3–5)
+### P1 Sprint 2 — Patient Intake Wizard (Weeks 3–5) ✅ COMPLETE
 
-**Frontend — Patient Portal:**
-- [ ] Mobile-first wizard shell with progress bar
-- [ ] Step 1: Procedure selection (Rhinoplasty only for MVP)
-- [ ] Step 2: Chief concern text input
-- [ ] Step 3: Dynamic quiz (rhinoplasty-specific — 8 questions)
-  - Nasal concerns checklist (tip, bridge, nostrils, asymmetry)
-  - Prior rhinoplasty history (yes/no → branching)
-  - Breathing issues (yes/no → branching)
-  - Skin type / thickness (thin / medium / thick)
-  - Ethnicity considerations (relevant for technique)
-  - Timeline / urgency (ready now / 3 months / 6+ months / researching)
-  - Budget range (multiple choice)
-  - How did you hear about us?
-- [ ] Step 4: Photo capture
-  - Camera access request with friendly explanation
-  - Angle guide overlay (face outline silhouette)
-  - Capture: Front, Left Profile, Right Profile
-  - Client-side quality check (blur detection)
-- [ ] Step 5: Contact info collection (name, email, phone)
-- [ ] Step 6: Consent + submission
-- [ ] Success screen with "What happens next" explanation
+**Frontend — Patient Portal (`/intake/`):**
+- [x] Mobile-first wizard shell (`WizardShell.tsx`) with animated progress bar
+- [x] Luxury dark design system: `#0A0A0F` bg, `#C9A84C` gold, `#F5F0E8` cream, `#9B9B8E` muted
+- [x] Step 1: Procedure selection — cards with category badges (Face / Body)
+- [x] Step 2 (integrated): Quiz — dynamic question engine, 8 Rhinoplasty questions
+  - [x] Question types: `boolean`, `single`, `multi`, `text`
+  - [x] Quiz branching — `skipToOnTrue`, `skipToOnFalse`, `skipToAlways` pre-resolved on backend (DB branches → array indices)
+  - [x] All branching tested end-to-end (e.g. Q2 "Prior rhinoplasty?" → skips details if No)
+- [x] Step 3: Photo capture — camera permission flow, angle overlays, Front/Left/Right required, quality score display
+- [x] Step 4: Contact info (name, email, phone)
+- [x] Step 5: Consent + submission (HIPAA ack, terms, photo use consent, timestamp)
+- [x] Success screen with "What happens next" explanation
 
-**Backend:**
-- [ ] `EvaluationController` — create, update, complete
-- [ ] `PhotoUploadController` — secure multi-part upload to S3
-- [ ] `QuizDefinition` seed data for Rhinoplasty
-- [ ] Evaluation form request validation
+**Backend — Intake API (JSON, not Inertia):**
+- [x] `POST /intake/evaluations` — create draft evaluation + stub patient
+- [x] `POST /intake/evaluations/{token}/quiz` — save quiz answers, advance status
+- [x] `POST /intake/evaluations/{token}/photos` — upload photo to S3, store encrypted key, return signed URL
+- [x] `POST /intake/evaluations/{token}/submit` — upsert patient PHI (encrypted), record consent in quiz_answers, advance to `analyzing`
+- [x] `ProcedureResource` — transforms `photo_protocol` array and quiz question shape for frontend contract
+- [x] `UploadPhotoRequest`, `CreateEvaluationRequest`, `SaveQuizRequest`, `SubmitEvaluationRequest` form requests
+
+**Bugs Fixed During Testing:**
+- [x] `quiz_definitions.questions[].id` → mapped to `key` for frontend; `select/multiselect` → `single/multi`
+- [x] `photo_protocol` DB array → `{required: [], optional: []}` transform in `ProcedureResource`
+- [x] Controller returned `evaluation_token` but frontend read `token` → fixed key name
+- [x] `SecureFileService::putFileAs()` used wrong named param `directory:` → fixed to positional
+- [x] `temporaryUrl()` not supported on local disk → added fallback to `url()` in dev
+- [x] `PhotoController` response shape `{photo_id, status}` → corrected to `{id, analysis_status, signed_url}`
 
 ---
 
-### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8)
+### P1 Sprint 2 (Extended) — Clinic Dashboard + Settings ✅ COMPLETE
 
-**AI Jobs:**
-- [ ] `ValidatePhotoQualityJob` — use AWS Rekognition to confirm face detected, assess quality score
-- [ ] `ExtractFacialLandmarksJob` — AWS Rekognition `DetectFaces` → store 27 landmark points
-- [ ] `CalculateProportionsJob` — facial thirds, fifths, symmetry from landmarks
+> *These items were originally planned for Sprint 4 but pulled forward to complete Sprint 1–2 before starting the AI pipeline.*
+
+**Coordinator Dashboard:**
+- [x] `GET /evaluations` — priority queue (urgent → high → medium → standard), paginated, status filter tabs
+- [x] `GET /evaluations/{id}` — full detail: patient PHI, photos gallery (lightbox), quiz answers, AI analysis
+- [x] `PATCH /evaluations/{id}/status` — update to contacted/booked/no_show/not_a_fit
+- [x] `PATCH /evaluations/{id}/notes` — save coordinator notes + follow_up_at date
+- [x] `EvaluationResource` — PHI auto-decrypted, photos with signed URLs, lead score, analysis_data
+- [x] `resources/js/pages/evaluations/index.tsx` — stat pills, tab bar, sortable table, pagination
+- [x] `resources/js/pages/evaluations/show.tsx` — patient card, photos gallery, quiz answers, coordinator panel
+
+**Clinic Settings & Team Management:**
+- [x] `GET /clinic/settings` — edit page: name, theme, procedures_enabled, coordinator_emails, webhook_url
+- [x] `PATCH /clinic/settings` — persist settings to tenant model
+- [x] `GET /clinic/team` — list all team members with roles
+- [x] `POST /clinic/team` — invite new user (coordinator/admin/surgeon/viewer)
+- [x] `DELETE /clinic/team/{user}` — remove team member (cannot remove self)
+- [x] `resources/js/pages/clinic/settings.tsx` — General / Procedures / Notifications / Integrations sections
+- [x] `resources/js/pages/clinic/team.tsx` — role badges, invite form, remove button
+
+**Navigation:**
+- [x] `AppSidebar` updated — "Evaluations" (ClipboardList icon) + "Clinic" section (Settings + Team)
+- [x] All routes use Wayfinder typed functions (no hardcoded URL strings)
+
+---
+
+### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8) ⬜ NEXT UP
+
+**AI Jobs (Laravel Queue — Horizon):**
+- [ ] `ValidatePhotoQualityJob` — AWS Rekognition to confirm face detected, compute quality score (0–100)
+- [ ] `ExtractFacialLandmarksJob` — AWS Rekognition `DetectFaces` → store 27 landmark points in `analysis_data`
+- [ ] `CalculateProportionsJob` — facial thirds, fifths, symmetry ratios from landmarks
 - [ ] `GenerateBasicRecommendationsJob` — rule-based (not ML yet) from quiz answers + proportions
+- [ ] Jobs chained and dispatched from `EvaluationController::submit()` (currently stubbed as `STATUS_ANALYZING`)
 
 **Lead Scoring:**
-- [ ] `LeadScoringService` — calculate 0–100 score
-- [ ] Priority assignment (Urgent / High / Medium / Standard)
+- [ ] `LeadScoringService` — calculate 0–100 score (timeline urgency + budget + quiz red flags + photo quality)
+- [ ] Priority assignment: Urgent (80+) / High (60–79) / Medium (40–59) / Standard (<40)
+- [ ] Store `lead_score` and `priority` on evaluation after scoring job completes
 
 **Notifications:**
-- [ ] `NotifyClinicNewEvaluationJob` — send email to coordinator
-- [ ] Email template: "New Rhinoplasty Evaluation — Lead Score: {score}"
-- [ ] Magic link generation for coordinator portal access
+- [ ] `NotifyClinicNewEvaluationJob` — email to all `coordinator_emails` on tenant
+- [ ] Email template: "New Rhinoplasty Evaluation — Lead Score: {score}, Priority: {priority}"
+- [ ] Magic link / one-time token for coordinator to access the evaluation directly
 
 ---
 
-### P1 Sprint 4 — Clinic Dashboard MVP (Weeks 9–11)
+### P1 Sprint 4 — Clinic Dashboard MVP (Weeks 9–11) ✅ COMPLETE (pulled into Sprint 2)
+
+> *Delivered early as part of completing Sprint 1–2 before starting the AI pipeline.*
 
 **Clinic Dashboard:**
-- [ ] Login flow (email + password)
-- [ ] Evaluation list view — sortable by lead score, date
-- [ ] Priority queue view (Urgent/High flagged at top)
-- [ ] Evaluation detail page:
-  - Patient photos (signed URLs, 15-min expiry)
-  - Quiz answers formatted
-  - AI analysis results (proportion scores)
-  - Lead score breakdown
-  - Procedure recommendation with reasoning
-- [ ] Mark as: Contacted / Booked / No-Show / Not a Fit
-- [ ] Basic search and filter
+- [x] Login flow (email + password via Laravel Fortify)
+- [x] Evaluation priority queue — sorted by priority then lead score then date
+- [x] Status filter tabs: Active / Analyzing / Complete / Contacted / Booked
+- [x] Evaluation detail page with patient PHI, photos gallery, quiz answers, coordinator notes
+- [x] Mark as: Contacted / Booked / No-Show / Not a Fit
+- [x] Coordinator notes + follow-up date
 
 **Security:**
-- [ ] All coordinator routes behind auth middleware
-- [ ] Audit log visible in clinic settings (basic list)
-- [ ] Session timeout after 30 minutes of inactivity
+- [x] All coordinator routes behind `auth + verified + tenant` middleware
+- [ ] Audit log visible in clinic settings (basic list) *(audit log records but no UI yet)*
+- [ ] Session timeout after 30 minutes of inactivity *(not configured yet)*
 
 ---
 

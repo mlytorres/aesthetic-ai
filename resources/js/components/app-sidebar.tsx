@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,6 +14,9 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as evaluationsIndex } from '@/routes/evaluations';
+import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
+import { index as clinicTeamIndex } from '@/routes/clinic/team';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -21,6 +24,24 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Evaluations',
+        href: evaluationsIndex.url(),
+        icon: ClipboardList,
+    },
+];
+
+const clinicNavItems: NavItem[] = [
+    {
+        title: 'Clinic Settings',
+        href: clinicSettingsEdit.url(),
+        icon: Settings,
+    },
+    {
+        title: 'Team',
+        href: clinicTeamIndex.url(),
+        icon: Users,
     },
 ];
 
@@ -54,6 +75,7 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                <NavClinic items={clinicNavItems} />
             </SidebarContent>
 
             <SidebarFooter>
@@ -61,5 +83,39 @@ export function AppSidebar() {
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
+    );
+}
+
+// ── Clinic section ────────────────────────────────────────────────────────────
+
+import {
+    SidebarGroup,
+    SidebarGroupLabel,
+} from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+
+function NavClinic({ items }: { items: NavItem[] }) {
+    const { isCurrentUrl } = useCurrentUrl();
+
+    return (
+        <SidebarGroup className="px-2 py-0">
+            <SidebarGroupLabel>Clinic</SidebarGroupLabel>
+            <SidebarMenu>
+                {items.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={isCurrentUrl(item.href)}
+                            tooltip={{ children: item.title }}
+                        >
+                            <Link href={item.href} prefetch>
+                                {item.icon && <item.icon />}
+                                <span>{item.title}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+        </SidebarGroup>
     );
 }

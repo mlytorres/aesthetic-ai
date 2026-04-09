@@ -57,11 +57,13 @@ class PhotoController extends Controller
             'quality_score' => $photo->quality_score,
         ]);
 
+        // Response shape must match UploadPhotoResponse in resources/js/types/intake.ts
         return response()->json([
-            'photo_id'      => $photo->id,
-            'type'          => $photo->type,
-            'quality_score' => $photo->quality_score,
-            'status'        => 'accepted',
+            'id'              => $photo->id,
+            'type'            => $photo->type,
+            'quality_score'   => $photo->quality_score,
+            'signed_url'      => $this->files->getSignedUrl($s3Key),
+            'analysis_status' => $photo->analysis_status,
         ], 201);
     }
 }

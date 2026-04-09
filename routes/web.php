@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Clinic\ClinicController;
+use App\Http\Controllers\Clinic\TeamController;
+use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PhotoController;
@@ -20,6 +23,24 @@ Route::inertia('/', 'welcome', [
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+    // ── Evaluations (coordinator priority queue) ──────────────────────────
+    Route::prefix('evaluations')->name('evaluations.')->group(function (): void {
+        Route::get('/', [DashboardEvaluationController::class, 'index'])->name('index');
+        Route::get('/{evaluation}', [DashboardEvaluationController::class, 'show'])->name('show');
+        Route::patch('/{evaluation}/status', [DashboardEvaluationController::class, 'updateStatus'])->name('update-status');
+        Route::patch('/{evaluation}/notes', [DashboardEvaluationController::class, 'updateNotes'])->name('update-notes');
+    });
+
+    // ── Clinic settings & team (owner / admin only) ───────────────────────
+    Route::prefix('clinic')->name('clinic.')->group(function (): void {
+        Route::get('/settings', [ClinicController::class, 'edit'])->name('settings.edit');
+        Route::patch('/settings', [ClinicController::class, 'update'])->name('settings.update');
+
+        Route::get('/team', [TeamController::class, 'index'])->name('team.index');
+        Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+        Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+    });
 });
 
 // ─── Patient Intake Wizard ────────────────────────────────────────────────────

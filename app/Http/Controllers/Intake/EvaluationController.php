@@ -46,7 +46,8 @@ class EvaluationController extends Controller
         $this->auditLog->record('evaluation.created', $evaluation);
 
         return response()->json([
-            'evaluation_token' => $evaluation->secure_token,
+            'token'  => $evaluation->secure_token,
+            'status' => $evaluation->status,
         ], 201);
     }
 
