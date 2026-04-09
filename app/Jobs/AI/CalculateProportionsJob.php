@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\AI;
 
+use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -35,10 +36,10 @@ use Illuminate\Support\Facades\Log;
  */
 class CalculateProportionsJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
 
     public int $tries   = 3;
-    public int $timeout = 30;
+    public int $timeout = 120;
 
     // Golden ratio and ideal proportion constants
     private const IDEAL_NASAL_PROJECTION = 0.575; // Goode's ratio midpoint
@@ -55,8 +56,10 @@ class CalculateProportionsJob implements ShouldQueue
             return;
         }
 
+        $this->setTenantFromEvaluation($this->evaluationId);
+
         /** @var Evaluation $evaluation */
-        $evaluation = Evaluation::withoutGlobalScopes()->findOrFail($this->evaluationId);
+        $evaluation = Evaluation::findOrFail($this->evaluationId);
         $analysisData = $evaluation->analysis_data ?? [];
         $landmarks    = $analysisData['landmarks'] ?? [];
 

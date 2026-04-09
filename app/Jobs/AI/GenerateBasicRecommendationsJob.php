@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\AI;
 
+use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
 use App\Services\LeadScoringService;
@@ -34,10 +35,10 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateBasicRecommendationsJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
 
     public int $tries   = 3;
-    public int $timeout = 30;
+    public int $timeout = 120;
 
     public function __construct(
         public readonly string $evaluationId,
@@ -49,8 +50,10 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
             return;
         }
 
+        $this->setTenantFromEvaluation($this->evaluationId);
+
         /** @var Evaluation $evaluation */
-        $evaluation   = Evaluation::withoutGlobalScopes()->findOrFail($this->evaluationId);
+        $evaluation   = Evaluation::findOrFail($this->evaluationId);
         $analysisData = $evaluation->analysis_data ?? [];
         $proportions  = $analysisData['proportions'] ?? [];
         $quizAnswers  = $evaluation->quiz_answers ?? [];
@@ -248,7 +251,7 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
             'error'         => $e->getMessage(),
         ]);
 
-        Evaluation::withoutGlobalScopes()
+        Evaluation::withoutGlobalScopes() // withoutGlobalScopes in failed() — context may not be set
             ->where('id', $this->evaluationId)
             ->update(['status' => Evaluation::STATUS_FAILED]);
     }

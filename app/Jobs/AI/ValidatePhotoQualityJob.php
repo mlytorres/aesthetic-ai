@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\AI;
 
+use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
 use App\Models\Photo;
 use App\Services\AuditLog;
@@ -35,10 +36,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ValidatePhotoQualityJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
 
     public int $tries   = 3;
-    public int $timeout = 60;
+    public int $timeout = 120;
 
     public function __construct(
         public readonly string $evaluationId,
@@ -50,11 +51,12 @@ class ValidatePhotoQualityJob implements ShouldQueue
             return;
         }
 
+        // Set TenantContext so all subsequent scoped queries work in this worker process.
+        $this->setTenantFromEvaluation($this->evaluationId);
+
         /** @var Evaluation $evaluation */
-        $evaluation = Evaluation::withoutGlobalScopes()->findOrFail($this->evaluationId);
-        $photos     = Photo::withoutGlobalScopes()
-            ->where('evaluation_id', $this->evaluationId)
-            ->get();
+        $evaluation = Evaluation::findOrFail($this->evaluationId);
+        $photos     = Photo::where('evaluation_id', $this->evaluationId)->get();
 
         if ($photos->isEmpty()) {
             Log::warning('ValidatePhotoQualityJob: no photos found', ['evaluation_id' => $this->evaluationId]);
@@ -190,6 +192,8 @@ class ValidatePhotoQualityJob implements ShouldQueue
             'error'         => $e->getMessage(),
         ]);
 
+        // Use withoutGlobalScopes() in failed() — TenantContext may not be set
+        // if the job failed before setTenantFromEvaluation() completed.
         Evaluation::withoutGlobalScopes()
             ->where('id', $this->evaluationId)
             ->update(['status' => Evaluation::STATUS_FAILED]);

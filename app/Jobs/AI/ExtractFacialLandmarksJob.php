@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\AI;
 
+use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
 use App\Models\Photo;
 use Aws\Rekognition\RekognitionClient;
@@ -37,10 +38,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ExtractFacialLandmarksJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
 
     public int $tries   = 3;
-    public int $timeout = 90;
+    public int $timeout = 120;
 
     public function __construct(
         public readonly string $evaluationId,
@@ -52,11 +53,12 @@ class ExtractFacialLandmarksJob implements ShouldQueue
             return;
         }
 
-        /** @var Evaluation $evaluation */
-        $evaluation = Evaluation::withoutGlobalScopes()->findOrFail($this->evaluationId);
+        $this->setTenantFromEvaluation($this->evaluationId);
 
-        $frontPhoto = Photo::withoutGlobalScopes()
-            ->where('evaluation_id', $this->evaluationId)
+        /** @var Evaluation $evaluation */
+        $evaluation = Evaluation::findOrFail($this->evaluationId);
+
+        $frontPhoto = Photo::where('evaluation_id', $this->evaluationId)
             ->where('type', Photo::TYPE_FRONT)
             ->where('analysis_status', Photo::ANALYSIS_COMPLETE)
             ->first();

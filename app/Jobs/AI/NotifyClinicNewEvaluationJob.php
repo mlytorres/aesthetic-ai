@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\AI;
 
+use App\Concerns\ResolvesJobTenant;
 use App\Mail\NewEvaluationMail;
 use App\Models\Evaluation;
 use App\Models\MagicLink;
@@ -33,7 +34,7 @@ use Illuminate\Support\Facades\Mail;
  */
 class NotifyClinicNewEvaluationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
 
     public int $tries   = 3;
     public int $timeout = 30;
@@ -44,9 +45,10 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
 
     public function handle(): void
     {
+        $this->setTenantFromEvaluation($this->evaluationId);
+
         /** @var Evaluation $evaluation */
-        $evaluation = Evaluation::withoutGlobalScopes()
-            ->with(['tenant', 'patient'])
+        $evaluation = Evaluation::with(['tenant', 'patient'])
             ->findOrFail($this->evaluationId);
 
         $tenant = $evaluation->tenant;
