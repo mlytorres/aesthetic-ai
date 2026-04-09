@@ -50,27 +50,31 @@ class EvaluationController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        // Load patient relation for list view (name/email only)
         $evaluations->load('patient');
 
         return Inertia::render('evaluations/index', [
-            'evaluations' => EvaluationResource::collection($evaluations),
-            'filters'     => ['status' => $status],
+            'evaluations'  => EvaluationResource::collection($evaluations),
+            'filters'      => ['status' => $status],
             'statusCounts' => [
-                'analyzing'  => Evaluation::where('status', Evaluation::STATUS_ANALYZING)->count(),
-                'complete'   => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
-                'contacted'  => Evaluation::where('status', Evaluation::STATUS_CONTACTED)->count(),
-                'booked'     => Evaluation::where('status', Evaluation::STATUS_BOOKED)->count(),
+                'analyzing' => Evaluation::where('status', Evaluation::STATUS_ANALYZING)->count(),
+                'complete'  => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
+                'contacted' => Evaluation::where('status', Evaluation::STATUS_CONTACTED)->count(),
+                'booked'    => Evaluation::where('status', Evaluation::STATUS_BOOKED)->count(),
             ],
         ]);
     }
 
     /**
      * Full evaluation detail — PHI access is audit-logged.
+     *
+     * NOTE: Uses string $evaluationId instead of Evaluation $evaluation to avoid
+     * triggering TenantScope during SubstituteBindings (which runs before the
+     * 'tenant' route middleware). The manual findOrFail() here fires after
+     * TenantContext is set, so the scope applies correctly.
      */
-    public function show(Evaluation $evaluation): Response
+    public function show(string $evaluationId): Response
     {
-        $evaluation->load(['patient', 'photos']);
+        $evaluation = Evaluation::with(['patient', 'photos'])->findOrFail($evaluationId);
 
         $this->auditLog->record('evaluation.photos.viewed', $evaluation);
 
@@ -82,8 +86,10 @@ class EvaluationController extends Controller
     /**
      * Update coordinator-facing status (Contacted / Booked / No-Show / Not a Fit).
      */
-    public function updateStatus(Request $request, Evaluation $evaluation): RedirectResponse
+    public function updateStatus(Request $request, string $evaluationId): RedirectResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
+
         $validated = $request->validate([
             'status' => ['required', Rule::in([
                 Evaluation::STATUS_CONTACTED,
@@ -106,8 +112,10 @@ class EvaluationController extends Controller
     /**
      * Save coordinator notes without changing status.
      */
-    public function updateNotes(Request $request, Evaluation $evaluation): RedirectResponse
+    public function updateNotes(Request $request, string $evaluationId): RedirectResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
+
         $validated = $request->validate([
             'coordinator_notes' => ['nullable', 'string', 'max:2000'],
             'follow_up_at'      => ['nullable', 'date'],

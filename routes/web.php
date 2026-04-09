@@ -7,6 +7,7 @@ use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
+use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PhotoController;
@@ -34,6 +35,10 @@ Route::middleware(['tenant'])->group(function (): void {
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // ── Local-dev photo streaming (FEATURE_AI_VISION=false only) ─────────
+    // In production this route is never hit — SecureFileService returns S3 pre-signed URLs.
+    Route::get('/photos/{hash}', PhotoStreamController::class)->name('photos.stream');
 
     // ── Evaluations (coordinator priority queue) ──────────────────────────
     Route::prefix('evaluations')->name('evaluations.')->group(function (): void {

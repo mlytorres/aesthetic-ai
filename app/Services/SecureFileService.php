@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Facades\TenantContext;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * HIPAA-compliant file storage service for patient photos.
@@ -63,19 +62,22 @@ class SecureFileService
      * Generate a signed URL for a photo. Expires in 15 minutes.
      * Never return raw S3 keys or public URLs.
      *
+     * In local dev (FEATURE_AI_VISION=false) photos are stored on the private
+     * local disk. We route requests through PhotoStreamController which streams
+     * the file after verifying session auth and tenant ownership.
+     * The route is looked up by s3_key_hash — a stable HMAC of the key.
+     *
      * @param string $s3Key  Plaintext S3 key (already decrypted from DB)
-     * @return string        Time-limited signed URL
+     * @return string        Time-limited signed URL (prod) or stream route URL (dev)
      */
     public function getSignedUrl(string $s3Key): string
     {
-        $disk = $this->disk();
-
-        // Local disk (dev) does not support temporaryUrl — fall back to a plain URL.
+        // Local dev — stream via authenticated proxy route (no S3, no symlink needed)
         if (config('features.ai_vision', false) === false) {
-            return $disk->url($s3Key);
+            return route('photos.stream', $this->hashKey($s3Key));
         }
 
-        return $disk->temporaryUrl(
+        return $this->disk()->temporaryUrl(
             $s3Key,
             now()->addMinutes(self::SIGNED_URL_EXPIRY_MINUTES),
         );
@@ -99,7 +101,8 @@ class SecureFileService
 
     private function disk(): \Illuminate\Contracts\Filesystem\Filesystem
     {
-        // In local dev (FEATURE_AI_VISION=false) use local disk to avoid S3 costs
+        // In local dev (FEATURE_AI_VISION=false) use the local disk (storage/app/private/).
+        // PhotoStreamController serves these files via an auth-protected proxy route.
         $diskName = config('features.ai_vision', false) ? 's3' : 'local';
 
         return Storage::disk($diskName);
