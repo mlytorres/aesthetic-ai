@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { index, show, updateNotes, updateStatus } from '@/routes/evaluations';
+import { brief, index, show, updateNotes, updateStatus } from '@/routes/evaluations';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,6 +298,25 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                 </form>
             </SectionCard>
 
+            {/* Clinical Brief */}
+            <SectionCard title="Clinical Brief">
+                <p className="mb-3 text-xs text-[#9B9B8E]">
+                    Download a HIPAA-safe PDF summary of this evaluation for handoff or file storage.
+                </p>
+                <a
+                    href={brief.url(evaluation.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-[#F5F0E8] transition-colors hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0" aria-hidden="true">
+                        <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                        <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                    </svg>
+                    Download Clinical Brief
+                </a>
+            </SectionCard>
+
             {/* Notes */}
             <SectionCard title="Coordinator Notes">
                 <form onSubmit={handleNotesSave} className="space-y-4">
@@ -358,7 +377,7 @@ export default function EvaluationShow({ evaluation }: Props) {
                         </p>
                     </div>
 
-                    {/* Scores */}
+                    {/* Scores + actions */}
                     <div className="flex items-center gap-4">
                         <div className="text-right">
                             <p className="text-xs text-[#9B9B8E]">Lead Score</p>
@@ -372,6 +391,25 @@ export default function EvaluationShow({ evaluation }: Props) {
                                 {evaluation.priority}
                             </p>
                         </div>
+                        {/* Clinical Brief PDF download — plain <a> so the browser handles the file download natively */}
+                        <a
+                            href={brief.url(evaluation.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-[#F5F0E8] transition-colors hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                className="size-3.5 shrink-0"
+                                aria-hidden="true"
+                            >
+                                <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                                <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                            </svg>
+                            Clinical Brief
+                        </a>
                     </div>
                 </div>
 

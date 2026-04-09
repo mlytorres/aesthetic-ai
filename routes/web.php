@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
+use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
         Route::get('/{evaluation}', [DashboardEvaluationController::class, 'show'])->name('show');
         Route::patch('/{evaluation}/status', [DashboardEvaluationController::class, 'updateStatus'])->name('update-status');
         Route::patch('/{evaluation}/notes', [DashboardEvaluationController::class, 'updateNotes'])->name('update-notes');
+        Route::get('/{evaluation}/brief', [ClinicalBriefController::class, 'download'])->name('brief');
     });
 
     // ── Clinic settings & team (owner / admin only) ───────────────────────
