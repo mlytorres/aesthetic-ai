@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
@@ -32,7 +33,7 @@ Route::middleware(['tenant'])->group(function (): void {
 // authenticated user's tenant_id when staff access the main domain directly.
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ── Evaluations (coordinator priority queue) ──────────────────────────
     Route::prefix('evaluations')->name('evaluations.')->group(function (): void {
