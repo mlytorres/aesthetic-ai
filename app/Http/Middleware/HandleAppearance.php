@@ -16,7 +16,9 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        // Default to 'dark' — Aesthetic AI uses a luxury dark theme.
+        // Users can switch to 'light' via Clinic Settings.
+        View::share('appearance', $request->cookie('appearance') ?? 'dark');
 
         return $next($request);
     }

@@ -90,6 +90,13 @@ class CalculateProportionsJob implements ShouldQueue
         $proportions = $this->calculate($landmarks);
         $proportions['_avg_photo_quality'] = $avgPhotoQuality;
 
+        // Forward face attributes captured by ExtractFacialLandmarksJob so
+        // GenerateBasicRecommendationsJob can use age estimate etc. without
+        // re-reading the full landmarks array.
+        if (isset($landmarks['_face_attributes'])) {
+            $proportions['_face_attributes'] = $landmarks['_face_attributes'];
+        }
+
         $this->saveProportions($evaluation, $proportions);
     }
 
@@ -283,13 +290,5 @@ class CalculateProportionsJob implements ShouldQueue
             'eye_symmetry' => ['y_difference' => 0, 'score' => 50],
             'overall_harmony' => 50,
         ];
-    }
-
-    public function failed(\Throwable $e): void
-    {
-        Log::error('CalculateProportionsJob failed', [
-            'evaluation_id' => $this->evaluationId,
-            'error' => $e->getMessage(),
-        ]);
     }
 }

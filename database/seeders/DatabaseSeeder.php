@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
 
         // 4. Seed a coordinator user for the pilot clinic
         User::updateOrCreate(
-            ['email' => 'coordinator@miamilife.test'],
+            ['email' => 'coordinator@aesthetic-ai.test'],
             [
                 'tenant_id' => $tenant->id,
                 'name'      => 'Sarah M.',
@@ -59,7 +59,7 @@ class DatabaseSeeder extends Seeder
 
         // 5. Seed an owner user
         User::updateOrCreate(
-            ['email' => 'owner@miamilife.test'],
+            ['email' => 'owner@aesthetic-ai.test'],
             [
                 'tenant_id' => $tenant->id,
                 'name'      => 'Dr. Rivera',
@@ -68,9 +68,21 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // 6. Seed the platform super-admin (tenant_id = null)
+        User::updateOrCreate(
+            ['email' => 'admin@aesthetic-ai.test'],
+            [
+                'tenant_id' => null,
+                'name'      => 'Platform Admin',
+                'password'  => Hash::make('password'),
+                'role'      => User::ROLE_OWNER,
+            ]
+        );
+
         $this->command->info('✅ Database seeded.');
-        $this->command->info("   Clinic URL: http://miamilife.aesthetic-ai.test");
-        $this->command->info("   Coordinator: coordinator@miamilife.test / password");
-        $this->command->info("   Owner:       owner@miamilife.test / password");
+        $this->command->info("   Clinic URL:   http://miamilife.aesthetic-ai.test");
+        $this->command->info("   Coordinator:  coordinator@aesthetic-ai.test / password");
+        $this->command->info("   Owner:        owner@aesthetic-ai.test / password");
+        $this->command->info("   Super-admin:  admin@aesthetic-ai.test / password  → /admin");
     }
 }

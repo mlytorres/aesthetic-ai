@@ -115,14 +115,19 @@ class ExtractFacialLandmarksJob implements ShouldQueue
                 return [];
             }
 
+            $face = $faces[0];
+
             // Normalise Rekognition landmark format → our internal format
             $landmarks = [];
-            foreach ($faces[0]['Landmarks'] ?? [] as $lm) {
+            foreach ($face['Landmarks'] ?? [] as $lm) {
                 $landmarks[$lm['Type']] = [
                     'x' => round((float) $lm['X'], 4),
                     'y' => round((float) $lm['Y'], 4),
                 ];
             }
+
+            // Store face attributes alongside landmarks for downstream jobs
+            $landmarks['_face_attributes'] = $this->extractFaceAttributes($face);
 
             return $landmarks;
         } catch (\Throwable $e) {
@@ -132,6 +137,49 @@ class ExtractFacialLandmarksJob implements ShouldQueue
             ]);
             return [];
         }
+    }
+
+    /**
+     * Extract structured face attributes from a Rekognition FaceDetail object.
+     *
+     * Captures age estimate, photo quality, pose angles, and key facial attributes
+     * that inform procedure-specific recommendations (especially facelift age context).
+     *
+     * @param  array<string, mixed>  $face  A single FaceDetails entry from Rekognition
+     * @return array<string, mixed>
+     */
+    private function extractFaceAttributes(array $face): array
+    {
+        $attrs = [];
+
+        // Age range estimate (Low/High bounds in years)
+        if (isset($face['AgeRange'])) {
+            $low = (int)($face['AgeRange']['Low'] ?? 0);
+            $high = (int)($face['AgeRange']['High'] ?? 0);
+            $attrs['age_range'] = ['low' => $low, 'high' => $high, 'midpoint' => (int)round(($low + $high) / 2)];
+        }
+
+        // Photo quality (Brightness 0–100, Sharpness 0–100)
+        if (isset($face['Quality'])) {
+            $attrs['photo_quality'] = [
+                'brightness' => round((float)($face['Quality']['Brightness'] ?? 0), 1),
+                'sharpness'  => round((float)($face['Quality']['Sharpness'] ?? 0), 1),
+            ];
+        }
+
+        // Pose — yaw/pitch/roll for detecting profile vs frontal photo
+        if (isset($face['Pose'])) {
+            $attrs['pose'] = [
+                'yaw'   => round((float)($face['Pose']['Yaw'] ?? 0), 1),
+                'pitch' => round((float)($face['Pose']['Pitch'] ?? 0), 1),
+                'roll'  => round((float)($face['Pose']['Roll'] ?? 0), 1),
+            ];
+        }
+
+        // Confidence that a face was detected
+        $attrs['confidence'] = round((float)($face['Confidence'] ?? 0), 1);
+
+        return $attrs;
     }
 
     /**
@@ -147,7 +195,16 @@ class ExtractFacialLandmarksJob implements ShouldQueue
         $jitter = fn (float $base, float $range = 0.01): float =>
             round($base + (mt_rand(-100, 100) / 100) * $range, 4);
 
+        $ageLow  = mt_rand(28, 42);
+        $ageHigh = $ageLow + mt_rand(4, 8);
+
         return [
+            '_face_attributes' => [
+                'age_range'    => ['low' => $ageLow, 'high' => $ageHigh, 'midpoint' => (int)round(($ageLow + $ageHigh) / 2)],
+                'photo_quality' => ['brightness' => round(mt_rand(60, 90) + mt_rand(0, 9) / 10, 1), 'sharpness' => round(mt_rand(55, 85) + mt_rand(0, 9) / 10, 1)],
+                'pose'         => ['yaw' => round(mt_rand(-8, 8) / 10, 1), 'pitch' => round(mt_rand(-5, 5) / 10, 1), 'roll' => round(mt_rand(-3, 3) / 10, 1)],
+                'confidence'   => round(mt_rand(970, 999) / 10, 1),
+            ],
             'eyeLeft'              => ['x' => $jitter(0.37),  'y' => $jitter(0.38)],
             'eyeRight'             => ['x' => $jitter(0.63),  'y' => $jitter(0.38)],
             'nose'                 => ['x' => $jitter(0.50),  'y' => $jitter(0.55)],

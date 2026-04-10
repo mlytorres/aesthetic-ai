@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Deferred } from '@inertiajs/react';
+import { analytics } from '@/routes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,41 @@ interface FunnelStep {
     rate:  number; // % of patients who reached at least this step
 }
 
+interface MonthMetric {
+    current:  number;
+    previous: number;
+    delta:    number;
+}
+
+interface MonthMetricFloat {
+    current:  number | null;
+    previous: number | null;
+    delta:    number | null;
+}
+
+interface MonthOverMonth {
+    current_month:  string;
+    previous_month: string;
+    evaluations:    MonthMetric;
+    avg_score:      MonthMetricFloat;
+    booked:         MonthMetric;
+}
+
+interface ProcedureRow {
+    procedure:    string;
+    label:        string;
+    count:        number;
+    booked:       number;
+    booking_rate: number;
+}
+
+interface ScoreVsBookingRow {
+    bucket:       string;
+    total:        number;
+    booked:       number;
+    booking_rate: number;
+}
+
 interface Props {
     weeklyVolume:      WeekPoint[];
     statusFunnel:      StatusRow[];
@@ -39,6 +75,9 @@ interface Props {
     priorityBreakdown: PriorityRow[];
     avgTimeToContact:  number | null;
     intakeFunnel:      FunnelStep[];
+    monthOverMonth:    MonthOverMonth;
+    procedureMix:      ProcedureRow[];
+    scoreVsBooking:    ScoreVsBookingRow[];
 }
 
 // ── Colour maps ───────────────────────────────────────────────────────────────
@@ -61,10 +100,31 @@ const PRIORITY_COLORS: Record<string, string> = {
     standard: 'bg-zinc-500',
 };
 
+const PROCEDURE_COLORS = [
+    'bg-[#C9A84C]',
+    'bg-purple-500',
+    'bg-sky-500',
+    'bg-emerald-500',
+    'bg-rose-500',
+];
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 function Skeleton({ className = '' }: { className?: string }) {
     return <div className={`animate-pulse rounded bg-zinc-800 ${className}`} />;
+}
+
+// ── Delta badge ───────────────────────────────────────────────────────────────
+
+function Delta({ value, suffix = '' }: { value: number | null; suffix?: string }) {
+    if (value === null) return <span className="text-zinc-500">—</span>;
+    if (value === 0) return <span className="text-zinc-400">±0{suffix}</span>;
+    const positive = value > 0;
+    return (
+        <span className={positive ? 'text-emerald-400' : 'text-red-400'}>
+            {positive ? '+' : ''}{value}{suffix}
+        </span>
+    );
 }
 
 // ── Bar chart (pure CSS) ──────────────────────────────────────────────────────
@@ -78,7 +138,7 @@ function BarChart({
     data:     Record<string, unknown>[];
     labelKey: string;
     valueKey: string;
-    colorFn:  (row: Record<string, unknown>) => string;
+    colorFn:  (row: Record<string, unknown>, i: number) => string;
 }) {
     const max = Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
 
@@ -95,7 +155,7 @@ function BarChart({
                             {value}
                         </span>
                         <div
-                            className={`w-full rounded-t transition-all ${colorFn(row)}`}
+                            className={`w-full rounded-t transition-all ${colorFn(row, i)}`}
                             style={{ height: `${height}%`, minHeight: value > 0 ? '4px' : '0' }}
                         />
                         <span className="max-w-full truncate text-center text-[10px] text-zinc-400">
@@ -104,6 +164,55 @@ function BarChart({
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+// ── Dual bar chart (count + booking rate) ────────────────────────────────────
+
+function DualBarChart({ data }: { data: ProcedureRow[] | ScoreVsBookingRow[] }) {
+    type Row = { label: string; count: number; booking_rate: number; color: string };
+
+    const rows: Row[] = (data as (ProcedureRow | ScoreVsBookingRow)[]).map((d, i) => ({
+        label:        'label' in d ? d.label : d.bucket,
+        count:        'count' in d ? d.count : d.total,
+        booking_rate: d.booking_rate,
+        color:        PROCEDURE_COLORS[i % PROCEDURE_COLORS.length],
+    }));
+
+    const maxCount = Math.max(...rows.map((r) => r.count), 1);
+
+    return (
+        <div className="flex flex-col gap-3">
+            {rows.map((row, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-zinc-200">{row.label}</span>
+                        <span className="tabular-nums text-zinc-400">
+                            {row.count} evals
+                            <span className="ml-3 text-[#C9A84C]">{row.booking_rate}% booked</span>
+                        </span>
+                    </div>
+                    {/* Volume bar */}
+                    <div className="h-4 overflow-hidden rounded bg-zinc-800">
+                        <div
+                            className={`h-full rounded transition-all ${row.color}`}
+                            style={{ width: `${Math.round((row.count / maxCount) * 100)}%`, opacity: 0.75 }}
+                        />
+                    </div>
+                    {/* Booking rate bar */}
+                    <div className="h-2 overflow-hidden rounded bg-zinc-800">
+                        <div
+                            className="h-full rounded bg-[#C9A84C] transition-all"
+                            style={{ width: `${row.booking_rate}%`, opacity: 0.6 }}
+                        />
+                    </div>
+                </div>
+            ))}
+            <div className="mt-1 flex gap-4 text-[10px] text-zinc-500">
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#C9A84C] opacity-75" /> Volume</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#C9A84C] opacity-60" /> Booking rate</span>
+            </div>
         </div>
     );
 }
@@ -209,6 +318,35 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
     );
 }
 
+// ── Month-over-month stat card ────────────────────────────────────────────────
+
+function MoMCard({
+    label,
+    current,
+    delta,
+    suffix = '',
+    sub,
+}: {
+    label:   string;
+    current: number | null;
+    delta:   number | null;
+    suffix?: string;
+    sub?:    string;
+}) {
+    return (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+            <p className="text-sm text-zinc-400">{label}</p>
+            <p className="mt-1 text-3xl font-semibold text-white">
+                {current !== null ? `${current}${suffix}` : '—'}
+            </p>
+            <p className="mt-1 text-xs">
+                <Delta value={delta} suffix={suffix} />
+                {sub && <span className="ml-1.5 text-zinc-500">{sub}</span>}
+            </p>
+        </div>
+    );
+}
+
 // ── Section card ─────────────────────────────────────────────────────────────
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
@@ -229,6 +367,9 @@ export default function Analytics({
     priorityBreakdown,
     avgTimeToContact,
     intakeFunnel,
+    monthOverMonth,
+    procedureMix,
+    scoreVsBooking,
 }: Props) {
     // Aggregate totals from deferred data (may be undefined while loading)
     const totalEvaluations = statusFunnel?.reduce((sum, r) => sum + r.count, 0) ?? null;
@@ -274,6 +415,46 @@ export default function Analytics({
                             sub="From submission to first contact"
                         />
                     </div>
+                </Deferred>
+
+                {/* ── Month-over-month KPI row ── */}
+                <Deferred data="monthOverMonth"
+                    fallback={
+                        <div className="flex flex-col gap-2">
+                            <Skeleton className="h-5 w-40" />
+                            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+                            </div>
+                        </div>
+                    }
+                >
+                    {monthOverMonth && (
+                        <div className="flex flex-col gap-3">
+                            <p className="text-xs text-zinc-500">
+                                Month over month — <span className="text-zinc-300">{monthOverMonth.current_month}</span> vs {monthOverMonth.previous_month}
+                            </p>
+                            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                                <MoMCard
+                                    label="Evaluations This Month"
+                                    current={monthOverMonth.evaluations.current}
+                                    delta={monthOverMonth.evaluations.delta}
+                                    sub="vs last month"
+                                />
+                                <MoMCard
+                                    label="Avg. Lead Score"
+                                    current={monthOverMonth.avg_score.current}
+                                    delta={monthOverMonth.avg_score.delta}
+                                    sub="vs last month"
+                                />
+                                <MoMCard
+                                    label="Bookings This Month"
+                                    current={monthOverMonth.booked.current}
+                                    delta={monthOverMonth.booked.delta}
+                                    sub="vs last month"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </Deferred>
 
                 {/* ── Charts row ── */}
@@ -330,6 +511,26 @@ export default function Analytics({
                             )}
                         </Deferred>
                     </Card>
+
+                    {/* Procedure mix */}
+                    <Card title="Procedure Mix & Booking Rate">
+                        <Deferred data="procedureMix" fallback={<Skeleton className="h-40" />}>
+                            {procedureMix && procedureMix.length > 0
+                                ? <DualBarChart data={procedureMix} />
+                                : <p className="text-sm text-zinc-500">No procedure data yet.</p>
+                            }
+                        </Deferred>
+                    </Card>
+
+                    {/* Score vs booking rate */}
+                    <Card title="Lead Score vs Booking Rate">
+                        <Deferred data="scoreVsBooking" fallback={<Skeleton className="h-40" />}>
+                            {scoreVsBooking && scoreVsBooking.some((r) => r.total > 0)
+                                ? <DualBarChart data={scoreVsBooking} />
+                                : <p className="text-sm text-zinc-500">Not enough conversion data yet.</p>
+                            }
+                        </Deferred>
+                    </Card>
                 </div>
 
                 {/* ── Intake funnel ── */}
@@ -378,3 +579,7 @@ export default function Analytics({
         </>
     );
 }
+
+Analytics.layout = {
+    breadcrumbs: [{ title: 'Analytics', href: analytics.url() }],
+};

@@ -15,6 +15,7 @@ use App\Services\AuditLog;
 use App\Services\LeadScoringService;
 use App\Services\SecureFileService;
 use App\Services\TenantContext;
+use App\Services\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 
@@ -174,7 +175,7 @@ test('GenerateBasicRecommendationsJob marks evaluation complete with lead score'
     ]);
 
     $job = new GenerateBasicRecommendationsJob($evaluation->id);
-    $job->handle(app(LeadScoringService::class), app(AuditLog::class));
+    $job->handle(app(LeadScoringService::class), app(AuditLog::class), app(WebhookService::class));
 
     $evaluation->refresh();
 
@@ -201,7 +202,7 @@ test('GenerateBasicRecommendationsJob adds recommendations to analysis_data', fu
     ]);
 
     $job = new GenerateBasicRecommendationsJob($evaluation->id);
-    $job->handle(app(LeadScoringService::class), app(AuditLog::class));
+    $job->handle(app(LeadScoringService::class), app(AuditLog::class), app(WebhookService::class));
 
     $evaluation->refresh();
     $recommendations = $evaluation->analysis_data['recommendations'] ?? null;
@@ -224,7 +225,7 @@ test('GenerateBasicRecommendationsJob dispatches notification job on completion'
     ]);
 
     $job = new GenerateBasicRecommendationsJob($evaluation->id);
-    $job->handle(app(LeadScoringService::class), app(AuditLog::class));
+    $job->handle(app(LeadScoringService::class), app(AuditLog::class), app(WebhookService::class));
 
     Bus::assertDispatched(NotifyClinicNewEvaluationJob::class, function ($job) use ($evaluation): bool {
         return $job->evaluationId === $evaluation->id;
@@ -250,7 +251,7 @@ test('full AI pipeline transforms submitted evaluation to complete with score', 
     (new CalculateProportionsJob($evaluation->id))->handle();
 
     (new GenerateBasicRecommendationsJob($evaluation->id))
-        ->handle(app(LeadScoringService::class), app(AuditLog::class));
+        ->handle(app(LeadScoringService::class), app(AuditLog::class), app(WebhookService::class));
 
     $evaluation->refresh();
 

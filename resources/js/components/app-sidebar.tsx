@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { BarChart3, BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users, Webhook } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BarChart3, BookOpen, Building2, ClipboardList, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -73,13 +73,16 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const page = usePage<{ auth: { user: { tenant_id: string | null } } }>();
+    const isSuperAdmin = page.props.auth.user?.tenant_id === null;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={isSuperAdmin ? '/admin' : dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -88,8 +91,14 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
-                <NavClinic items={clinicNavItems} />
+                {isSuperAdmin ? (
+                    <NavAdmin />
+                ) : (
+                    <>
+                        <NavMain items={mainNavItems} />
+                        <NavClinic items={clinicNavItems} />
+                    </>
+                )}
             </SidebarContent>
 
             <SidebarFooter>
@@ -97,6 +106,43 @@ export function AppSidebar() {
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
+    );
+}
+
+// ── Super-admin section ───────────────────────────────────────────────────────
+
+function NavAdmin() {
+    const { isCurrentUrl } = useCurrentUrl();
+
+    const items: NavItem[] = [
+        { title: 'Tenants', href: '/admin/tenants', icon: Building2 },
+    ];
+
+    return (
+        <>
+            <SidebarGroup className="px-2 py-0">
+                <SidebarGroupLabel className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-3 w-3 text-[#C9A84C]" />
+                    Platform Admin
+                </SidebarGroupLabel>
+                <SidebarMenu>
+                    {items.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isCurrentUrl(item.href)}
+                                tooltip={{ children: item.title }}
+                            >
+                                <Link href={item.href} prefetch>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </SidebarGroup>
+        </>
     );
 }
 

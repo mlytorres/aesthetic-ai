@@ -4,6 +4,20 @@
 
 ---
 
+## Production Environment
+
+| | |
+|---|---|
+| **Production URL** | https://aesthai.laravel.cloud/ |
+| **Platform** | Laravel Cloud |
+| **Deployed** | April 2026 |
+| **Local dev URL** | https://aesthetic-ai.test (Laravel Herd) |
+
+> When testing webhooks in production, set the webhook URL in Clinic Settings to your CRM endpoint and verify the `X-AestheticAI-Signature` header using the tenant's `webhook_secret`.
+> For smoke-testing the intake wizard against production, use the tenant subdomain once configured (e.g. `https://miamilife.aesthai.laravel.cloud/intake`).
+
+---
+
 ## Implementation Status
 
 > Legend: ✅ Done · 🚧 In Progress · ⬜ Not Started · 🚫 Non-dev (business task)
@@ -274,11 +288,16 @@ Phase 4 — Scale (Months 11–18)
 - [ ] Results stored alongside evaluation, shareable via secure link
 
 **Patient Experience Enhancements:**
-- [ ] Beauty Roadmap PDF — personalized report for patient
-  - Their proportion analysis results
-  - AI-recommended procedures with explanations
-  - Educational content about each procedure
-  - FAQ specific to their concerns
+- [x] Beauty Roadmap PDF — personalized report for patient ✅ *Phase 3 Sprint 1*
+  - [x] Harmony score + label (Excellent / Very Good / Good / Moderate)
+  - [x] Proportion measurement highlights (symmetry, Goode's ratio, photo quality)
+  - [x] Patient-friendly key insights derived from AI recommendations + quiz answers
+  - [x] Dynamic FAQs per procedure and concern selections (capped at 6 items)
+  - [x] Next steps + medical AI disclaimer
+  - [x] Emailed to patient after analysis completes (`SendPatientReportJob` on notifications queue)
+  - [x] PDF attached to email + secure download link via `GET /intake/evaluations/{token}/report`
+  - [x] `PatientReportService`, `PatientReportMail`, `PatientReportController`, `SendPatientReportJob`
+  - [x] 13 tests in `PatientReportTest.php`
 - [ ] Patient portal: check their evaluation status
 - [ ] Patient portal: book consultation directly from their portal
 

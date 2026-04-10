@@ -17,12 +17,15 @@ class AnalyticsController extends Controller
     public function index(): Response
     {
         return Inertia::render('analytics/index', [
-            'weeklyVolume'    => Inertia::defer(fn () => $this->weeklyVolume()),
-            'statusFunnel'    => Inertia::defer(fn () => $this->statusFunnel()),
-            'scoreDistrib'    => Inertia::defer(fn () => $this->scoreDistribution()),
+            'weeklyVolume'      => Inertia::defer(fn () => $this->weeklyVolume()),
+            'statusFunnel'      => Inertia::defer(fn () => $this->statusFunnel()),
+            'scoreDistrib'      => Inertia::defer(fn () => $this->scoreDistribution()),
             'priorityBreakdown' => Inertia::defer(fn () => $this->priorityBreakdown()),
             'avgTimeToContact'  => Inertia::defer(fn () => $this->avgTimeToContact()),
-            'intakeFunnel'    => Inertia::defer(fn () => $this->intakeFunnel()),
+            'intakeFunnel'      => Inertia::defer(fn () => $this->intakeFunnel()),
+            'monthOverMonth'    => Inertia::defer(fn () => $this->monthOverMonth()),
+            'procedureMix'      => Inertia::defer(fn () => $this->procedureMix()),
+            'scoreVsBooking'    => Inertia::defer(fn () => $this->scoreVsBooking()),
         ]);
     }
 
@@ -182,6 +185,147 @@ class AnalyticsController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Month-over-month comparison: evaluations count, avg lead score, and bookings.
+     * Compares the current calendar month against the previous calendar month.
+     *
+     * @return array{
+     *   current_month: string,
+     *   previous_month: string,
+     *   evaluations: array{current: int, previous: int, delta: int},
+     *   avg_score: array{current: float|null, previous: float|null, delta: float|null},
+     *   booked: array{current: int, previous: int, delta: int}
+     * }
+     */
+    private function monthOverMonth(): array
+    {
+        $currentStart = Carbon::now()->startOfMonth();
+        $currentEnd   = Carbon::now()->endOfMonth();
+        $prevStart    = Carbon::now()->subMonth()->startOfMonth();
+        $prevEnd      = Carbon::now()->subMonth()->endOfMonth();
+
+        $curr = Evaluation::whereBetween('created_at', [$currentStart, $currentEnd])
+            ->whereNotIn('status', [Evaluation::STATUS_DRAFT])
+            ->selectRaw('count(*) as total, avg(lead_score) as avg_score')
+            ->first();
+
+        $prev = Evaluation::whereBetween('created_at', [$prevStart, $prevEnd])
+            ->whereNotIn('status', [Evaluation::STATUS_DRAFT])
+            ->selectRaw('count(*) as total, avg(lead_score) as avg_score')
+            ->first();
+
+        $currBooked = Evaluation::whereBetween('created_at', [$currentStart, $currentEnd])
+            ->where('status', Evaluation::STATUS_BOOKED)
+            ->count();
+
+        $prevBooked = Evaluation::whereBetween('created_at', [$prevStart, $prevEnd])
+            ->where('status', Evaluation::STATUS_BOOKED)
+            ->count();
+
+        $currTotal = (int) ($curr?->total ?? 0);
+        $prevTotal = (int) ($prev?->total ?? 0);
+        $currScore = $curr?->avg_score !== null ? round((float) $curr->avg_score, 1) : null;
+        $prevScore = $prev?->avg_score !== null ? round((float) $prev->avg_score, 1) : null;
+
+        return [
+            'current_month'  => Carbon::now()->format('F Y'),
+            'previous_month' => Carbon::now()->subMonth()->format('F Y'),
+            'evaluations'    => [
+                'current'  => $currTotal,
+                'previous' => $prevTotal,
+                'delta'    => $currTotal - $prevTotal,
+            ],
+            'avg_score'      => [
+                'current'  => $currScore,
+                'previous' => $prevScore,
+                'delta'    => ($currScore !== null && $prevScore !== null) ? round($currScore - $prevScore, 1) : null,
+            ],
+            'booked'         => [
+                'current'  => $currBooked,
+                'previous' => $prevBooked,
+                'delta'    => $currBooked - $prevBooked,
+            ],
+        ];
+    }
+
+    /**
+     * Evaluation count and booking rate per procedure slug.
+     * Ordered by volume descending.
+     *
+     * @return array<int, array{procedure: string, label: string, count: int, booked: int, booking_rate: float}>
+     */
+    private function procedureMix(): array
+    {
+        $rows = Evaluation::withoutGlobalScopes()
+            ->where('tenant_id', TenantContext::id())
+            ->whereNotNull('procedure_slug')
+            ->whereNotIn('status', [Evaluation::STATUS_DRAFT])
+            ->selectRaw('procedure_slug, count(*) as total, sum(case when status = ? then 1 else 0 end) as booked_count', [
+                Evaluation::STATUS_BOOKED,
+            ])
+            ->groupBy('procedure_slug')
+            ->orderByDesc('total')
+            ->get();
+
+        return $rows->map(fn ($row) => [
+            'procedure'    => $row->procedure_slug,
+            'label'        => $this->procedureLabel($row->procedure_slug),
+            'count'        => (int) $row->total,
+            'booked'       => (int) $row->booked_count,
+            'booking_rate' => $row->total > 0 ? round((int) $row->booked_count / (int) $row->total * 100, 1) : 0.0,
+        ])->values()->all();
+    }
+
+    /**
+     * Booking conversion rate per lead score bucket (0–19, 20–39, … 80–100).
+     * Shows which score bands convert best to booked appointments.
+     *
+     * @return array<int, array{bucket: string, total: int, booked: int, booking_rate: float}>
+     */
+    private function scoreVsBooking(): array
+    {
+        $buckets = [
+            '0–19'   => [0, 19],
+            '20–39'  => [20, 39],
+            '40–59'  => [40, 59],
+            '60–79'  => [60, 79],
+            '80–100' => [80, 100],
+        ];
+
+        return collect($buckets)
+            ->map(function (array $range, string $label): array {
+                $total  = Evaluation::whereNotNull('lead_score')->whereBetween('lead_score', $range)->count();
+                $booked = Evaluation::whereNotNull('lead_score')
+                    ->whereBetween('lead_score', $range)
+                    ->where('status', Evaluation::STATUS_BOOKED)
+                    ->count();
+
+                return [
+                    'bucket'       => $label,
+                    'total'        => $total,
+                    'booked'       => $booked,
+                    'booking_rate' => $total > 0 ? round($booked / $total * 100, 1) : 0.0,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Human-readable label for a procedure slug.
+     */
+    private function procedureLabel(string $slug): string
+    {
+        return match ($slug) {
+            'rhinoplasty'         => 'Rhinoplasty',
+            'bbl'                 => 'BBL',
+            'lipo_360'            => 'Lipo 360°',
+            'breast_augmentation' => 'Breast Aug.',
+            'facelift'            => 'Facelift',
+            default               => ucwords(str_replace('_', ' ', $slug)),
+        };
     }
 
     /**

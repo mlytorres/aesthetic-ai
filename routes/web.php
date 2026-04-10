@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationCo
 use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
+use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -97,6 +99,31 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
     // Photo upload
     Route::post('/evaluations/{token}/photos', [PhotoController::class, 'store'])
         ->name('evaluations.photos.store');
+
+    // Patient Beauty Roadmap PDF (no auth — gated by evaluation token)
+    Route::get('/evaluations/{token}/report', [PatientReportController::class, 'download'])
+        ->name('evaluations.report');
+});
+
+// ─── Super-admin panel ────────────────────────────────────────────────────────
+// Accessible to platform operators (tenant_id = null users) only.
+// No 'tenant' middleware — these users don't belong to a clinic.
+
+Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::get('/', fn () => redirect()->route('admin.tenants.index'));
+
+    Route::prefix('tenants')->name('tenants.')->group(function (): void {
+        Route::get('/',           [TenantAdminController::class, 'index'])->name('index');
+        Route::get('/create',    [TenantAdminController::class, 'create'])->name('create');
+        Route::post('/',         [TenantAdminController::class, 'store'])->name('store');
+        // Note: show/update use string $id in the controller so they work with soft-deleted tenants.
+        Route::get('/{id}',      [TenantAdminController::class, 'show'])->name('show');
+        Route::patch('/{id}',    [TenantAdminController::class, 'update'])->name('update');
+        Route::delete('/{tenant}', [TenantAdminController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{id}/restore', [TenantAdminController::class, 'restore'])->name('restore');
+        Route::post('/{tenant}/users', [TenantAdminController::class, 'addUser'])->name('users.store');
+        Route::post('/{tenant}/users/{user}/resend-invite', [TenantAdminController::class, 'resendInvite'])->name('users.resend');
+    });
 });
 
 require __DIR__.'/settings.php';

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\TenantMiddleware;
@@ -27,7 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Named middleware aliases — use in route groups
         $middleware->alias([
-            'tenant' => TenantMiddleware::class,
+            'tenant'       => TenantMiddleware::class,
+            'super-admin'  => EnsureSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

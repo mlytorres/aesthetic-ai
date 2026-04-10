@@ -4,6 +4,32 @@
 
 ---
 
+## Production Environment
+
+  
+
+  
+
+**Production URL**
+
+[https://aesthai.laravel.cloud/](https://aesthai.laravel.cloud/)
+
+**Platform**
+
+Laravel Cloud
+
+**Deployed**
+
+April 2026
+
+**Local dev URL**
+
+[https://aesthetic-ai.test](https://aesthetic-ai.test) (Laravel Herd)
+
+> When testing webhooks in production, set the webhook URL in Clinic Settings to your CRM endpoint and verify the `X-AestheticAI-Signature` header using the tenant's `webhook_secret`. For smoke-testing the intake wizard against production, use the tenant subdomain once configured (e.g. `https://miamilife.aesthai.laravel.cloud/intake`).
+
+---
+
 ## Implementation Status
 
 > Legend: ✅ Done · 🚧 In Progress · ⬜ Not Started · 🚫 Non-dev (business task)

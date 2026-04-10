@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import AppLayout from '@/layouts/app-layout';
+import AuthLayout from '@/layouts/auth-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -26,8 +28,30 @@ if (import.meta.env.VITE_SENTRY_DSN_PUBLIC) {
     });
 }
 
+// ── Layout resolver ───────────────────────────────────────────────────────────
+// Inertia v3's Page.layout = { ... } (props object) pattern requires a
+// defaultLayout function here. Without it, pages render with no wrapping layout
+// (no sidebar, no header). The resolver returns the correct layout per page group:
+//   auth/*     → AuthLayout   (centred auth shell)
+//   intake/*   → null         (patient-facing wizard — manages its own layout)
+//   welcome    → null         (public landing page)
+//   *          → AppLayout    (authenticated app shell with sidebar)
+function resolveLayout(component: string) {
+    if (component.startsWith('auth/')) {
+        return AuthLayout;
+    }
+
+    if (component.startsWith('intake/') || component === 'welcome') {
+        return null;
+    }
+
+    return AppLayout;
+}
+
 createInertiaApp({
     title: (title) => `${title} — ${appName}`,
+
+    layout: resolveLayout,
 
     resolve: (name) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
