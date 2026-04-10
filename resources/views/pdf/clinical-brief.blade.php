@@ -345,15 +345,16 @@
                 <div class="grid-3">
                     <div>
                         <div class="field-label">Full Name</div>
-                        <div class="field-value">{{ $evaluation->patient->name ?? '—' }}</div>
+                        {{-- Patient PHI is stored encrypted; the 'encrypted' cast auto-decrypts on access --}}
+                        <div class="field-value">{{ $evaluation->patient->name_encrypted ?? '—' }}</div>
                     </div>
                     <div>
                         <div class="field-label">Email</div>
-                        <div class="field-value">{{ $evaluation->patient->email ?? '—' }}</div>
+                        <div class="field-value">{{ $evaluation->patient->email_encrypted ?? '—' }}</div>
                     </div>
                     <div>
                         <div class="field-label">Phone</div>
-                        <div class="field-value">{{ $evaluation->patient->phone ?? '—' }}</div>
+                        <div class="field-value">{{ $evaluation->patient->phone_encrypted ?? '—' }}</div>
                     </div>
                     <div>
                         <div class="field-label">Submitted</div>
@@ -377,19 +378,22 @@
     </div>
 
     {{-- ── PHOTOS ───────────────────────────────────────────────────────── --}}
-    @if ($evaluation->photos->isNotEmpty())
+    @if (!empty($photoData))
         <div class="card">
-            <div class="card-header">Patient Photos ({{ $evaluation->photos->count() }})</div>
+            <div class="card-header">Patient Photos ({{ count($photoData) }})</div>
             <div class="card-body">
                 <div class="photos-grid">
-                    @foreach ($evaluation->photos->take(8) as $photo)
+                    @foreach (array_slice($photoData, 0, 8) as $photo)
                         <div class="photo-item">
                             <img
-                                src="{{ $photo->signed_url ?? '' }}"
-                                alt="{{ $photo->type }}"
+                                src="{{ $photo['signed_url'] }}"
+                                alt="{{ $photo['type'] }}"
                                 onerror="this.style.display='none'"
                             />
-                            <div class="photo-label">{{ str_replace('_', ' ', $photo->type) }}</div>
+                            <div class="photo-label">{{ str_replace('_', ' ', $photo['type']) }}</div>
+                            @if (!empty($photo['quality_score']))
+                                <div class="photo-label">Q: {{ $photo['quality_score'] }}</div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -429,58 +433,110 @@
 
     {{-- ── AI ANALYSIS ─────────────────────────────────────────────────── --}}
     @if ($evaluation->analysis_data && count($evaluation->analysis_data))
-        <div class="card">
-            <div class="card-header">AI Analysis Summary</div>
-            <div class="card-body">
-                @php
-                    $analysis = $evaluation->analysis_data;
-                    $summary  = $analysis['summary'] ?? $analysis['notes'] ?? null;
-                    $tags     = $analysis['tags']    ?? $analysis['concerns'] ?? null;
-                    $recs     = $analysis['recommendations'] ?? null;
-                @endphp
+        @php
+            $analysis    = $evaluation->analysis_data;
+            $proportions = $analysis['proportions'] ?? [];
+            $recs        = $analysis['recommendations'] ?? [];
+        @endphp
 
-                @if ($summary)
-                    <p class="analysis-text">{{ $summary }}</p>
-                @endif
-
-                @if ($recs)
-                    <div style="margin-top: 7px;">
-                        <div class="field-label" style="margin-bottom:4px;">Recommendations</div>
-                        @if (is_array($recs))
-                            @foreach ($recs as $rec)
-                                <div style="padding: 2px 0; font-size:10.5px; color:#333;">
-                                    &bull; {{ is_array($rec) ? ($rec['text'] ?? json_encode($rec)) : $rec }}
-                                </div>
-                            @endforeach
-                        @else
-                            <p class="analysis-text">{{ $recs }}</p>
+        {{-- Proportion scores --}}
+        @if (!empty($proportions))
+            <div class="card">
+                <div class="card-header">Facial Proportion Analysis</div>
+                <div class="card-body">
+                    <div class="grid-3">
+                        @if (isset($proportions['overall_harmony']))
+                            <div>
+                                <div class="field-label">Overall Harmony</div>
+                                <div class="field-value">{{ $proportions['overall_harmony'] }} / 100</div>
+                            </div>
+                        @endif
+                        @if (isset($proportions['nasal_symmetry']['symmetry_score']))
+                            <div>
+                                <div class="field-label">Nasal Symmetry</div>
+                                <div class="field-value">{{ $proportions['nasal_symmetry']['symmetry_score'] }} / 100</div>
+                            </div>
+                        @endif
+                        @if (isset($proportions['nasal_symmetry']['deviation_mm']))
+                            <div>
+                                <div class="field-label">Deviation</div>
+                                <div class="field-value">{{ number_format($proportions['nasal_symmetry']['deviation_mm'], 1) }} mm</div>
+                            </div>
+                        @endif
+                        @if (isset($proportions['goodes_ratio']))
+                            <div>
+                                <div class="field-label">Goode's Ratio</div>
+                                <div class="field-value">{{ number_format($proportions['goodes_ratio'], 2) }}</div>
+                            </div>
+                        @endif
+                        @if (isset($proportions['nasal_width']['width_to_intercanthal_ratio']))
+                            <div>
+                                <div class="field-label">Width / Intercanthal</div>
+                                <div class="field-value">{{ number_format($proportions['nasal_width']['width_to_intercanthal_ratio'], 2) }}</div>
+                            </div>
+                        @endif
+                        @if (isset($proportions['_avg_photo_quality']))
+                            <div>
+                                <div class="field-label">Avg Photo Quality</div>
+                                <div class="field-value">{{ $proportions['_avg_photo_quality'] }} / 100</div>
+                            </div>
                         @endif
                     </div>
-                @endif
 
-                @if ($tags && is_array($tags) && count($tags))
-                    <div class="analysis-pills">
-                        @foreach ($tags as $tag)
-                            <span class="pill">{{ is_string($tag) ? $tag : json_encode($tag) }}</span>
-                        @endforeach
-                    </div>
-                @endif
-
-                @if (!$summary && !$tags && !$recs)
-                    {{-- Fallback: render all top-level scalar fields in a grid --}}
-                    <div class="grid-2">
-                        @foreach ($analysis as $key => $val)
-                            @if (is_scalar($val))
+                    @if (isset($proportions['facial_thirds']) && is_array($proportions['facial_thirds']))
+                        @php $thirds = $proportions['facial_thirds']; @endphp
+                        <div style="margin-top:8px; border-top:1px solid #f0f0f0; padding-top:6px;">
+                            <div class="field-label" style="margin-bottom:4px;">Facial Thirds</div>
+                            <div class="grid-3">
                                 <div>
-                                    <div class="field-label">{{ ucwords(str_replace('_', ' ', $key)) }}</div>
-                                    <div class="field-value">{{ $val }}</div>
+                                    <div class="field-label">Upper</div>
+                                    <div class="field-value">{{ number_format($thirds['upper'] ?? 0, 1) }}%</div>
                                 </div>
-                            @endif
-                        @endforeach
-                    </div>
-                @endif
+                                <div>
+                                    <div class="field-label">Middle</div>
+                                    <div class="field-value">{{ number_format($thirds['middle'] ?? 0, 1) }}%</div>
+                                </div>
+                                <div>
+                                    <div class="field-label">Lower</div>
+                                    <div class="field-value">{{ number_format($thirds['lower'] ?? 0, 1) }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
-        </div>
+        @endif
+
+        {{-- Recommendations --}}
+        @if (!empty($recs))
+            <div class="card">
+                <div class="card-header">AI Recommendations</div>
+                <div class="card-body">
+                    @foreach ($recs as $rec)
+                        @php
+                            $category   = is_array($rec) ? ($rec['category']   ?? null) : null;
+                            $confidence = is_array($rec) ? ($rec['confidence']  ?? null) : null;
+                            $note       = is_array($rec) ? ($rec['note'] ?? $rec['text'] ?? null) : (is_string($rec) ? $rec : null);
+                        @endphp
+                        <div style="padding:4px 0; border-bottom:1px solid #f5f5f5;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                @if ($category)
+                                    <span style="font-size:10px; font-weight:600; color:#333; text-transform:capitalize;">
+                                        {{ str_replace('_', ' ', $category) }}
+                                    </span>
+                                @endif
+                                @if ($confidence)
+                                    <span class="pill" style="font-size:8.5px;">{{ ucfirst($confidence) }} confidence</span>
+                                @endif
+                            </div>
+                            @if ($note)
+                                <div style="font-size:10px; color:#555; line-height:1.5;">{{ $note }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     @endif
 
     {{-- ── COORDINATOR NOTES ────────────────────────────────────────────── --}}

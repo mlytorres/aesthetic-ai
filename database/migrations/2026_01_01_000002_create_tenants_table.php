@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            $table->uuid('id')->primary();
             $table->string('slug', 63)->unique();                // subdomain identifier
             $table->string('name', 255);                         // clinic display name
             $table->foreignUuid('plan_id')->constrained('plans');

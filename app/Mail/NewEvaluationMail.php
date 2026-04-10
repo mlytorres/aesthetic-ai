@@ -7,6 +7,7 @@ namespace App\Mail;
 use App\Models\Evaluation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -25,25 +26,35 @@ class NewEvaluationMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $procedure;
-    public int|null $leadScore;
+
+    public ?int $leadScore;
+
     public string $priority;
+
     public string $magicUrl;
+
     public string $patientFirstName;
+
     public string $clinicName;
+
+    /** Raw PDF bytes for the clinical brief attachment, or null to skip. */
+    private ?string $briefPdfBytes = null;
 
     public function __construct(
         public readonly Evaluation $evaluation,
         string $magicUrl,
+        ?string $briefPdfBytes = null,
     ) {
+        $this->briefPdfBytes = $briefPdfBytes;
         $procedure = $evaluation->procedure_slug;
-        $patient   = $evaluation->patient;
-        $tenant    = $evaluation->tenant;
+        $patient = $evaluation->patient;
+        $tenant = $evaluation->tenant;
 
-        $this->procedure       = ucwords(str_replace(['-', '_'], ' ', $procedure));
-        $this->leadScore       = $evaluation->lead_score;
-        $this->priority        = ucfirst($evaluation->priority ?? 'standard');
-        $this->clinicName      = $tenant?->name ?? 'Your Clinic';
-        $this->magicUrl        = $magicUrl;
+        $this->procedure = ucwords(str_replace(['-', '_'], ' ', $procedure));
+        $this->leadScore = $evaluation->lead_score;
+        $this->priority = ucfirst($evaluation->priority ?? 'standard');
+        $this->clinicName = $tenant?->name ?? 'Your Clinic';
+        $this->magicUrl = $magicUrl;
 
         // Use only the first name — partial PHI exposure in email body
         $fullName = $patient?->name_encrypted ?? null;
@@ -56,9 +67,9 @@ class NewEvaluationMail extends Mailable
     {
         $priorityTag = match (strtolower($this->evaluation->priority ?? 'standard')) {
             'urgent' => '🔴 URGENT',
-            'high'   => '🟠 High Priority',
+            'high' => '🟠 High Priority',
             'medium' => '🟡',
-            default  => '⚪',
+            default => '⚪',
         };
 
         return new Envelope(
@@ -71,5 +82,24 @@ class NewEvaluationMail extends Mailable
         return new Content(
             view: 'emails.new-evaluation',
         );
+    }
+
+    /**
+     * @return array<int, Attachment>
+     */
+    public function attachments(): array
+    {
+        if ($this->briefPdfBytes === null) {
+            return [];
+        }
+
+        $procedure = ucwords(str_replace(['-', '_'], ' ', $this->evaluation->procedure_slug));
+        $shortId = substr($this->evaluation->id, 0, 8);
+        $filename = "Clinical-Brief-{$procedure}-{$shortId}.pdf";
+
+        return [
+            Attachment::fromData(fn () => $this->briefPdfBytes, $filename)
+                ->withMime('application/pdf'),
+        ];
     }
 }

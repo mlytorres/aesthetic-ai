@@ -7,12 +7,16 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
-use Spatie\LaravelPdf\Facades\Pdf;
+use App\Services\ClinicalBriefService;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClinicalBriefController extends Controller
 {
-    public function __construct(private readonly AuditLog $auditLog) {}
+    public function __construct(
+        private readonly AuditLog $auditLog,
+        private readonly ClinicalBriefService $briefService,
+    ) {}
 
     /**
      * Generate and download a Clinical Brief PDF for the given evaluation.
@@ -23,22 +27,19 @@ class ClinicalBriefController extends Controller
      * NOTE: Uses string $evaluationId to avoid TenantScope firing before
      * TenantContext is resolved (same pattern as EvaluationController::show).
      */
-    public function download(string $evaluationId): StreamedResponse
+    public function download(string $evaluationId): Response|StreamedResponse
     {
         $evaluation = Evaluation::with(['patient', 'photos', 'tenant'])->findOrFail($evaluationId);
 
         $this->auditLog->record('evaluation.brief.downloaded', $evaluation);
 
-        $filename = sprintf(
-            'clinical-brief-%s-%s.pdf',
-            $evaluation->procedure_slug,
-            substr($evaluation->id, 0, 8),
-        );
+        $filename = $this->briefService->filename($evaluation);
+        $bytes = $this->briefService->generateBytes($evaluation);
 
-        return Pdf::view('pdf.clinical-brief', [
-            'evaluation' => $evaluation,
-        ])
-            ->format('A4')
-            ->download($filename);
+        return response($bytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Content-Length' => strlen($bytes),
+        ]);
     }
 }

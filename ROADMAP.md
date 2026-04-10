@@ -134,7 +134,7 @@ Phase 4 — Scale (Months 11–18)
 
 ---
 
-### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8) 🚧 IN PROGRESS
+### P1 Sprint 3 — Basic AI Pipeline (Weeks 6–8) ✅ COMPLETE
 
 **AI Jobs (Laravel Queue — Horizon):**
 - [x] `ValidatePhotoQualityJob` — Rekognition face detect + quality score; simulation mode for dev (`FEATURE_AI_VISION=false`)
@@ -177,7 +177,7 @@ Phase 4 — Scale (Months 11–18)
 
 **Security:**
 - [x] All coordinator routes behind `auth + verified + tenant` middleware
-- [ ] Audit log visible in clinic settings (basic list) *(audit log records but no UI yet)*
+- [x] Audit log visible in evaluation detail (deferred timeline with user, action, IP, timestamp)
 - [ ] Session timeout after 30 minutes of inactivity *(not configured yet)*
 
 ---

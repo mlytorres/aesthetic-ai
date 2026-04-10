@@ -16,7 +16,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('quiz_definitions', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            $table->uuid('id')->primary();
             $table->string('procedure_slug', 64)
                 ->constrained('procedures', 'slug')
                 ->cascadeOnDelete();

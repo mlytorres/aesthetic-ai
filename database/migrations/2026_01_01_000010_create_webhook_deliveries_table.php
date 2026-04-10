@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('webhook_deliveries', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            $table->uuid('id')->primary();
 
             $table->foreignUuid('tenant_id')
                 ->constrained('tenants')

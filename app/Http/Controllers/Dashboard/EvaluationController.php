@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EvaluationResource;
+use App\Models\AuditLogEntry;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
 use Illuminate\Http\RedirectResponse;
@@ -26,14 +27,13 @@ class EvaluationController extends Controller
         $status = $request->query('status', 'active');
 
         $evaluations = Evaluation::withCount('photos')
-            ->when($status === 'active', fn ($q) =>
-                $q->whereNotIn('status', [
-                    Evaluation::STATUS_BOOKED,
-                    Evaluation::STATUS_NO_SHOW,
-                    Evaluation::STATUS_NOT_A_FIT,
-                    Evaluation::STATUS_DRAFT,
-                    Evaluation::STATUS_FAILED,
-                ])
+            ->when($status === 'active', fn ($q) => $q->whereNotIn('status', [
+                Evaluation::STATUS_BOOKED,
+                Evaluation::STATUS_NO_SHOW,
+                Evaluation::STATUS_NOT_A_FIT,
+                Evaluation::STATUS_DRAFT,
+                Evaluation::STATUS_FAILED,
+            ])
             )
             ->when($status !== 'active', fn ($q) => $q->where('status', $status))
             ->orderByRaw("
@@ -53,13 +53,13 @@ class EvaluationController extends Controller
         $evaluations->load('patient');
 
         return Inertia::render('evaluations/index', [
-            'evaluations'  => EvaluationResource::collection($evaluations),
-            'filters'      => ['status' => $status],
+            'evaluations' => EvaluationResource::collection($evaluations),
+            'filters' => ['status' => $status],
             'statusCounts' => [
                 'analyzing' => Evaluation::where('status', Evaluation::STATUS_ANALYZING)->count(),
-                'complete'  => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
+                'complete' => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
                 'contacted' => Evaluation::where('status', Evaluation::STATUS_CONTACTED)->count(),
-                'booked'    => Evaluation::where('status', Evaluation::STATUS_BOOKED)->count(),
+                'booked' => Evaluation::where('status', Evaluation::STATUS_BOOKED)->count(),
             ],
         ]);
     }
@@ -80,6 +80,26 @@ class EvaluationController extends Controller
 
         return Inertia::render('evaluations/show', [
             'evaluation' => (new EvaluationResource($evaluation))->resolve(),
+
+            // Deferred: audit timeline loads after the main page renders.
+            // Scoped to this evaluation's subject_id so unrelated tenant events are excluded.
+            'auditEntries' => Inertia::defer(fn () => AuditLogEntry::where('subject_type', 'Evaluation')
+                ->where('subject_id', $evaluationId)
+                ->with('user:id,name,role')
+                ->orderByDesc('created_at')
+                ->limit(50)
+                ->get()
+                ->map(fn (AuditLogEntry $e) => [
+                    'id' => $e->id,
+                    'action' => $e->action,
+                    'user_name' => $e->user?->name ?? 'System',
+                    'user_role' => $e->user?->role,
+                    'ip_address' => $e->ip_address,
+                    'metadata' => $e->metadata,
+                    'created_at' => $e->created_at->toIso8601String(),
+                ])
+                ->all()
+            ),
         ]);
     }
 
@@ -118,7 +138,7 @@ class EvaluationController extends Controller
 
         $validated = $request->validate([
             'coordinator_notes' => ['nullable', 'string', 'max:2000'],
-            'follow_up_at'      => ['nullable', 'date'],
+            'follow_up_at' => ['nullable', 'date'],
         ]);
 
         $evaluation->update($validated);

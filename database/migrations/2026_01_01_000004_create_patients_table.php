@@ -16,7 +16,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('patients', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            $table->uuid('id')->primary();
 
             // ✅ REQUIRED: tenant scope
             $table->foreignUuid('tenant_id')

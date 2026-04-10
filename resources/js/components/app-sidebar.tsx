@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users } from 'lucide-react';
+import { BarChart3, BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,7 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { analytics, dashboard } from '@/routes';
 import { index as evaluationsIndex } from '@/routes/evaluations';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
 import { index as clinicTeamIndex } from '@/routes/clinic/team';
@@ -29,6 +29,11 @@ const mainNavItems: NavItem[] = [
         title: 'Evaluations',
         href: evaluationsIndex.url(),
         icon: ClipboardList,
+    },
+    {
+        title: 'Analytics',
+        href: analytics.url(),
+        icon: BarChart3,
     },
 ];
 

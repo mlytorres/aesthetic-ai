@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('plans', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(\Illuminate\Support\Facades\DB::raw('gen_random_uuid()'));
+            $table->uuid('id')->primary();
             $table->string('name', 64);                          // 'Starter', 'Growth', 'Pro'
             $table->string('slug', 32)->unique();
             $table->unsignedSmallInteger('max_procedures')->default(1);

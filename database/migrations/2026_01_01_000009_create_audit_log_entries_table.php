@@ -47,9 +47,12 @@ return new class extends Migration
         // Upgrade the ip_address column to PostgreSQL's native inet type.
         // Blueprint has no first-class method for inet, so we use a raw ALTER.
         // The USING clause safely casts NULL → NULL; non-null values are validated by PostgreSQL.
-        DB::statement(
-            'ALTER TABLE audit_log_entries ALTER COLUMN ip_address TYPE inet USING ip_address::inet'
-        );
+        // SQLite (used in tests) has no inet type, so we skip this on non-pgsql drivers.
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement(
+                'ALTER TABLE audit_log_entries ALTER COLUMN ip_address TYPE inet USING ip_address::inet'
+            );
+        }
     }
 
     public function down(): void

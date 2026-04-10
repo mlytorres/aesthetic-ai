@@ -10,6 +10,7 @@ use App\Models\Evaluation;
 use App\Models\MagicLink;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\ClinicalBriefService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,29 +35,31 @@ use Illuminate\Support\Facades\Mail;
  */
 class NotifyClinicNewEvaluationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
+    use Dispatchable, InteractsWithQueue, Queueable, ResolvesJobTenant, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $timeout = 30;
 
     public function __construct(
         public readonly string $evaluationId,
     ) {}
 
-    public function handle(): void
+    public function handle(ClinicalBriefService $briefService): void
     {
         $this->setTenantFromEvaluation($this->evaluationId);
 
         /** @var Evaluation $evaluation */
-        $evaluation = Evaluation::with(['tenant', 'patient'])
+        $evaluation = Evaluation::with(['tenant', 'patient', 'photos'])
             ->findOrFail($this->evaluationId);
 
         $tenant = $evaluation->tenant;
 
-        if (!$tenant) {
+        if (! $tenant) {
             Log::warning('NotifyClinicNewEvaluationJob: tenant not found', [
                 'evaluation_id' => $this->evaluationId,
             ]);
+
             return;
         }
 
@@ -65,27 +68,49 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
         if (empty($recipients)) {
             Log::info('NotifyClinicNewEvaluationJob: no recipients configured', [
                 'evaluation_id' => $this->evaluationId,
-                'tenant_id'     => $tenant->id,
+                'tenant_id' => $tenant->id,
             ]);
+
             return;
         }
 
         $sentCount = 0;
 
+        // Build the tenant subdomain base URL — the magic link route requires the tenant
+        // middleware, which resolves the tenant from the subdomain. Without it the link
+        // would land on the root domain where tenant cannot be resolved.
+        $appUrl = config('app.url');                                  // e.g. https://aesthetic-ai.test
+        $appDomain = parse_url($appUrl, PHP_URL_HOST);                   // aesthetic-ai.test
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'https';      // https
+        $tenantBase = "{$scheme}://{$tenant->slug}.{$appDomain}";        // https://miamilife.aesthetic-ai.test
+
+        // Generate the clinical brief PDF once — attached to every recipient's email.
+        // Catch exceptions so a PDF generation failure never silences the notification.
+        $briefBytes = null;
+
+        try {
+            $briefBytes = $briefService->generateBytes($evaluation);
+        } catch (\Throwable $e) {
+            Log::warning('NotifyClinicNewEvaluationJob: clinical brief PDF failed, sending without attachment', [
+                'evaluation_id' => $this->evaluationId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         foreach ($recipients as $email) {
             // Generate a fresh one-time magic link per recipient
             [, $rawToken] = MagicLink::generate($evaluation, $email);
 
-            $magicUrl = url('/magic/' . $rawToken);
+            $magicUrl = $tenantBase.'/magic/'.$rawToken;
 
-            Mail::to($email)->send(new NewEvaluationMail($evaluation, $magicUrl));
+            Mail::to($email)->send(new NewEvaluationMail($evaluation, $magicUrl, $briefBytes));
 
             $sentCount++;
         }
 
         Log::info('NotifyClinicNewEvaluationJob: notifications sent', [
             'evaluation_id' => $this->evaluationId,
-            'recipients'    => $sentCount,
+            'recipients' => $sentCount,
         ]);
     }
 
@@ -97,7 +122,7 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
         // Priority 1: explicitly configured coordinator emails in tenant settings
         $configured = $tenant->settings['coordinator_emails'] ?? [];
 
-        if (!empty($configured) && is_array($configured)) {
+        if (! empty($configured) && is_array($configured)) {
             return array_filter($configured); // remove any empty strings
         }
 
@@ -115,7 +140,7 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
     {
         Log::error('NotifyClinicNewEvaluationJob failed', [
             'evaluation_id' => $this->evaluationId,
-            'error'         => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
         // Non-fatal — don't update evaluation status for notification failures
     }

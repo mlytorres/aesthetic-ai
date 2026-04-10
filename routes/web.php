@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
+use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
@@ -36,6 +37,7 @@ Route::middleware(['tenant'])->group(function (): void {
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
     // ── Local-dev photo streaming (FEATURE_AI_VISION=false only) ─────────
     // In production this route is never hit — SecureFileService returns S3 pre-signed URLs.

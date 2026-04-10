@@ -28,7 +28,7 @@ return [
     |
     */
     'cloudflare' => [
-        'api_token'  => env('LARAVEL_PDF_CLOUDFLARE_API_TOKEN'),
+        'api_token' => env('LARAVEL_PDF_CLOUDFLARE_API_TOKEN'),
         'account_id' => env('LARAVEL_PDF_CLOUDFLARE_ACCOUNT_ID'),
     ],
 
@@ -38,8 +38,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'browsershot' => [
-        'node_binary'       => env('LARAVEL_PDF_NODE_BINARY', 'node'),
-        'npm_binary'        => env('LARAVEL_PDF_NPM_BINARY', 'npm'),
+        'node_binary' => env('LARAVEL_PDF_NODE_BINARY', 'node'),
+        'npm_binary' => env('LARAVEL_PDF_NPM_BINARY', 'npm'),
         'node_modules_path' => env('LARAVEL_PDF_NODE_MODULES_PATH'),
     ],
 
@@ -49,11 +49,11 @@ return [
     |--------------------------------------------------------------------------
     */
     'options' => [
-        'format'       => 'A4',
-        'margin_top'   => 0,
+        'format' => 'A4',
+        'margin_top' => 0,
         'margin_right' => 0,
-        'margin_bottom'=> 0,
-        'margin_left'  => 0,
+        'margin_bottom' => 0,
+        'margin_left' => 0,
     ],
 
 ];

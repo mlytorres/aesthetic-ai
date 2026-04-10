@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Deferred, Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,8 +46,19 @@ interface Evaluation {
     photos: Photo[];
 }
 
+interface AuditEntry {
+    id:          string;
+    action:      string;
+    user_name:   string;
+    user_role:   string | null;
+    ip_address:  string | null;
+    metadata:    Record<string, unknown> | null;
+    created_at:  string;
+}
+
 interface Props {
-    evaluation: Evaluation;
+    evaluation:  Evaluation;
+    auditEntries?: AuditEntry[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -227,6 +238,84 @@ function QuizAnswersCard({ answers }: { answers: Record<string, unknown> | null 
     );
 }
 
+// ── Audit timeline ────────────────────────────────────────────────────────────
+
+const ACTION_LABELS: Record<string, string> = {
+    'evaluation.photos.viewed':        'Viewed evaluation',
+    'evaluation.brief.downloaded':     'Downloaded clinical brief',
+    'evaluation.status.changed':       'Updated status',
+    'evaluation.photo.uploaded':       'Photo uploaded',
+    'evaluation.submitted':            'Evaluation submitted',
+    'ai.photo_quality.validated':      'AI: Photo quality validated',
+    'ai.landmarks.extracted':          'AI: Landmarks extracted',
+    'ai.proportions.calculated':       'AI: Proportions calculated',
+    'ai.recommendations.generated':    'AI: Recommendations generated',
+    'coordinator.magic_link.used':     'Accessed via magic link',
+};
+
+function actionLabel(action: string): string {
+    return ACTION_LABELS[action] ?? action.replace(/\./g, ' › ');
+}
+
+function timeAgo(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1)  return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
+    if (entries.length === 0) {
+        return (
+            <SectionCard title="Activity Log">
+                <p className="text-sm italic text-[#9B9B8E]">No activity recorded yet.</p>
+            </SectionCard>
+        );
+    }
+
+    return (
+        <SectionCard title="Activity Log">
+            <ol className="relative border-l border-[#2A2A35]">
+                {entries.map((entry) => (
+                    <li key={entry.id} className="mb-5 ml-4 last:mb-0">
+                        {/* Timeline dot */}
+                        <div className="absolute -left-1.5 mt-1.5 size-3 rounded-full border border-[#0A0A0F] bg-[#2A2A35]" />
+
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                            <p className="text-sm font-medium text-[#F5F0E8]">
+                                {actionLabel(entry.action)}
+                            </p>
+                            <time className="shrink-0 text-xs text-[#9B9B8E]" dateTime={entry.created_at}>
+                                {timeAgo(entry.created_at)}
+                            </time>
+                        </div>
+
+                        <p className="mt-0.5 text-xs text-[#9B9B8E]">
+                            {entry.user_name}
+                            {entry.user_role && (
+                                <span className="ml-1 capitalize opacity-60">· {entry.user_role}</span>
+                            )}
+                            {entry.ip_address && (
+                                <span className="ml-1 font-mono opacity-40"> · {entry.ip_address}</span>
+                            )}
+                        </p>
+
+                        {/* Metadata badge for status changes */}
+                        {entry.metadata?.new_status && (
+                            <span className="mt-1 inline-block rounded bg-[#1E1E28] px-1.5 py-0.5 text-[10px] capitalize text-[#C9A84C]">
+                                → {String(entry.metadata.new_status).replace('_', ' ')}
+                            </span>
+                        )}
+                    </li>
+                ))}
+            </ol>
+        </SectionCard>
+    );
+}
+
 // ── Status update panel ───────────────────────────────────────────────────────
 
 interface StatusFormFields {
@@ -354,7 +443,7 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function EvaluationShow({ evaluation }: Props) {
+export default function EvaluationShow({ evaluation, auditEntries }: Props) {
     return (
         <>
             <Head title={`Evaluation — ${formatProcedure(evaluation.procedure_slug)}`} />
@@ -421,6 +510,25 @@ export default function EvaluationShow({ evaluation }: Props) {
                         <PatientCard patient={evaluation.patient ?? null} />
                         <PhotosGallery photos={evaluation.photos ?? []} />
                         <QuizAnswersCard answers={evaluation.quiz_answers} />
+
+                        {/* Audit timeline — deferred, loads after main page */}
+                        <Deferred data="auditEntries" fallback={
+                            <SectionCard title="Activity Log">
+                                <div className="space-y-3">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="flex animate-pulse gap-3">
+                                            <div className="size-3 shrink-0 rounded-full bg-[#2A2A35]" />
+                                            <div className="flex-1 space-y-1.5">
+                                                <div className="h-3 w-2/3 rounded bg-[#2A2A35]" />
+                                                <div className="h-2.5 w-1/3 rounded bg-[#1E1E28]" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </SectionCard>
+                        }>
+                            <AuditTimeline entries={auditEntries ?? []} />
+                        </Deferred>
                     </div>
 
                     {/* Right — coordinator actions (1/3) */}
