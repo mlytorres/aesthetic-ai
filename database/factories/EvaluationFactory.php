@@ -35,6 +35,7 @@ class EvaluationFactory extends Factory
             'patient_id' => Patient::factory(),
             'procedure_slug' => 'rhinoplasty',
             'status' => Evaluation::STATUS_SUBMITTED,
+            'funnel_step' => Evaluation::FUNNEL_QUIZ,
             'quiz_answers' => [
                 'q_timeline' => 'asap',
                 'q_budget' => '15k_25k',

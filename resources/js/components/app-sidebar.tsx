@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BarChart3, BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users } from 'lucide-react';
+import { BarChart3, BookOpen, ClipboardList, FolderGit2, LayoutGrid, Settings, Users, Webhook } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -19,6 +19,7 @@ import { analytics, dashboard } from '@/routes';
 import { index as evaluationsIndex } from '@/routes/evaluations';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
 import { index as clinicTeamIndex } from '@/routes/clinic/team';
+import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
@@ -50,6 +51,11 @@ const clinicNavItems: NavItem[] = [
         title: 'Team',
         href: clinicTeamIndex.url(),
         icon: Users,
+    },
+    {
+        title: 'Webhooks',
+        href: webhooksIndex.url(),
+        icon: Webhook,
     },
 ];
 

@@ -9,6 +9,7 @@ use App\Http\Resources\EvaluationResource;
 use App\Models\AuditLogEntry;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
+use App\Services\WebhookService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,7 +18,10 @@ use Inertia\Response;
 
 class EvaluationController extends Controller
 {
-    public function __construct(private readonly AuditLog $auditLog) {}
+    public function __construct(
+        private readonly AuditLog $auditLog,
+        private readonly WebhookService $webhooks,
+    ) {}
 
     /**
      * Evaluation priority queue — the main coordinator view.
@@ -33,8 +37,7 @@ class EvaluationController extends Controller
                 Evaluation::STATUS_NOT_A_FIT,
                 Evaluation::STATUS_DRAFT,
                 Evaluation::STATUS_FAILED,
-            ])
-            )
+            ]))
             ->when($status !== 'active', fn ($q) => $q->where('status', $status))
             ->orderByRaw("
                 CASE priority
@@ -82,7 +85,6 @@ class EvaluationController extends Controller
             'evaluation' => (new EvaluationResource($evaluation))->resolve(),
 
             // Deferred: audit timeline loads after the main page renders.
-            // Scoped to this evaluation's subject_id so unrelated tenant events are excluded.
             'auditEntries' => Inertia::defer(fn () => AuditLogEntry::where('subject_type', 'Evaluation')
                 ->where('subject_id', $evaluationId)
                 ->with('user:id,name,role')
@@ -105,6 +107,7 @@ class EvaluationController extends Controller
 
     /**
      * Update coordinator-facing status (Contacted / Booked / No-Show / Not a Fit).
+     * Fires an evaluation.status_changed webhook so connected CRMs stay in sync.
      */
     public function updateStatus(Request $request, string $evaluationId): RedirectResponse
     {
@@ -117,12 +120,19 @@ class EvaluationController extends Controller
                 Evaluation::STATUS_NO_SHOW,
                 Evaluation::STATUS_NOT_A_FIT,
             ])],
-            'coordinator_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $evaluation->update($validated);
+        $previousStatus = $evaluation->status;
 
-        $this->auditLog->record('evaluation.status.changed', $evaluation, [
+        $evaluation->update(['status' => $validated['status']]);
+
+        $this->auditLog->record('evaluation.status.updated', $evaluation, [
+            'previous_status' => $previousStatus,
+            'new_status' => $validated['status'],
+        ]);
+
+        $this->webhooks->dispatch($evaluation, 'evaluation.status_changed', [
+            'previous_status' => $previousStatus,
             'new_status' => $validated['status'],
         ]);
 
@@ -130,18 +140,23 @@ class EvaluationController extends Controller
     }
 
     /**
-     * Save coordinator notes without changing status.
+     * Save coordinator notes and optional follow-up date.
      */
     public function updateNotes(Request $request, string $evaluationId): RedirectResponse
     {
         $evaluation = Evaluation::findOrFail($evaluationId);
 
         $validated = $request->validate([
-            'coordinator_notes' => ['nullable', 'string', 'max:2000'],
+            'coordinator_notes' => ['nullable', 'string', 'max:5000'],
             'follow_up_at' => ['nullable', 'date'],
         ]);
 
-        $evaluation->update($validated);
+        $evaluation->update([
+            'coordinator_notes' => $validated['coordinator_notes'],
+            'follow_up_at' => $validated['follow_up_at'],
+        ]);
+
+        $this->auditLog->record('evaluation.notes.updated', $evaluation);
 
         return back()->with('flash.success', 'Notes saved.');
     }

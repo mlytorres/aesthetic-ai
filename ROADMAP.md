@@ -14,7 +14,7 @@
 **Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
 **Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
 **Sprint 3 — AI Pipeline:** ✅ **Complete**
-**Sprint 5 — Polish + Pilot Launch:** 🚧 **In Progress** (dev items complete, business items pending)
+**Sprint 5 — Polish + Pilot Launch:** ✅ **Complete** (all dev items done; business items pending BAA + QA)
 
 ---
 
@@ -196,9 +196,9 @@ Phase 4 — Scale (Months 11–18)
 - [x] HIPAA audit log timeline — `AuditTimeline` component on evaluation detail page
 - [x] TypeScript strict — `tsc --noEmit` passes with zero errors
 - [x] Test suite — 102 tests, all passing (`ClinicalBriefTest`, `AnalyticsTest` + all prior suites)
-- [ ] **Funnel drop-off tracking** — step completion rates for intake wizard (steps 1–5 tracked server-side) *(not yet implemented)*
+- [x] **Funnel drop-off tracking** — `funnel_step` on evaluations (1–4), analytics `intakeFunnel` deferred prop, `IntakeFunnelChart` React component
 - [ ] **CloudWatch alerts** — CPU/memory/queue-depth alarms for production deploy *(infrastructure — defer to deploy)*
-- [ ] **Session timeout after 30 min** — update `.env` `SESSION_LIFETIME=30` *(done in `.env.example`; must be set in production env)*
+- [x] **Session timeout after 30 min** — `SESSION_LIFETIME=30` in `.env.example`; must be set in production env
 
 **Business items (non-dev — coordinate with clinic):**
 - 🚫 End-to-end QA (full flow on iPhone, Android, desktop)
@@ -220,10 +220,11 @@ Phase 4 — Scale (Months 11–18)
 
 ### Key Deliverables
 
-**Multi-Procedure Expansion:**
-- [ ] Quiz engine supports multiple procedure definitions (JSONB config)
-- [ ] Procedure library: Rhinoplasty, Liposuction 360, BBL, Breast Augmentation, Facelift
-- [ ] Procedure-specific photo capture protocols (body vs. face)
+**Multi-Procedure Expansion:** ✅ *Delivered early (Phase 1 Sprint 5)*
+- [x] Quiz engine supports multiple procedure definitions (JSONB config)
+- [x] Procedure library: Rhinoplasty, Liposuction 360, BBL, Breast Augmentation, Facelift — all with branching quizzes
+- [x] Procedure-specific photo capture protocols (body vs. face angles)
+- [x] Tenant settings UI — checkbox grid grouped by Face/Body to enable/disable procedures per clinic
 - [ ] Anatomical 3D pin-drop interface (Phase 2 enhancement of chief concern step)
 
 **Multi-Tenant Onboarding:**
@@ -244,10 +245,10 @@ Phase 4 — Scale (Months 11–18)
 - [ ] Nextech webhook (lead creation)
 - [ ] Webhook delivery log + retry UI in dashboard
 
-**Clinical Brief Generator:**
-- [ ] PDF generation of pre-consultation brief
-- [ ] Printable format for surgeon's physical files
-- [ ] Auto-attached to clinic notification email
+**Clinical Brief Generator:** ✅ *Delivered in Sprint 5*
+- [x] PDF generation of pre-consultation brief (`ClinicalBriefService`, spatie/laravel-pdf)
+- [x] Printable format for surgeon's physical files (download button on evaluation detail)
+- [x] Auto-attached to clinic notification email (`NewEvaluationMail`)
 
 ---
 

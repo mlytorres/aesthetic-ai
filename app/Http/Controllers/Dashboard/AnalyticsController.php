@@ -17,11 +17,12 @@ class AnalyticsController extends Controller
     public function index(): Response
     {
         return Inertia::render('analytics/index', [
-            'weeklyVolume' => Inertia::defer(fn () => $this->weeklyVolume()),
-            'statusFunnel' => Inertia::defer(fn () => $this->statusFunnel()),
-            'scoreDistrib' => Inertia::defer(fn () => $this->scoreDistribution()),
+            'weeklyVolume'    => Inertia::defer(fn () => $this->weeklyVolume()),
+            'statusFunnel'    => Inertia::defer(fn () => $this->statusFunnel()),
+            'scoreDistrib'    => Inertia::defer(fn () => $this->scoreDistribution()),
             'priorityBreakdown' => Inertia::defer(fn () => $this->priorityBreakdown()),
-            'avgTimeToContact' => Inertia::defer(fn () => $this->avgTimeToContact()),
+            'avgTimeToContact'  => Inertia::defer(fn () => $this->avgTimeToContact()),
+            'intakeFunnel'    => Inertia::defer(fn () => $this->intakeFunnel()),
         ]);
     }
 
@@ -138,6 +139,46 @@ class AnalyticsController extends Controller
                 'priority' => $priority,
                 'label' => $label,
                 'count' => (int) ($counts[$priority] ?? 0),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Intake wizard drop-off funnel.
+     *
+     * Returns count of evaluations that reached each step, showing where
+     * patients abandoned. Each step count is the number who got AT LEAST that far.
+     *
+     * @return array<int, array{step: int, label: string, count: int, rate: float}>
+     */
+    private function intakeFunnel(): array
+    {
+        $steps = [
+            Evaluation::FUNNEL_PROCEDURE => 'Procedure Selected',
+            Evaluation::FUNNEL_QUIZ      => 'Quiz Completed',
+            Evaluation::FUNNEL_PHOTOS    => 'Photos Uploaded',
+            Evaluation::FUNNEL_SUBMITTED => 'Submitted',
+        ];
+
+        // Count evaluations that reached at least each step.
+        $counts = collect($steps)->mapWithKeys(
+            fn (string $label, int $step) => [
+                $step => Evaluation::withoutGlobalScopes()
+                    ->where('tenant_id', TenantContext::id())
+                    ->where('funnel_step', '>=', $step)
+                    ->count(),
+            ]
+        );
+
+        $total = $counts->get(Evaluation::FUNNEL_PROCEDURE, 0);
+
+        return collect($steps)
+            ->map(fn (string $label, int $step) => [
+                'step'  => $step,
+                'label' => $label,
+                'count' => $counts->get($step, 0),
+                'rate'  => $total > 0 ? round($counts->get($step, 0) / $total * 100, 1) : 0.0,
             ])
             ->values()
             ->all();

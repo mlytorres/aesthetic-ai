@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
                 'plan_id' => $starterPlan->id,
                 'settings' => [
                     'theme'               => 'luxury-dark',
-                    'procedures_enabled'  => ['rhinoplasty'],
+                    'procedures_enabled'  => ['rhinoplasty', 'bbl', 'lipo_360', 'breast_augmentation', 'facelift'],
                     'coordinator_emails'  => ['coordinator@miamilife.test'],
                 ],
             ]

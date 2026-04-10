@@ -33,6 +33,12 @@ class Evaluation extends Model
     public const PRIORITY_MEDIUM   = 'medium';
     public const PRIORITY_STANDARD = 'standard';
 
+    /** Intake wizard funnel steps — only increases, never decreases. */
+    public const FUNNEL_PROCEDURE  = 1; // procedure selected
+    public const FUNNEL_QUIZ       = 2; // quiz completed
+    public const FUNNEL_PHOTOS     = 3; // at least one photo uploaded
+    public const FUNNEL_SUBMITTED  = 4; // contact info + consent recorded
+
     protected $fillable = [
         'tenant_id',
         'patient_id',
@@ -47,6 +53,7 @@ class Evaluation extends Model
         'follow_up_at',
         'external_id',
         'completed_at',
+        'funnel_step',
     ];
 
     protected function casts(): array

@@ -25,12 +25,20 @@ interface PriorityRow {
     count:    number;
 }
 
+interface FunnelStep {
+    step:  number;
+    label: string;
+    count: number;
+    rate:  number; // % of patients who reached at least this step
+}
+
 interface Props {
     weeklyVolume:      WeekPoint[];
     statusFunnel:      StatusRow[];
     scoreDistrib:      ScoreBucket[];
     priorityBreakdown: PriorityRow[];
     avgTimeToContact:  number | null;
+    intakeFunnel:      FunnelStep[];
 }
 
 // ── Colour maps ───────────────────────────────────────────────────────────────
@@ -153,6 +161,42 @@ function SparkLine({ data }: { data: WeekPoint[] }) {
     );
 }
 
+// ── Intake funnel chart ───────────────────────────────────────────────────────
+
+function IntakeFunnelChart({ data }: { data: FunnelStep[] }) {
+    if (data.length === 0) {
+        return <p className="text-sm text-zinc-500">No intake data yet.</p>;
+    }
+
+    return (
+        <div className="flex flex-col gap-3">
+            {data.map((step, i) => {
+                const dropOff = i > 0 ? data[i - 1].rate - step.rate : 0;
+                return (
+                    <div key={step.step} className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium text-zinc-200">{step.label}</span>
+                            <span className="tabular-nums text-zinc-400">
+                                {step.count.toLocaleString()}
+                                {i > 0 && dropOff > 0 && (
+                                    <span className="ml-2 text-red-400">−{dropOff.toFixed(1)}%</span>
+                                )}
+                            </span>
+                        </div>
+                        <div className="h-6 overflow-hidden rounded bg-zinc-800">
+                            <div
+                                className="h-full rounded bg-[#C9A84C] transition-all"
+                                style={{ width: `${step.rate}%`, opacity: 0.6 + (step.rate / 100) * 0.4 }}
+                            />
+                        </div>
+                        <span className="text-right text-[10px] text-zinc-500">{step.rate}% completion</span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -184,6 +228,7 @@ export default function Analytics({
     scoreDistrib,
     priorityBreakdown,
     avgTimeToContact,
+    intakeFunnel,
 }: Props) {
     // Aggregate totals from deferred data (may be undefined while loading)
     const totalEvaluations = statusFunnel?.reduce((sum, r) => sum + r.count, 0) ?? null;
@@ -286,6 +331,13 @@ export default function Analytics({
                         </Deferred>
                     </Card>
                 </div>
+
+                {/* ── Intake funnel ── */}
+                <Card title="Intake Wizard Drop-off Funnel">
+                    <Deferred data="intakeFunnel" fallback={<Skeleton className="h-40" />}>
+                        {intakeFunnel && <IntakeFunnelChart data={intakeFunnel} />}
+                    </Deferred>
+                </Card>
 
                 {/* ── Status detail table ── */}
                 <Card title="Status Breakdown">

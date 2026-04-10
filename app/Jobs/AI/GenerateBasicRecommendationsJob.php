@@ -8,6 +8,7 @@ use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
 use App\Services\LeadScoringService;
+use App\Services\WebhookService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,16 +36,17 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateBasicRecommendationsJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, ResolvesJobTenant, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $timeout = 120;
 
     public function __construct(
         public readonly string $evaluationId,
     ) {}
 
-    public function handle(LeadScoringService $scorer, AuditLog $auditLog): void
+    public function handle(LeadScoringService $scorer, AuditLog $auditLog, WebhookService $webhooks): void
     {
         if ($this->batch()?->cancelled()) {
             return;
@@ -53,16 +55,16 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
         $this->setTenantFromEvaluation($this->evaluationId);
 
         /** @var Evaluation $evaluation */
-        $evaluation   = Evaluation::findOrFail($this->evaluationId);
+        $evaluation = Evaluation::findOrFail($this->evaluationId);
         $analysisData = $evaluation->analysis_data ?? [];
-        $proportions  = $analysisData['proportions'] ?? [];
-        $quizAnswers  = $evaluation->quiz_answers ?? [];
-        $procedure    = $evaluation->procedure_slug;
+        $proportions = $analysisData['proportions'] ?? [];
+        $quizAnswers = $evaluation->quiz_answers ?? [];
+        $procedure = $evaluation->procedure_slug;
 
         // ── Generate recommendations ──────────────────────────────────────────
         $recommendations = match ($procedure) {
             'rhinoplasty' => $this->rhinoplastyRecommendations($proportions, $quizAnswers),
-            default       => $this->genericRecommendations($proportions, $quizAnswers),
+            default => $this->genericRecommendations($proportions, $quizAnswers),
         };
 
         // ── Score the lead ────────────────────────────────────────────────────
@@ -70,43 +72,48 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
 
         // ── Persist everything and mark complete ──────────────────────────────
         $evaluation->update([
-            'status'        => Evaluation::STATUS_COMPLETE,
-            'lead_score'    => $leadScore,
-            'priority'      => $priority,
+            'status' => Evaluation::STATUS_COMPLETE,
+            'lead_score' => $leadScore,
+            'priority' => $priority,
             'analysis_data' => array_merge($analysisData, [
-                'recommendations'           => $recommendations,
+                'recommendations' => $recommendations,
                 'recommendations_generated_at' => now()->toIso8601String(),
             ]),
         ]);
 
         $auditLog->recordSystem('evaluation.analysis.complete', $evaluation, [
             'lead_score' => $leadScore,
-            'priority'   => $priority,
+            'priority' => $priority,
         ]);
 
         // ── Notify clinic ─────────────────────────────────────────────────────
         if (config('features.notifications', true)) {
             NotifyClinicNewEvaluationJob::dispatch($this->evaluationId)->onQueue('notifications');
         }
+
+        // ── Fire webhook ──────────────────────────────────────────────────────
+        $webhooks->dispatch($evaluation, 'evaluation.analysis_complete', [
+            'ai_summary' => $recommendations['primary_finding'] ?? null,
+        ]);
     }
 
     /**
      * Rhinoplasty-specific rule-based recommendations.
      *
-     * @param array<string, mixed> $proportions
-     * @param array<string, mixed> $quizAnswers
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
      * @return array<string, mixed>
      */
     private function rhinoplastyRecommendations(array $proportions, array $quizAnswers): array
     {
-        $flags   = [];
+        $flags = [];
         $bullets = [];
         $techniques = [];
 
         // ── Skin thickness ────────────────────────────────────────────────────
         $skinType = $quizAnswers['q_skin_thickness'] ?? null;
         match ($skinType) {
-            'thin'  => $bullets[] = 'Thin skin provides excellent definition and shows fine detail work well, but requires meticulous refinement to avoid visible scarring.',
+            'thin' => $bullets[] = 'Thin skin provides excellent definition and shows fine detail work well, but requires meticulous refinement to avoid visible scarring.',
             'thick' => $bullets[] = 'Thick/sebaceous skin may obscure tip refinement. Skin-thinning techniques (defatting) may be discussed during consultation.',
             default => null,
         };
@@ -114,16 +121,16 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
         // ── Prior rhinoplasty ─────────────────────────────────────────────────
         $priorSurgery = $quizAnswers['q_prior_surgery'] ?? null;
         if ($priorSurgery === true || $priorSurgery === 'true' || $priorSurgery === 1) {
-            $flags[]    = 'revision_rhinoplasty';
-            $bullets[]  = 'Revision rhinoplasty is technically more complex due to scar tissue and altered anatomy. Surgeon should review prior operative notes if available.';
+            $flags[] = 'revision_rhinoplasty';
+            $bullets[] = 'Revision rhinoplasty is technically more complex due to scar tissue and altered anatomy. Surgeon should review prior operative notes if available.';
             $techniques[] = 'Revision approach likely required';
         }
 
         // ── Breathing concerns ────────────────────────────────────────────────
         $breathing = $quizAnswers['q_breathing'] ?? null;
         if ($breathing === true || $breathing === 'true' || $breathing === 1) {
-            $flags[]    = 'functional_component';
-            $bullets[]  = 'Patient reports nasal breathing difficulties. Functional evaluation (septal deviation, turbinate hypertrophy) recommended alongside cosmetic assessment.';
+            $flags[] = 'functional_component';
+            $bullets[] = 'Patient reports nasal breathing difficulties. Functional evaluation (septal deviation, turbinate hypertrophy) recommended alongside cosmetic assessment.';
             $techniques[] = 'Functional rhinoplasty component likely';
         }
 
@@ -143,7 +150,7 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
                 $techniques[] = 'Alar base reduction (Weir excisions)';
             }
             if (in_array('asymmetry', $concerns, true)) {
-                $flags[]   = 'asymmetry_noted';
+                $flags[] = 'asymmetry_noted';
                 $bullets[] = 'Asymmetry is a primary concern. AI analysis supports this — surgical plan should prioritise bilateral symmetry.';
             }
         }
@@ -156,13 +163,13 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
         } elseif ($harmonyScore >= 50) {
             $bullets[] = 'Facial proportions show moderate variation from ideal ratios. Surgical planning should account for these findings.';
         } else {
-            $flags[]   = 'significant_proportion_deviation';
+            $flags[] = 'significant_proportion_deviation';
             $bullets[] = 'Proportion analysis indicates notable deviation from ideal facial thirds/fifths. Surgeon should review AI measurements during consultation.';
         }
 
         $nasalSym = $proportions['nasal_symmetry']['score'] ?? 50;
         if ($nasalSym < 70) {
-            $flags[]   = 'nasal_asymmetry_detected';
+            $flags[] = 'nasal_asymmetry_detected';
             $bullets[] = sprintf('Nasal symmetry score: %d/100. Asymmetry visible in AI analysis — surgeon should confirm clinically.', $nasalSym);
         }
 
@@ -176,33 +183,33 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
         }
 
         return [
-            'procedure'       => 'rhinoplasty',
-            'confidence'      => $this->confidenceFromHarmony($harmonyScore),
+            'procedure' => 'rhinoplasty',
+            'confidence' => $this->confidenceFromHarmony($harmonyScore),
             'primary_finding' => $this->primaryFinding($concerns, $priorSurgery),
-            'flags'           => array_unique($flags),
-            'key_points'      => array_values(array_unique($bullets)),
+            'flags' => array_unique($flags),
+            'key_points' => array_values(array_unique($bullets)),
             'technique_notes' => array_values(array_unique($techniques)),
-            'harmony_score'   => $harmonyScore,
+            'harmony_score' => $harmonyScore,
         ];
     }
 
     /**
      * Generic fallback for non-rhinoplasty procedures.
      *
-     * @param array<string, mixed> $proportions
-     * @param array<string, mixed> $quizAnswers
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
      * @return array<string, mixed>
      */
     private function genericRecommendations(array $proportions, array $quizAnswers): array
     {
         return [
-            'procedure'       => 'general',
-            'confidence'      => 'medium',
+            'procedure' => 'general',
+            'confidence' => 'medium',
             'primary_finding' => 'Evaluation completed. Full AI analysis available for rhinoplasty — other procedures use standard intake review.',
-            'flags'           => [],
-            'key_points'      => ['Manual review recommended for this procedure type.'],
+            'flags' => [],
+            'key_points' => ['Manual review recommended for this procedure type.'],
             'technique_notes' => [],
-            'harmony_score'   => $proportions['overall_harmony'] ?? 50,
+            'harmony_score' => $proportions['overall_harmony'] ?? 50,
         ];
     }
 
@@ -211,13 +218,12 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
         return match (true) {
             $harmonyScore >= 75 => 'high',
             $harmonyScore >= 50 => 'medium',
-            default             => 'low',
+            default => 'low',
         };
     }
 
     /**
-     * @param array<int, string>|mixed $concerns
-     * @param mixed $priorSurgery
+     * @param  array<int, string>|mixed  $concerns
      */
     private function primaryFinding(mixed $concerns, mixed $priorSurgery): string
     {
@@ -227,10 +233,10 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
 
         if (is_array($concerns) && count($concerns) > 0) {
             $labels = [
-                'bridge'     => 'dorsal hump',
-                'tip'        => 'nasal tip',
-                'nostrils'   => 'alar base',
-                'asymmetry'  => 'nasal asymmetry',
+                'bridge' => 'dorsal hump',
+                'tip' => 'nasal tip',
+                'nostrils' => 'alar base',
+                'asymmetry' => 'nasal asymmetry',
                 'projection' => 'nasal projection',
             ];
 
@@ -238,7 +244,7 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
                 array_map(fn ($c) => $labels[$c] ?? null, $concerns)
             );
 
-            return 'Primary concerns: ' . implode(', ', $mapped) . '.';
+            return 'Primary concerns: '.implode(', ', $mapped).'.';
         }
 
         return 'General rhinoplasty consultation requested.';
@@ -248,7 +254,7 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
     {
         Log::error('GenerateBasicRecommendationsJob failed', [
             'evaluation_id' => $this->evaluationId,
-            'error'         => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
 
         Evaluation::withoutGlobalScopes() // withoutGlobalScopes in failed() — context may not be set

@@ -52,6 +52,11 @@ class PhotoController extends Controller
             'taken_at'         => now(),
         ]);
 
+        // Advance funnel step to PHOTOS on the first upload — never downgrade.
+        if ($evaluation->funnel_step < Evaluation::FUNNEL_PHOTOS) {
+            $evaluation->update(['funnel_step' => Evaluation::FUNNEL_PHOTOS]);
+        }
+
         $this->auditLog->record('evaluation.photo.uploaded', $photo, [
             'type'          => $photo->type,
             'quality_score' => $photo->quality_score,

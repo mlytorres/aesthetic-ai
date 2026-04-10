@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\TeamController;
+use App\Http\Controllers\Clinic\WebhookDeliveryController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -66,6 +67,9 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
         Route::get('/team', [TeamController::class, 'index'])->name('team.index');
         Route::post('/team', [TeamController::class, 'store'])->name('team.store');
         Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+
+        Route::get('/webhooks', [WebhookDeliveryController::class, 'index'])->name('webhooks.index');
+        Route::post('/webhooks/{webhookDelivery}/retry', [WebhookDeliveryController::class, 'retry'])->name('webhooks.retry');
     });
 });
 

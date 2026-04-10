@@ -49,6 +49,7 @@ class EvaluationController extends Controller
             'patient_id'     => $patient->id,
             'procedure_slug' => $request->validated('procedure_slug'),
             'status'         => Evaluation::STATUS_DRAFT,
+            'funnel_step'    => Evaluation::FUNNEL_PROCEDURE,
         ]);
 
         $this->auditLog->record('evaluation.created', $evaluation);
@@ -69,6 +70,7 @@ class EvaluationController extends Controller
         $evaluation->update([
             'quiz_answers' => $request->validated('answers'),
             'status'       => Evaluation::STATUS_SUBMITTED,
+            'funnel_step'  => max($evaluation->funnel_step, Evaluation::FUNNEL_QUIZ),
         ]);
 
         return response()->json(['status' => 'saved']);
@@ -111,6 +113,7 @@ class EvaluationController extends Controller
             'patient_id'   => $patient->id,
             'status'       => Evaluation::STATUS_ANALYZING,
             'completed_at' => now(),
+            'funnel_step'  => Evaluation::FUNNEL_SUBMITTED,
             'quiz_answers' => array_merge($evaluation->quiz_answers ?? [], [
                 '_consent' => [
                     'hipaa_acknowledged' => $validated['consent']['hipaa_acknowledged'],
