@@ -33,6 +33,7 @@
 **Sprint 5 — Polish + Pilot Launch:** ✅ **Complete** (all dev items done; business items pending BAA + QA)
 **Sprint 6 — Advanced AI Vision + Analytics:** ✅ **Complete**
 **Sprint 7 — Multi-Tenant Platform Admin:** ✅ **Complete**
+**Sprint 8 — Body Landmarks + AI Simulation:** ✅ **Complete**
 
 ---
 
@@ -45,7 +46,7 @@ Phase 1 — MVP (Months 1–3)          ✅ COMPLETE
 Phase 2 — Foundation (Months 4–6)   🚧 IN PROGRESS
   "Multi-procedure. Multi-tenant. CRM integrations. Billing."
 
-Phase 3 — Intelligence (Months 7–10) 🚧 IN PROGRESS (Analytics + AI Vision shipped early)
+Phase 3 — Intelligence (Months 7–10) 🚧 IN PROGRESS (Analytics + AI Vision + Body Landmarks + Simulation shipped early)
   "Full AI suite. Simulations. Expand to 5+ clinics."
 
 Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
@@ -222,6 +223,26 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ---
 
+### P1 Sprint 8 — Body Landmarks + AI Simulation ✅ COMPLETE
+
+**Body Landmark Detection (body procedure variant):**
+- [x] `ExtractBodyLandmarksJob` — 11 front landmarks (shoulders, waist, hips, thighs, abdomen) + 5 side landmarks (gluteal peak, gluteal base, lower-back curve, shoulder, upper abdomen); procedure-aware coordinate variance (BBL → wider hips, Lipo → more abdominal projection)
+- [x] `CalculateBodyProportionsJob` — WHR (waist/hip, ideal 0.70), shoulder-waist ratio (ideal 1.40), gluteal projection, abdominal projection, bilateral symmetry score, skin laxity integration, overall contour score (weighted composite 0–100); WHR label: Hourglass / Pear / Rectangular / Apple
+- [x] Pipeline branching in `EvaluationController::submit()` — body procedures route to body jobs; face procedures keep facial jobs
+- [x] Simulation mode — full landmark + proportion pipeline works without AWS (all values deterministically simulated from quiz answers)
+- [x] 12 tests in `BodyLandmarkTest.php`
+
+**AI Before/After Simulation:**
+- [x] `OpenAIService` — `editImage()` + `generateImage()` wrappers for `gpt-image-1`; registered as singleton in `AppServiceProvider`
+- [x] `GenerateSimulationJob` — builds procedure-specific prompts incorporating proportion scores; calls OpenAI; stores PNG to S3/local; placeholder mode when `FEATURE_AI_VISION=false`
+- [x] `SimulationController` — `POST /evaluations/{id}/simulation` (request) + `GET /evaluations/{id}/simulation` (poll); duplicate-request guard; signed S3 URL on completion
+- [x] `SimulationViewer` React component — gated by body procedure + analysis complete; spinner with 4-second polling; result image or dev placeholder; "AI Visualization — Not a Guarantee" disclaimer; regenerate button
+- [x] Migration — `simulation_status`, `simulation_data`, `simulation_requested_at` columns on evaluations
+- [x] `OPENAI_API_KEY` added to `.env.example` and `config/services.php`
+- [x] 11 tests in `AISimulationTest.php`
+
+---
+
 ### P1 Sprint 7 — Multi-Tenant Platform Admin ✅ COMPLETE
 
 > *Phase 2 multi-tenant onboarding items delivered.*
@@ -312,21 +333,27 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ### Key Deliverables
 
-**Advanced AI Vision:** 🚧 *Partially delivered (Sprint 6)*
+**Advanced AI Vision:** 🚧 *Partially delivered (Sprint 6 + Sprint 8)*
 - [x] Procedure-specific AI flags for all 5 procedures (rhinoplasty, BBL, lipo 360, breast aug, facelift)
 - [x] Age estimation from Rekognition (facelift: young/mature candidate detection)
 - [x] Skin laxity concern flag (lipo 360: from photo quality proxy metric)
 - [x] Body analysis flags (BBL: safety protocol, donor areas, weight stability)
+- [x] Body landmark detection — `ExtractBodyLandmarksJob`: 11 front + 5 side normalised landmarks, procedure-aware variance
+- [x] Body proportions — `CalculateBodyProportionsJob`: WHR, shoulder-waist ratio, gluteal projection, body symmetry, overall contour score (0–100)
+- [x] Pipeline branching — body procedures (BBL, Lipo 360, Breast Aug) use body jobs; face procedures use facial jobs
 - [ ] Full skin texture / laxity estimation from photo (dedicated ML model, not proxy)
-- [ ] Body landmark detection for torso / gluteal proportions (BBL, lipo 360)
 - [ ] Improved ML-based procedure matching trained on historical outcome data
 
-**AI Simulation (High Impact Feature):** ⬜ *Not started*
-- [ ] "Potential Results" overlay using generative AI
-- [ ] Morphing preview for Rhinoplasty (realistic, not cartoonish)
-- [ ] Breast augmentation size comparison view
-- [ ] IMPORTANT: Clear labeling — "AI Visualization — Not a Guarantee"
-- [ ] Results stored alongside evaluation, shareable via secure link
+**AI Simulation (High Impact Feature):** 🚧 *Partially delivered (Sprint 8)*
+- [x] `OpenAIService` — typed HTTP wrapper for `gpt-image-1` image edit + generation endpoints
+- [x] `GenerateSimulationJob` — procedure-specific prompts using body proportion data; stores result to S3; placeholder in dev (no OpenAI key required)
+- [x] `SimulationController` — `POST` to request simulation, `GET` to poll status (async, 'ai' queue)
+- [x] `SimulationViewer` React component — request button, 4-second status polling, result display, "not a guarantee" disclaimer, regenerate button
+- [x] Migration — `simulation_status`, `simulation_data`, `simulation_requested_at` on evaluations
+- [x] 12 body landmark tests (`BodyLandmarkTest.php`) + 11 simulation tests (`AISimulationTest.php`)
+- [ ] Morphing preview for Rhinoplasty (facial photo edit, not just generation)
+- [ ] Shareable secure link for simulation result
+- [ ] S3 photo download for real OpenAI image edit (currently generates from prompt only in prod)
 
 **Patient Experience Enhancements:**
 - [x] Beauty Roadmap PDF — personalized report emailed to patient ✅ *Sprint 6*
@@ -395,14 +422,15 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🔥 1 | Tenant self-registration flow (public sign-up → auto-onboard) | Phase 2 | Medium |
-| 🔥 2 | Stripe billing + plan enforcement | Phase 2 | Large |
+| 🔥 1 | Stripe billing + plan enforcement (Starter / Growth / Pro) | Phase 2 | Large |
+| 🔥 2 | Tenant self-registration flow (public sign-up → auto-onboard) | Phase 2 | Medium |
 | 🔥 3 | GitHub Actions CI (PHPStan + Pest + tsc) | Infra | Small |
 | 4 | CloudWatch / production alerts | Infra | Small |
-| 5 | Patient portal (status check + booking) | Phase 3 | Medium |
-| 6 | HubSpot / Nextech CRM integration | Phase 2 | Medium |
-| 7 | Body landmark detection (BBL/Lipo) | Phase 3 | Large |
-| 8 | AI Simulation (generative overlay) | Phase 3 | X-Large |
+| 5 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
+| 6 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
+| 7 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| 8 | Shareable secure link for simulation result | Phase 3 | Small |
+| 9 | Multilingual support (Spanish — Miami market priority) | Backlog | Large |
 
 ---
 
