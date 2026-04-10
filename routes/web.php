@@ -12,6 +12,7 @@ use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
+use App\Http\Controllers\Dashboard\SimulationController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
@@ -59,6 +60,10 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
         Route::patch('/{evaluation}/status', [DashboardEvaluationController::class, 'updateStatus'])->name('update-status');
         Route::patch('/{evaluation}/notes', [DashboardEvaluationController::class, 'updateNotes'])->name('update-notes');
         Route::get('/{evaluation}/brief', [ClinicalBriefController::class, 'download'])->name('brief');
+
+        // ── AI Simulation ──────────────────────────────────────────────────
+        Route::post('/{evaluation}/simulation', [SimulationController::class, 'store'])->name('simulation.store');
+        Route::get('/{evaluation}/simulation', [SimulationController::class, 'show'])->name('simulation.show');
     });
 
     // ── Clinic settings & team (owner / admin only) ───────────────────────
@@ -113,12 +118,12 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/', fn () => redirect()->route('admin.tenants.index'));
 
     Route::prefix('tenants')->name('tenants.')->group(function (): void {
-        Route::get('/',           [TenantAdminController::class, 'index'])->name('index');
-        Route::get('/create',    [TenantAdminController::class, 'create'])->name('create');
-        Route::post('/',         [TenantAdminController::class, 'store'])->name('store');
+        Route::get('/', [TenantAdminController::class, 'index'])->name('index');
+        Route::get('/create', [TenantAdminController::class, 'create'])->name('create');
+        Route::post('/', [TenantAdminController::class, 'store'])->name('store');
         // Note: show/update use string $id in the controller so they work with soft-deleted tenants.
-        Route::get('/{id}',      [TenantAdminController::class, 'show'])->name('show');
-        Route::patch('/{id}',    [TenantAdminController::class, 'update'])->name('update');
+        Route::get('/{id}', [TenantAdminController::class, 'show'])->name('show');
+        Route::patch('/{id}', [TenantAdminController::class, 'update'])->name('update');
         Route::delete('/{tenant}', [TenantAdminController::class, 'deactivate'])->name('deactivate');
         Route::post('/{id}/restore', [TenantAdminController::class, 'restore'])->name('restore');
         Route::post('/{tenant}/users', [TenantAdminController::class, 'addUser'])->name('users.store');

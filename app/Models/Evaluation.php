@@ -11,33 +11,48 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Evaluation extends Model
 {
     use HasFactory, HasTenantScope, HasUuids, SoftDeletes;
 
     // Status constants — use these everywhere, never raw strings
-    public const STATUS_DRAFT       = 'draft';
-    public const STATUS_SUBMITTED   = 'submitted';
-    public const STATUS_ANALYZING   = 'analyzing';
-    public const STATUS_COMPLETE    = 'complete';
-    public const STATUS_CONTACTED   = 'contacted';
-    public const STATUS_BOOKED      = 'booked';
-    public const STATUS_NO_SHOW     = 'no_show';
-    public const STATUS_NOT_A_FIT   = 'not_a_fit';
-    public const STATUS_FAILED      = 'failed';
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SUBMITTED = 'submitted';
+
+    public const STATUS_ANALYZING = 'analyzing';
+
+    public const STATUS_COMPLETE = 'complete';
+
+    public const STATUS_CONTACTED = 'contacted';
+
+    public const STATUS_BOOKED = 'booked';
+
+    public const STATUS_NO_SHOW = 'no_show';
+
+    public const STATUS_NOT_A_FIT = 'not_a_fit';
+
+    public const STATUS_FAILED = 'failed';
 
     // Priority constants
-    public const PRIORITY_URGENT   = 'urgent';
-    public const PRIORITY_HIGH     = 'high';
-    public const PRIORITY_MEDIUM   = 'medium';
+    public const PRIORITY_URGENT = 'urgent';
+
+    public const PRIORITY_HIGH = 'high';
+
+    public const PRIORITY_MEDIUM = 'medium';
+
     public const PRIORITY_STANDARD = 'standard';
 
     /** Intake wizard funnel steps — only increases, never decreases. */
-    public const FUNNEL_PROCEDURE  = 1; // procedure selected
-    public const FUNNEL_QUIZ       = 2; // quiz completed
-    public const FUNNEL_PHOTOS     = 3; // at least one photo uploaded
-    public const FUNNEL_SUBMITTED  = 4; // contact info + consent recorded
+    public const FUNNEL_PROCEDURE = 1; // procedure selected
+
+    public const FUNNEL_QUIZ = 2; // quiz completed
+
+    public const FUNNEL_PHOTOS = 3; // at least one photo uploaded
+
+    public const FUNNEL_SUBMITTED = 4; // contact info + consent recorded
 
     protected $fillable = [
         'tenant_id',
@@ -54,16 +69,21 @@ class Evaluation extends Model
         'external_id',
         'completed_at',
         'funnel_step',
+        'simulation_status',
+        'simulation_data',
+        'simulation_requested_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'quiz_answers'  => 'array',
+            'quiz_answers' => 'array',
             'analysis_data' => 'array',
-            'lead_score'    => 'integer',
-            'follow_up_at'  => 'datetime',
-            'completed_at'  => 'datetime',
+            'simulation_data' => 'array',
+            'lead_score' => 'integer',
+            'follow_up_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'simulation_requested_at' => 'datetime',
         ];
     }
 
@@ -73,7 +93,7 @@ class Evaluation extends Model
     {
         static::creating(function (Evaluation $evaluation): void {
             if (empty($evaluation->secure_token)) {
-                $evaluation->secure_token = hash('sha256', \Illuminate\Support\Str::random(64));
+                $evaluation->secure_token = hash('sha256', Str::random(64));
             }
         });
     }

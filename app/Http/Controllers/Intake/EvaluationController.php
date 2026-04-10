@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Intake;
 
-use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Intake\CreateEvaluationRequest;
 use App\Http\Requests\Intake\SaveQuizRequest;
 use App\Http\Requests\Intake\SubmitEvaluationRequest;
+use App\Jobs\AI\CalculateBodyProportionsJob;
 use App\Jobs\AI\CalculateProportionsJob;
+use App\Jobs\AI\ExtractBodyLandmarksJob;
 use App\Jobs\AI\ExtractFacialLandmarksJob;
 use App\Jobs\AI\GenerateBasicRecommendationsJob;
 use App\Jobs\AI\ValidatePhotoQualityJob;
@@ -40,22 +41,22 @@ class EvaluationController extends Controller
         // Create a stub patient record (no PHI yet — just a placeholder)
         // PHI is collected in the submit step only.
         $patient = Patient::create([
-            'email_encrypted' => 'pending_' . Str::uuid(), // placeholder until submit
-            'email_hash'      => hash('sha256', 'pending_' . Str::uuid()),
-            'created_via'     => 'widget',
+            'email_encrypted' => 'pending_'.Str::uuid(), // placeholder until submit
+            'email_hash' => hash('sha256', 'pending_'.Str::uuid()),
+            'created_via' => 'widget',
         ]);
 
         $evaluation = Evaluation::create([
-            'patient_id'     => $patient->id,
+            'patient_id' => $patient->id,
             'procedure_slug' => $request->validated('procedure_slug'),
-            'status'         => Evaluation::STATUS_DRAFT,
-            'funnel_step'    => Evaluation::FUNNEL_PROCEDURE,
+            'status' => Evaluation::STATUS_DRAFT,
+            'funnel_step' => Evaluation::FUNNEL_PROCEDURE,
         ]);
 
         $this->auditLog->record('evaluation.created', $evaluation);
 
         return response()->json([
-            'token'  => $evaluation->secure_token,
+            'token' => $evaluation->secure_token,
             'status' => $evaluation->status,
         ], 201);
     }
@@ -69,8 +70,8 @@ class EvaluationController extends Controller
 
         $evaluation->update([
             'quiz_answers' => $request->validated('answers'),
-            'status'       => Evaluation::STATUS_SUBMITTED,
-            'funnel_step'  => max($evaluation->funnel_step, Evaluation::FUNNEL_QUIZ),
+            'status' => Evaluation::STATUS_SUBMITTED,
+            'funnel_step' => max($evaluation->funnel_step, Evaluation::FUNNEL_QUIZ),
         ]);
 
         return response()->json(['status' => 'saved']);
@@ -91,7 +92,7 @@ class EvaluationController extends Controller
     public function submit(SubmitEvaluationRequest $request, string $token): JsonResponse
     {
         $evaluation = $this->findByToken($token);
-        $validated  = $request->validated();
+        $validated = $request->validated();
 
         // Create or find patient by email hash (deduplication)
         $emailHash = Patient::hashEmail($validated['patient']['email']);
@@ -101,25 +102,25 @@ class EvaluationController extends Controller
 
         // Update the patient record with real PHI (encrypted by model casts)
         $patient->update([
-            'name_encrypted'  => $validated['patient']['name'],
+            'name_encrypted' => $validated['patient']['name'],
             'email_encrypted' => $validated['patient']['email'],
             'phone_encrypted' => $validated['patient']['phone'] ?? null,
-            'email_hash'      => $emailHash,
-            'name_hash'       => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
+            'email_hash' => $emailHash,
+            'name_hash' => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
         ]);
 
         // Finalize evaluation — attach consent metadata
         $evaluation->update([
-            'patient_id'   => $patient->id,
-            'status'       => Evaluation::STATUS_ANALYZING,
+            'patient_id' => $patient->id,
+            'status' => Evaluation::STATUS_ANALYZING,
             'completed_at' => now(),
-            'funnel_step'  => Evaluation::FUNNEL_SUBMITTED,
+            'funnel_step' => Evaluation::FUNNEL_SUBMITTED,
             'quiz_answers' => array_merge($evaluation->quiz_answers ?? [], [
                 '_consent' => [
                     'hipaa_acknowledged' => $validated['consent']['hipaa_acknowledged'],
-                    'terms_accepted'     => $validated['consent']['terms_accepted'],
-                    'photo_use_consent'  => $validated['consent']['photo_use_consent'],
-                    'consented_at'       => $validated['consent']['consented_at'],
+                    'terms_accepted' => $validated['consent']['terms_accepted'],
+                    'photo_use_consent' => $validated['consent']['photo_use_consent'],
+                    'consented_at' => $validated['consent']['consented_at'],
                 ],
             ]),
         ]);
@@ -128,33 +129,46 @@ class EvaluationController extends Controller
 
         // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
         $evaluationId = $evaluation->id;
+        $procedureSlug = $evaluation->procedure_slug;
+
+        // Body procedures use landmark + proportion jobs specific to body geometry.
+        // Face procedures use the facial landmark + facial proportion jobs.
+        $isBodyProcedure = in_array($procedureSlug, ['bbl', 'lipo_360', 'breast_augmentation'], strict: true);
+
+        $landmarkJob = $isBodyProcedure
+            ? new ExtractBodyLandmarksJob($evaluationId)
+            : new ExtractFacialLandmarksJob($evaluationId);
+
+        $proportionsJob = $isBodyProcedure
+            ? new CalculateBodyProportionsJob($evaluationId)
+            : new CalculateProportionsJob($evaluationId);
 
         Bus::chain([
             new ValidatePhotoQualityJob($evaluationId),
-            new ExtractFacialLandmarksJob($evaluationId),
-            new CalculateProportionsJob($evaluationId),
+            $landmarkJob,
+            $proportionsJob,
             new GenerateBasicRecommendationsJob($evaluationId),
         ])
-        ->onQueue('ai')
-        ->catch(function (Throwable $e) use ($evaluationId): void {
-            Log::error('AI pipeline chain failed', [
-                'evaluation_id' => $evaluationId,
-                'error'         => $e->getMessage(),
-            ]);
+            ->onQueue('ai')
+            ->catch(function (Throwable $e) use ($evaluationId): void {
+                Log::error('AI pipeline chain failed', [
+                    'evaluation_id' => $evaluationId,
+                    'error' => $e->getMessage(),
+                ]);
 
-            // Mark evaluation failed if the chain breaks mid-way
-            Evaluation::withoutGlobalScopes()
-                ->where('id', $evaluationId)
-                ->whereNotIn('status', [
-                    Evaluation::STATUS_COMPLETE,
-                    Evaluation::STATUS_FAILED,
-                ])
-                ->update(['status' => Evaluation::STATUS_FAILED]);
-        })
-        ->dispatch();
+                // Mark evaluation failed if the chain breaks mid-way
+                Evaluation::withoutGlobalScopes()
+                    ->where('id', $evaluationId)
+                    ->whereNotIn('status', [
+                        Evaluation::STATUS_COMPLETE,
+                        Evaluation::STATUS_FAILED,
+                    ])
+                    ->update(['status' => Evaluation::STATUS_FAILED]);
+            })
+            ->dispatch();
 
         return response()->json([
-            'status'     => 'submitted',
+            'status' => 'submitted',
             'portal_url' => route('intake.success', [], absolute: true),
         ]);
     }

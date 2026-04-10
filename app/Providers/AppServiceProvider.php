@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\AuditLog;
+use App\Services\OpenAIService;
+use App\Services\SecureFileService;
 use App\Services\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -19,8 +22,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(TenantContext::class);
 
         // AuditLog depends on the current request for IP/user-agent
-        $this->app->singleton(\App\Services\AuditLog::class);
-        $this->app->singleton(\App\Services\SecureFileService::class);
+        $this->app->singleton(AuditLog::class);
+        $this->app->singleton(SecureFileService::class);
+
+        // OpenAI — resolved once per process; key comes from config/services.php
+        $this->app->singleton(OpenAIService::class, fn () => new OpenAIService(
+            (string) config('services.openai.key', ''),
+        ));
     }
 
     public function boot(): void

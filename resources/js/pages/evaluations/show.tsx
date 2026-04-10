@@ -1,5 +1,5 @@
 import { Deferred, Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { brief, index, show, updateNotes, updateStatus } from '@/routes/evaluations';
+import { show as simulationShow, store as simulationStore } from '@/routes/evaluations/simulation';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,9 @@ interface Evaluation {
     created_at: string;
     quiz_answers: Record<string, unknown> | null;
     analysis_data: Record<string, unknown> | null;
+    simulation_status: string | null;
+    simulation_data: Record<string, unknown> | null;
+    simulation_requested_at: string | null;
     patient: Patient | null;
     photos: Photo[];
 }
@@ -316,6 +320,157 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
     );
 }
 
+// ── AI Simulation Viewer ──────────────────────────────────────────────────────
+
+interface SimulationStatus {
+    status: string | null;
+    simulation_data: Record<string, unknown> | null;
+    simulation_url: string | null;
+    requested_at: string | null;
+}
+
+function SimulationViewer({ evaluation }: { evaluation: Evaluation }) {
+    const [sim, setSim] = useState<SimulationStatus>({
+        status: evaluation.simulation_status,
+        simulation_data: evaluation.simulation_data,
+        simulation_url: null,
+        requested_at: evaluation.simulation_requested_at,
+    });
+    const [requesting, setRequesting] = useState(false);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const isBodyProcedure = ['bbl', 'lipo_360', 'breast_augmentation'].includes(evaluation.procedure_slug);
+
+    const stopPolling = useCallback(() => {
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+    }, []);
+
+    const pollStatus = useCallback(async () => {
+        try {
+            const res = await fetch(simulationShow.url(evaluation.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) return;
+            const data: SimulationStatus = await res.json();
+            setSim(data);
+            if (data.status === 'complete' || data.status === 'failed') {
+                stopPolling();
+            }
+        } catch {
+            // Network error — keep polling
+        }
+    }, [evaluation.id, stopPolling]);
+
+    // Start polling when status is pending/processing
+    useEffect(() => {
+        if (sim.status === 'pending' || sim.status === 'processing') {
+            pollRef.current = setInterval(pollStatus, 4000);
+        }
+        return stopPolling;
+    }, [sim.status, pollStatus, stopPolling]);
+
+    const requestSimulation = async () => {
+        setRequesting(true);
+        try {
+            const res = await fetch(simulationStore.url(evaluation.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '',
+                },
+            });
+            const data = await res.json();
+            setSim((prev) => ({ ...prev, status: data.status }));
+        } finally {
+            setRequesting(false);
+        }
+    };
+
+    const isBodyComplete = evaluation.status === 'complete' || evaluation.analysis_data?.body_proportions != null;
+
+    return (
+        <SectionCard title="AI Simulation">
+            {!isBodyProcedure ? (
+                <p className="text-xs text-[#9B9B8E] italic">
+                    AI simulation is available for body procedures (BBL, Lipo 360, Breast Augmentation).
+                </p>
+            ) : !isBodyComplete && sim.status === null ? (
+                <p className="text-xs text-[#9B9B8E] italic">
+                    Simulation will be available once AI analysis is complete.
+                </p>
+            ) : sim.status === null ? (
+                <div className="space-y-3">
+                    <p className="text-xs text-[#9B9B8E]">
+                        Generate an AI before/after simulation for this patient's procedure.
+                        The result is for consultation purposes only and is not a medical guarantee.
+                    </p>
+                    <Button
+                        onClick={requestSimulation}
+                        disabled={requesting}
+                        className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 text-sm"
+                    >
+                        {requesting ? 'Requesting…' : '✦ Generate Simulation'}
+                    </Button>
+                </div>
+            ) : sim.status === 'pending' || sim.status === 'processing' ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                    <div className="size-8 animate-spin rounded-full border-2 border-[#C9A84C] border-t-transparent" />
+                    <p className="text-xs text-[#9B9B8E]">
+                        {sim.status === 'pending' ? 'Queued…' : 'Generating simulation…'}
+                    </p>
+                </div>
+            ) : sim.status === 'failed' ? (
+                <div className="space-y-3">
+                    <p className="text-xs text-red-400">Simulation failed. Please try again.</p>
+                    <Button
+                        onClick={requestSimulation}
+                        disabled={requesting}
+                        variant="outline"
+                        className="w-full text-sm border-sidebar-border/50 text-[#F5F0E8]"
+                    >
+                        {requesting ? 'Requesting…' : 'Retry Simulation'}
+                    </Button>
+                </div>
+            ) : sim.status === 'complete' ? (
+                <div className="space-y-3">
+                    {sim.simulation_url ? (
+                        <img
+                            src={sim.simulation_url}
+                            alt="AI simulation result"
+                            className="w-full rounded-lg border border-sidebar-border/50 object-cover"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#C9A84C]/30 bg-[#0A0A0F] py-8 px-4">
+                            <span className="text-2xl">✦</span>
+                            <p className="text-center text-xs text-[#9B9B8E]">
+                                {sim.simulation_data?.placeholder_message as string
+                                    ?? 'Simulation complete. Enable AI Vision to view generated images.'}
+                            </p>
+                        </div>
+                    )}
+
+                    <p className="text-[10px] text-[#9B9B8E] italic text-center">
+                        ⚠ AI simulation for consultation purposes only. Results are not a medical guarantee.
+                    </p>
+
+                    <Button
+                        onClick={requestSimulation}
+                        disabled={requesting}
+                        variant="outline"
+                        className="w-full text-xs border-sidebar-border/50 text-[#9B9B8E] hover:text-[#F5F0E8]"
+                    >
+                        {requesting ? 'Requesting…' : 'Regenerate'}
+                    </Button>
+                </div>
+            ) : null}
+        </SectionCard>
+    );
+}
+
 // ── Status update panel ───────────────────────────────────────────────────────
 
 interface StatusFormFields {
@@ -508,7 +663,8 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                     </div>
 
                     {/* Right — coordinator actions (1/3) */}
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1 space-y-6">
+                        <SimulationViewer evaluation={evaluation} />
                         <CoordinatorPanel evaluation={evaluation} />
                     </div>
                 </div>
