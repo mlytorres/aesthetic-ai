@@ -20,6 +20,8 @@ use Illuminate\Queue\SerializesModels;
  *
  * PHI: email contains only patient first name + procedure type.
  * Full PHI remains behind the authenticated coordinator portal.
+ *
+ * The clinical brief PDF is attached when $briefPdfBytes is provided.
  */
 class NewEvaluationMail extends Mailable
 {
@@ -37,15 +39,12 @@ class NewEvaluationMail extends Mailable
 
     public string $clinicName;
 
-    /** Raw PDF bytes for the clinical brief attachment, or null to skip. */
-    private ?string $briefPdfBytes = null;
-
     public function __construct(
         public readonly Evaluation $evaluation,
         string $magicUrl,
-        ?string $briefPdfBytes = null,
+        private readonly ?string $briefPdfBytes = null,
+        private readonly string $briefFilename = 'clinical-brief.pdf',
     ) {
-        $this->briefPdfBytes = $briefPdfBytes;
         $procedure = $evaluation->procedure_slug;
         $patient = $evaluation->patient;
         $tenant = $evaluation->tenant;
@@ -56,7 +55,7 @@ class NewEvaluationMail extends Mailable
         $this->clinicName = $tenant?->name ?? 'Your Clinic';
         $this->magicUrl = $magicUrl;
 
-        // Use only the first name — partial PHI exposure in email body
+        // Use only the first name — partial PHI exposure in email body is acceptable.
         $fullName = $patient?->name_encrypted ?? null;
         $this->patientFirstName = $fullName
             ? explode(' ', trim($fullName))[0]
@@ -73,7 +72,7 @@ class NewEvaluationMail extends Mailable
         };
 
         return new Envelope(
-            subject: "{$priorityTag} New {$this->procedure} Evaluation — Score: {$this->leadScore}",
+            subject: "{$priorityTag} New {$this->procedure} Evaluation — {$this->clinicName}",
         );
     }
 
@@ -85,7 +84,9 @@ class NewEvaluationMail extends Mailable
     }
 
     /**
-     * @return array<int, Attachment>
+     * Attach the clinical brief PDF when bytes were successfully generated.
+     *
+     * @return Attachment[]
      */
     public function attachments(): array
     {
@@ -93,13 +94,11 @@ class NewEvaluationMail extends Mailable
             return [];
         }
 
-        $procedure = ucwords(str_replace(['-', '_'], ' ', $this->evaluation->procedure_slug));
-        $shortId = substr($this->evaluation->id, 0, 8);
-        $filename = "Clinical-Brief-{$procedure}-{$shortId}.pdf";
-
         return [
-            Attachment::fromData(fn () => $this->briefPdfBytes, $filename)
-                ->withMime('application/pdf'),
+            Attachment::fromData(
+                fn () => $this->briefPdfBytes,
+                $this->briefFilename,
+            )->withMime('application/pdf'),
         ];
     }
 }

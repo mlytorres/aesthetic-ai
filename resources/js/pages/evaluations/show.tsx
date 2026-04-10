@@ -304,7 +304,7 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
                         </p>
 
                         {/* Metadata badge for status changes */}
-                        {entry.metadata?.new_status && (
+                        {entry.metadata?.new_status != null && (
                             <span className="mt-1 inline-block rounded bg-[#1E1E28] px-1.5 py-0.5 text-[10px] capitalize text-[#C9A84C]">
                                 → {String(entry.metadata.new_status).replace('_', ' ')}
                             </span>
@@ -480,20 +480,14 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                                 {evaluation.priority}
                             </p>
                         </div>
-                        {/* Clinical Brief PDF download — plain <a> so the browser handles the file download natively */}
+                        {/* Clinical Brief PDF — plain <a> so the browser handles the download natively */}
                         <a
                             href={brief.url(evaluation.id)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-[#F5F0E8] transition-colors hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                                className="size-3.5 shrink-0"
-                                aria-hidden="true"
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-3.5 shrink-0" aria-hidden="true">
                                 <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
                                 <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
                             </svg>
@@ -510,25 +504,7 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                         <PatientCard patient={evaluation.patient ?? null} />
                         <PhotosGallery photos={evaluation.photos ?? []} />
                         <QuizAnswersCard answers={evaluation.quiz_answers} />
-
-                        {/* Audit timeline — deferred, loads after main page */}
-                        <Deferred data="auditEntries" fallback={
-                            <SectionCard title="Activity Log">
-                                <div className="space-y-3">
-                                    {[...Array(3)].map((_, i) => (
-                                        <div key={i} className="flex animate-pulse gap-3">
-                                            <div className="size-3 shrink-0 rounded-full bg-[#2A2A35]" />
-                                            <div className="flex-1 space-y-1.5">
-                                                <div className="h-3 w-2/3 rounded bg-[#2A2A35]" />
-                                                <div className="h-2.5 w-1/3 rounded bg-[#1E1E28]" />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </SectionCard>
-                        }>
-                            <AuditTimeline entries={auditEntries ?? []} />
-                        </Deferred>
+                        <AuditTimeline entries={auditEntries ?? []} />
                     </div>
 
                     {/* Right — coordinator actions (1/3) */}

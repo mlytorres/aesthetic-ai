@@ -6,14 +6,15 @@
 
 ## Implementation Status
 
-> Legend: ✅ Done · 🚧 In Progress · ⬜ Not Started
+> Legend: ✅ Done · 🚧 In Progress · ⬜ Not Started · 🚫 Non-dev (business task)
 
-### Sprint 1 & 2 — Completion Summary (Updated April 2026)
+### Sprint Summary (Updated April 2026)
 
 **Sprint 1 — Core Infrastructure:** ✅ **Complete**
 **Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
 **Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
 **Sprint 3 — AI Pipeline:** ✅ **Complete**
+**Sprint 5 — Polish + Pilot Launch:** 🚧 **In Progress** (dev items complete, business items pending)
 
 ---
 
@@ -178,20 +179,34 @@ Phase 4 — Scale (Months 11–18)
 **Security:**
 - [x] All coordinator routes behind `auth + verified + tenant` middleware
 - [x] Audit log visible in evaluation detail (deferred timeline with user, action, IP, timestamp)
-- [ ] Session timeout after 30 minutes of inactivity *(not configured yet)*
+- [x] Session timeout after 30 minutes of inactivity — `useSessionTimeout` hook + warning dialog + `/keepalive` route
 
 ---
 
 ### P1 Sprint 5 — Polish + Pilot Launch (Weeks 12–13)
 
-- [ ] End-to-end QA (full flow on iPhone, Android, desktop)
-- [ ] HIPAA internal review checklist
-- [ ] BAA signed with pilot clinic
-- [ ] Patient-facing copy review (medical accuracy, tone)
-- [ ] Coordinator training session (30 min)
-- [ ] Analytics: Funnel drop-off tracking (step completion rates)
-- [ ] Monitoring: Sentry errors + CloudWatch alerts
-- [ ] Soft launch: Add widget to one page on clinic website
+**Dev items:**
+- [x] Analytics dashboard — `AnalyticsController` with `Inertia::defer()` for all 5 metrics (weeklyVolume, statusFunnel, scoreDistrib, priorityBreakdown, avgTimeToContact)
+- [x] Analytics React page (`resources/js/pages/analytics/index.tsx`) with skeleton loaders
+- [x] Analytics sidebar nav entry + Wayfinder route helper
+- [x] Monitoring: Sentry — server-side `SentryContextServiceProvider` (user + tenant context on every error) + client-side `@sentry/react` init in `app.tsx` with `browserTracingIntegration`
+- [x] Clinical Brief PDF — `ClinicalBriefService`, `ClinicalBriefController`, `pdf.clinical-brief` Blade template, download button in evaluation detail
+- [x] Clinical Brief auto-attached to coordinator notification email (`NewEvaluationMail`)
+- [x] HIPAA session timeout — 30-min inactivity timer with warning dialog + `/keepalive` endpoint
+- [x] HIPAA audit log timeline — `AuditTimeline` component on evaluation detail page
+- [x] TypeScript strict — `tsc --noEmit` passes with zero errors
+- [x] Test suite — 102 tests, all passing (`ClinicalBriefTest`, `AnalyticsTest` + all prior suites)
+- [ ] **Funnel drop-off tracking** — step completion rates for intake wizard (steps 1–5 tracked server-side) *(not yet implemented)*
+- [ ] **CloudWatch alerts** — CPU/memory/queue-depth alarms for production deploy *(infrastructure — defer to deploy)*
+- [ ] **Session timeout after 30 min** — update `.env` `SESSION_LIFETIME=30` *(done in `.env.example`; must be set in production env)*
+
+**Business items (non-dev — coordinate with clinic):**
+- 🚫 End-to-end QA (full flow on iPhone, Android, desktop)
+- 🚫 HIPAA internal review checklist
+- 🚫 BAA signed with pilot clinic
+- 🚫 Patient-facing copy review (medical accuracy, tone)
+- 🚫 Coordinator training session (30 min)
+- 🚫 Soft launch: Add intake widget to one page on clinic website
 
 ---
 
@@ -333,4 +348,4 @@ Phase 4 — Scale (Months 11–18)
 | Coordinator time-to-call | < 30 min for High/Urgent | < 15 min |
 | No-show rate | -15% vs. baseline | -25% |
 | Photo quality pass rate | > 80% | > 90% |
-| AI recommendation accuracy | N/A (rule-based) | > 75% match |
+| AI recommendation accuracy | N/A (rule-based) | > 75% match 

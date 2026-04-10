@@ -8,6 +8,8 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -17,6 +19,7 @@ import { analytics, dashboard } from '@/routes';
 import { index as evaluationsIndex } from '@/routes/evaluations';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
 import { index as clinicTeamIndex } from '@/routes/clinic/team';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -92,12 +95,6 @@ export function AppSidebar() {
 }
 
 // ── Clinic section ────────────────────────────────────────────────────────────
-
-import {
-    SidebarGroup,
-    SidebarGroupLabel,
-} from '@/components/ui/sidebar';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 
 function NavClinic({ items }: { items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();

@@ -39,6 +39,12 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
+    // ── Session keepalive (HIPAA inactivity timer) ────────────────────────
+    // Touching this endpoint resets the server-side session lifetime.
+    // Called by the client-side useSessionTimeout hook when the user confirms
+    // they are still active.
+    Route::get('keepalive', fn () => response()->noContent())->name('keepalive');
+
     // ── Local-dev photo streaming (FEATURE_AI_VISION=false only) ─────────
     // In production this route is never hit — SecureFileService returns S3 pre-signed URLs.
     Route::get('/photos/{hash}', PhotoStreamController::class)->name('photos.stream');
@@ -86,7 +92,7 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
     // Photo upload
     Route::post('/evaluations/{token}/photos', [PhotoController::class, 'store'])
-        ->name('evaluations.photos');
+        ->name('evaluations.photos.store');
 });
 
 require __DIR__.'/settings.php';

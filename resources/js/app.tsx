@@ -1,11 +1,10 @@
 import * as Sentry from '@sentry/react';
-import { createInertiaApp, router } from '@inertiajs/react';
+import { createInertiaApp } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
-import AppLayout from '@/layouts/app-layout';
-import AuthLayout from '@/layouts/auth-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -21,52 +20,33 @@ if (import.meta.env.VITE_SENTRY_DSN_PUBLIC) {
         // Capture 20% of transactions for performance monitoring
         tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
 
-        // Track Inertia page navigations as Sentry transactions
         integrations: [
-            Sentry.browserTracingIntegration({
-                // Inertia navigation: capture route changes
-                beforeStartSpan: (context) => ({
-                    ...context,
-                    name: window.location.pathname,
-                }),
-            }),
+            Sentry.browserTracingIntegration(),
         ],
-    });
-
-    // Attach the Inertia page component name as a Sentry tag on every navigation
-    router.on('navigate', () => {
-        Sentry.setTag('inertia.page', document.title);
     });
 }
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-            case name.startsWith('intake/'):   // patient-facing — no chrome
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
-        }
+    title: (title) => `${title} — ${appName}`,
+
+    resolve: (name) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pages = import.meta.glob('./pages/**/*.tsx', { eager: true }) as any;
+        return resolvePageComponent(`./pages/${name}.tsx`, pages);
     },
-    strictMode: true,
-    withApp(app) {
-        return (
-            <TooltipProvider delayDuration={0}>
-                {app}
+
+    setup({ el, App, props }) {
+        createRoot(el).render(
+            <TooltipProvider>
+                <App {...props} />
                 <Toaster />
-            </TooltipProvider>
+            </TooltipProvider>,
         );
     },
+
     progress: {
-        color: '#4B5563',
+        color: '#C9A84C',
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();

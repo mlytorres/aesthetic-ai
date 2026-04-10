@@ -28,6 +28,9 @@ use Illuminate\Support\Facades\Mail;
  * Recipients: tenant.settings.coordinator_emails → falls back to all
  * coordinator/owner users on the tenant.
  *
+ * The clinical brief PDF is generated once and attached to every outgoing email.
+ * If PDF generation fails, the notification is still sent without the attachment.
+ *
  * Queued on the 'notifications' queue — separate from the 'default' AI queue
  * so a slow email provider never blocks AI processing.
  *
@@ -39,7 +42,7 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 30;
+    public int $timeout = 60;
 
     public function __construct(
         public readonly string $evaluationId,
@@ -74,19 +77,18 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
             return;
         }
 
-        $sentCount = 0;
-
         // Build the tenant subdomain base URL — the magic link route requires the tenant
         // middleware, which resolves the tenant from the subdomain. Without it the link
         // would land on the root domain where tenant cannot be resolved.
-        $appUrl = config('app.url');                                  // e.g. https://aesthetic-ai.test
-        $appDomain = parse_url($appUrl, PHP_URL_HOST);                   // aesthetic-ai.test
-        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'https';      // https
-        $tenantBase = "{$scheme}://{$tenant->slug}.{$appDomain}";        // https://miamilife.aesthetic-ai.test
+        $appUrl = config('app.url');
+        $appDomain = parse_url($appUrl, PHP_URL_HOST);
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'https';
+        $tenantBase = "{$scheme}://{$tenant->slug}.{$appDomain}";
 
         // Generate the clinical brief PDF once — attached to every recipient's email.
         // Catch exceptions so a PDF generation failure never silences the notification.
         $briefBytes = null;
+        $briefFilename = $briefService->filename($evaluation);
 
         try {
             $briefBytes = $briefService->generateBytes($evaluation);
@@ -97,51 +99,51 @@ class NotifyClinicNewEvaluationJob implements ShouldQueue
             ]);
         }
 
+        $sentCount = 0;
+
         foreach ($recipients as $email) {
-            // Generate a fresh one-time magic link per recipient
+            // Generate a fresh one-time magic link per recipient.
             [, $rawToken] = MagicLink::generate($evaluation, $email);
 
             $magicUrl = $tenantBase.'/magic/'.$rawToken;
 
-            Mail::to($email)->send(new NewEvaluationMail($evaluation, $magicUrl, $briefBytes));
+            Mail::to($email)->send(new NewEvaluationMail(
+                evaluation: $evaluation,
+                magicUrl: $magicUrl,
+                briefPdfBytes: $briefBytes,
+                briefFilename: $briefFilename,
+            ));
 
             $sentCount++;
         }
 
         Log::info('NotifyClinicNewEvaluationJob: notifications sent', [
             'evaluation_id' => $this->evaluationId,
-            'recipients' => $sentCount,
+            'tenant_id' => $tenant->id,
+            'recipient_count' => $sentCount,
+            'brief_attached' => $briefBytes !== null,
         ]);
     }
 
     /**
-     * @return array<string>
+     * Resolve notification recipients.
+     *
+     * Uses coordinator_emails from tenant settings when configured.
+     * Falls back to all coordinator + owner users on the tenant.
+     *
+     * @return string[]
      */
     private function resolveRecipients(Tenant $tenant): array
     {
-        // Priority 1: explicitly configured coordinator emails in tenant settings
-        $configured = $tenant->settings['coordinator_emails'] ?? [];
+        $configured = data_get($tenant->settings, 'coordinator_emails', []);
 
         if (! empty($configured) && is_array($configured)) {
-            return array_filter($configured); // remove any empty strings
+            return array_filter($configured, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
         }
 
-        // Priority 2: all coordinator + owner users on this tenant
-        return User::withoutGlobalScopes()
-            ->where('tenant_id', $tenant->id)
-            ->whereIn('role', ['coordinator', 'owner', 'admin'])
+        return User::where('tenant_id', $tenant->id)
+            ->whereIn('role', [User::ROLE_COORDINATOR, User::ROLE_OWNER, User::ROLE_ADMIN])
             ->pluck('email')
-            ->filter()
-            ->values()
-            ->toArray();
-    }
-
-    public function failed(\Throwable $e): void
-    {
-        Log::error('NotifyClinicNewEvaluationJob failed', [
-            'evaluation_id' => $this->evaluationId,
-            'error' => $e->getMessage(),
-        ]);
-        // Non-fatal — don't update evaluation status for notification failures
+            ->all();
     }
 }
