@@ -117,9 +117,16 @@ function Skeleton({ className = '' }: { className?: string }) {
 // ── Delta badge ───────────────────────────────────────────────────────────────
 
 function Delta({ value, suffix = '' }: { value: number | null; suffix?: string }) {
-    if (value === null) return <span className="text-zinc-500">—</span>;
-    if (value === 0) return <span className="text-zinc-400">±0{suffix}</span>;
+    if (value === null) {
+return <span className="text-zinc-500">—</span>;
+}
+
+    if (value === 0) {
+return <span className="text-zinc-400">±0{suffix}</span>;
+}
+
     const positive = value > 0;
+
     return (
         <span className={positive ? 'text-emerald-400' : 'text-red-400'}>
             {positive ? '+' : ''}{value}{suffix}
@@ -226,6 +233,7 @@ function SparkLine({ data }: { data: WeekPoint[] }) {
     const pts    = data.map((d, i) => {
         const x = (i / (data.length - 1)) * w;
         const y = h - (d.count / max) * (h - 4);
+
         return `${x},${y}`;
     });
     const polyline = pts.join(' ');
@@ -255,6 +263,7 @@ function SparkLine({ data }: { data: WeekPoint[] }) {
                 />
                 {data.map((d, i) => {
                     const [x, y] = pts[i].split(',').map(Number);
+
                     return (
                         <circle key={i} cx={x} cy={y} r="2" fill="#C9A84C" />
                     );
@@ -281,6 +290,7 @@ function IntakeFunnelChart({ data }: { data: FunnelStep[] }) {
         <div className="flex flex-col gap-3">
             {data.map((step, i) => {
                 const dropOff = i > 0 ? data[i - 1].rate - step.rate : 0;
+
                 return (
                     <div key={step.step} className="flex flex-col gap-1">
                         <div className="flex items-center justify-between text-xs">
@@ -558,6 +568,7 @@ export default function Analytics({
                                             const share = totalEvaluations
                                                 ? Math.round((row.count / totalEvaluations) * 100)
                                                 : 0;
+
                                             return (
                                                 <tr key={row.status} className="border-b border-zinc-800/50 last:border-0">
                                                     <td className="px-4 py-3 text-zinc-200">

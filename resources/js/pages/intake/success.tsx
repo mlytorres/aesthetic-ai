@@ -1,5 +1,5 @@
-import { type FC } from 'react';
 import { Head } from '@inertiajs/react';
+import type {FC} from 'react';
 
 interface Props {
     clinic: {

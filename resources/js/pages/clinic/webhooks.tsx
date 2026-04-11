@@ -1,13 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Clock, RefreshCw, Webhook } from 'lucide-react';
-import Heading from '@/components/heading';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import {
     index as webhooksIndex,
     retry as webhooksRetry,
 } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
+import Heading from '@/components/heading';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { edit as settingsEdit } from '@/routes/clinic/settings';
 
 interface LastResponse {
@@ -79,6 +79,7 @@ const STATUS_CONFIG = {
 function StatusBadge({ status }: { status: Delivery['status'] }) {
     const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
     const Icon = config.icon;
+
     return (
         <span
             className={cn(

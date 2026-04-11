@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
 import { ArrowLeft, Mail, UserPlus } from 'lucide-react';
+import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
 interface TenantData {
@@ -293,6 +294,7 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 							<div className="space-y-3">
 								{users.map((user) => {
 									const colors = getRoleColors(user.role);
+
 									return (
 										<div
 											key={user.id}
@@ -341,10 +343,14 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 	);
 }
 
-TenantShow.layout = {
-	breadcrumbs: [
-		{ title: 'Admin', href: '/admin' },
-		{ title: 'Tenants', href: '/admin/tenants' },
-		{ title: 'Manage', href: '#' },
-	],
-};
+TenantShow.layout = (page: React.ReactNode) => (
+	<AppLayout
+		breadcrumbs={[
+			{ title: 'Admin', href: '/admin' },
+			{ title: 'Tenants', href: '/admin/tenants' },
+			{ title: 'Manage', href: '#' },
+		]}
+	>
+		{page}
+	</AppLayout>
+);

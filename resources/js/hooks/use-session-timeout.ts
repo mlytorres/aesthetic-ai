@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * HIPAA-compliant session inactivity timeout hook.
@@ -67,6 +67,7 @@ export function useSessionTimeout(): UseSessionTimeoutReturn {
                 loggedOutRef.current = true;
                 clearInterval(interval);
                 router.post('/logout');
+
                 return;
             }
 
@@ -92,6 +93,7 @@ export function useSessionTimeout(): UseSessionTimeoutReturn {
             setRemainingSeconds((prev) => {
                 if (prev <= 1) {
                     clearInterval(countdown);
+
                     return 0;
                 }
 

@@ -145,6 +145,7 @@ export default function CreateTenant({ plans }: Props) {
 							<div className="flex flex-wrap gap-2">
 								{PROCEDURES.map((proc) => {
 									const active = data.procedures.includes(proc.value);
+
 									return (
 										<button
 											key={proc.value}

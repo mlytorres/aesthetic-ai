@@ -93,9 +93,13 @@ function formatDate(iso: string): string {
 }
 
 function LeadScoreBar({ score }: { score: number | null }) {
-    if (score === null) return <span className="text-[#9B9B8E] text-xs">—</span>;
+    if (score === null) {
+return <span className="text-[#9B9B8E] text-xs">—</span>;
+}
+
     const pct = Math.min(100, Math.max(0, score));
     const color = pct >= 75 ? '#C9A84C' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
+
     return (
         <div className="flex items-center gap-2">
             <div className="h-1.5 w-16 rounded-full bg-white/10 overflow-hidden">

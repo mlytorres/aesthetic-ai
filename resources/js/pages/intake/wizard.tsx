@@ -1,23 +1,14 @@
-import { useReducer, useCallback, type FC } from 'react';
 import { Head, router } from '@inertiajs/react';
-import {
-    type WizardState,
-    type WizardAction,
-    type WizardStep,
-    type Procedure,
-    type PhotoType,
-    type ClinicConfig,
-    type CreateEvaluationResponse,
-    type UploadPhotoResponse,
-    type ValidationErrorResponse,
-} from '@/types/intake';
+import { useReducer, useCallback  } from 'react';
+import type {FC} from 'react';
+import type {WizardState, WizardAction, WizardStep, Procedure, PhotoType, ClinicConfig, CreateEvaluationResponse, UploadPhotoResponse, ValidationErrorResponse} from '@/types/intake';
 
 import WizardShell    from './components/WizardShell';
+import ConsentSubmit   from './steps/ConsentSubmit';
+import ContactInfo     from './steps/ContactInfo';
+import PhotoCapture    from './steps/PhotoCapture';
 import ProcedureSelect from './steps/ProcedureSelect';
 import QuizStep        from './steps/QuizStep';
-import PhotoCapture    from './steps/PhotoCapture';
-import ContactInfo     from './steps/ContactInfo';
-import ConsentSubmit   from './steps/ConsentSubmit';
 
 // ─── Props from IntakeController@show ────────────────────────────────────────
 
@@ -32,11 +23,13 @@ const STEP_ORDER: WizardStep[] = ['procedure', 'quiz', 'photos', 'contact', 'con
 
 function nextStep(current: WizardStep): WizardStep {
     const idx = STEP_ORDER.indexOf(current);
+
     return STEP_ORDER[Math.min(idx + 1, STEP_ORDER.length - 1)] as WizardStep;
 }
 
 function prevStep(current: WizardStep): WizardStep {
     const idx = STEP_ORDER.indexOf(current);
+
     return STEP_ORDER[Math.max(idx - 1, 0)] as WizardStep;
 }
 
@@ -96,6 +89,7 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
                 existing >= 0
                     ? state.photos.map((p, i) => (i === existing ? placeholder : p))
                     : [...state.photos, placeholder];
+
             return { ...state, photos, error: null };
         }
 
@@ -105,6 +99,7 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
                     ? { ...action.photo, local_url: p.local_url, uploading: false }
                     : p,
             );
+
             return { ...state, photos };
         }
 
@@ -114,6 +109,7 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
                     ? { ...p, uploading: false, error: action.error }
                     : p,
             );
+
             return { ...state, photos };
         }
 
@@ -172,6 +168,7 @@ async function apiPost<T>(url: string, body: unknown): Promise<T> {
             err.errors
                 ? Object.values(err.errors).flat().join(' ')
                 : err.message ?? 'Something went wrong.';
+
         throw new Error(message);
     }
 
@@ -185,7 +182,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
 
     // ── Step 1: select procedure → create evaluation ──────────────────────────
     const handleProcedureNext = useCallback(async (): Promise<void> => {
-        if (!state.selectedProcedure) return;
+        if (!state.selectedProcedure) {
+return;
+}
 
         dispatch({ type: 'SET_LOADING', loading: true });
         dispatch({ type: 'SET_ERROR', error: null });
@@ -212,7 +211,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
 
     // ── Step 2: submit quiz answers ───────────────────────────────────────────
     const handleQuizNext = useCallback(async (): Promise<void> => {
-        if (!state.evaluationToken) return;
+        if (!state.evaluationToken) {
+return;
+}
 
         dispatch({ type: 'SET_LOADING', loading: true });
 
@@ -232,7 +233,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
     // ── Photo upload ──────────────────────────────────────────────────────────
     const handlePhotoUpload = useCallback(
         async (file: File, type: PhotoType): Promise<void> => {
-            if (!state.evaluationToken) return;
+            if (!state.evaluationToken) {
+return;
+}
 
             const localUrl = URL.createObjectURL(file);
             dispatch({ type: 'PHOTO_UPLOAD_START', photoType: type, localUrl });
@@ -262,6 +265,7 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
                         ? Object.values(err.errors).flat().join(' ')
                         : err.message ?? 'Upload failed.';
                     dispatch({ type: 'PHOTO_UPLOAD_ERROR', photoType: type, error: msg });
+
                     return;
                 }
 
@@ -300,7 +304,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
 
     // ── Final submit ──────────────────────────────────────────────────────────
     const handleSubmit = useCallback(async (): Promise<void> => {
-        if (!state.evaluationToken) return;
+        if (!state.evaluationToken) {
+return;
+}
 
         // Stamp consent timestamp at submission time (not stored in reducer — used inline)
         const consentedAt = new Date().toISOString();
@@ -347,7 +353,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
                         procedures={procedures}
                         state={state}
                         dispatch={dispatch}
-                        onNext={() => { void handleProcedureNext(); }}
+                        onNext={() => {
+ void handleProcedureNext(); 
+}}
                     />
                 )}
 
@@ -356,7 +364,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
                         questions={procedure.quiz.questions}
                         state={state}
                         dispatch={dispatch}
-                        onNext={() => { void handleQuizNext(); }}
+                        onNext={() => {
+ void handleQuizNext(); 
+}}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
                     />
                 )}
@@ -387,7 +397,9 @@ const WizardPage: FC<Props> = ({ clinic, procedures }) => {
                     <ConsentSubmit
                         state={state}
                         dispatch={dispatch}
-                        onSubmit={() => { void handleSubmit(); }}
+                        onSubmit={() => {
+ void handleSubmit(); 
+}}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
                     />
                 )}

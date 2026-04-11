@@ -21,7 +21,10 @@ interface Props {
 export default function TenantsIndex({ tenants }: Props) {
 	const handleToggle = (tenant: Tenant) => {
 		if (tenant.active) {
-			if (!confirm(`Deactivate "${tenant.name}"? Their staff will lose access.`)) return;
+			if (!confirm(`Deactivate "${tenant.name}"? Their staff will lose access.`)) {
+return;
+}
+
 			router.delete(`/admin/tenants/${tenant.id}`);
 		} else {
 			router.post(`/admin/tenants/${tenant.id}/restore`);

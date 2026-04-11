@@ -1,7 +1,7 @@
-import * as Sentry from '@sentry/react';
 import { createInertiaApp } from '@inertiajs/react';
+import * as Sentry from '@sentry/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -54,18 +54,35 @@ createInertiaApp({
     layout: resolveLayout,
 
     resolve: (name) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const pages = import.meta.glob('./pages/**/*.tsx', { eager: true }) as any;
+
         return resolvePageComponent(`./pages/${name}.tsx`, pages);
     },
 
     setup({ el, App, props }) {
-        createRoot(el).render(
+        if (import.meta.env.SSR) {
+            return (
+                <TooltipProvider>
+                    <App {...props} />
+                    <Toaster />
+                </TooltipProvider>
+            );
+        }
+
+        const appElement = (
             <TooltipProvider>
                 <App {...props} />
                 <Toaster />
-            </TooltipProvider>,
+            </TooltipProvider>
         );
+
+        if (import.meta.env.DEV) {
+            createRoot(el!).render(appElement);
+            return;
+        }
+
+        hydrateRoot(el!, appElement);
     },
 
     progress: {

@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { dashboard } from '@/routes';
-import { index as evaluationsIndex, show as evaluationShow } from '@/routes/evaluations';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
+import { index as evaluationsIndex, show as evaluationShow } from '@/routes/evaluations';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,9 +48,17 @@ const STATUS_COLORS: Record<string, string> = {
 function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
+
+    if (mins < 60) {
+return `${mins}m ago`;
+}
+
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
+
+    if (hrs < 24) {
+return `${hrs}h ago`;
+}
+
     return `${Math.floor(hrs / 24)}d ago`;
 }
 
@@ -89,6 +97,7 @@ function StatCard({ label, value, color, href, urgent }: StatCardProps) {
     if (href) {
         return <Link href={href}>{inner}</Link>;
     }
+
     return inner;
 }
 

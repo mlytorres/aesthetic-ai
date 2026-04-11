@@ -1,5 +1,5 @@
-import { type FC } from 'react';
-import { type Procedure, type WizardState, type WizardAction } from '@/types/intake';
+import type {FC} from 'react';
+import type {Procedure, WizardState, WizardAction} from '@/types/intake';
 
 interface Props {
     procedures: Procedure[];
@@ -19,8 +19,13 @@ const ProcedureSelect: FC<Props> = ({ procedures, state, dispatch, onNext }) => 
     // Group procedures by category
     const groups = procedures.reduce<Record<string, Procedure[]>>((acc, p) => {
         const cat = p.category ?? 'other';
-        if (!acc[cat]) acc[cat] = [];
+
+        if (!acc[cat]) {
+acc[cat] = [];
+}
+
         acc[cat].push(p);
+
         return acc;
     }, {});
 

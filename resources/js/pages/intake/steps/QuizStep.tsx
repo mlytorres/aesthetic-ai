@@ -1,5 +1,6 @@
-import { useState, type FC } from 'react';
-import { type QuizQuestion, type WizardState, type WizardAction } from '@/types/intake';
+import { useState  } from 'react';
+import type {FC} from 'react';
+import type {QuizQuestion, WizardState, WizardAction} from '@/types/intake';
 
 interface Props {
     questions: QuizQuestion[];
@@ -34,10 +35,13 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
         if (question.type === 'boolean') {
             if (currentAnswer === true && question.skipToOnTrue !== undefined) {
                 setActiveIndex(question.skipToOnTrue);
+
                 return;
             }
+
             if (currentAnswer === false && question.skipToOnFalse !== undefined) {
                 setActiveIndex(question.skipToOnFalse);
+
                 return;
             }
         }
@@ -45,12 +49,16 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
         // ── Single-choice option-level branching ──────────────────────────────
         if (question.type === 'single' && question.options) {
             const selected = question.options.find((o) => o.value === currentAnswer);
+
             if (selected?.skipToEnd) {
                 setActiveIndex(questions.length); // jump to completion screen
+
                 return;
             }
+
             if (selected?.skipTo !== undefined) {
                 setActiveIndex(selected.skipTo);
+
                 return;
             }
         }
@@ -58,6 +66,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
         // ── Wildcard / text branching ─────────────────────────────────────────
         if (question.skipToAlways !== undefined) {
             setActiveIndex(question.skipToAlways);
+
             return;
         }
 
@@ -188,6 +197,7 @@ const SingleChoice: FC<SingleChoiceProps> = ({ options, value, onChange }) => (
     <div className="space-y-2">
         {options.map((opt) => {
             const isSelected = opt.value === value;
+
             return (
                 <button
                     key={opt.value}
@@ -223,6 +233,7 @@ const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
             <p className="mb-3 text-xs text-[#9B9B8E]">Select all that apply</p>
             {options.map((opt) => {
                 const isSelected = value.includes(opt.value);
+
                 return (
                     <button
                         key={opt.value}
@@ -271,6 +282,7 @@ const BooleanChoice: FC<BooleanChoiceProps> = ({ value, onChange }) => (
         {(['Yes', 'No'] as const).map((label) => {
             const boolVal = label === 'Yes';
             const isSelected = value === boolVal;
+
             return (
                 <button
                     key={label}

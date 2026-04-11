@@ -1,5 +1,6 @@
-import { useRef, type FC, type ChangeEvent } from 'react';
-import { type PhotoType, type UploadedPhoto, type WizardState, type WizardAction } from '@/types/intake';
+import { useRef   } from 'react';
+import type {FC, ChangeEvent} from 'react';
+import type {PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
 
 interface Props {
     requiredTypes: PhotoType[];
@@ -155,7 +156,11 @@ const PhotoSlot: FC<PhotoSlotProps> = ({ type, required, uploaded, onUpload, dis
 
     const handleChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+return;
+}
+
         await onUpload(file, type);
         // reset input so same file can be re-selected
         e.target.value = '';

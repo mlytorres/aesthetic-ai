@@ -1,5 +1,5 @@
-import { type FC, type ChangeEvent } from 'react';
-import { type WizardState, type WizardAction, type ContactFormData } from '@/types/intake';
+import type {FC, ChangeEvent} from 'react';
+import type {WizardState, WizardAction, ContactFormData} from '@/types/intake';
 
 interface Props {
     state: WizardState;

@@ -81,7 +81,9 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 			if (!acc[proc.category]) {
 				acc[proc.category] = [];
 			}
+
 			acc[proc.category].push(proc);
+
 			return acc;
 		},
 		{} as Record<string, AvailableProcedure[]>

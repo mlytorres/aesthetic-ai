@@ -88,7 +88,10 @@ function formatProcedure(slug: string): string {
 }
 
 function formatDate(iso: string | null | undefined): string {
-    if (!iso) return '—';
+    if (!iso) {
+return '—';
+}
+
     return new Intl.DateTimeFormat('en-US', {
         month: 'short',
         day: 'numeric',
@@ -264,10 +267,21 @@ function actionLabel(action: string): string {
 function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60_000);
-    if (mins < 1)  return 'just now';
-    if (mins < 60) return `${mins}m ago`;
+
+    if (mins < 1)  {
+return 'just now';
+}
+
+    if (mins < 60) {
+return `${mins}m ago`;
+}
+
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24)  return `${hrs}h ago`;
+
+    if (hrs < 24)  {
+return `${hrs}h ago`;
+}
+
     return `${Math.floor(hrs / 24)}d ago`;
 }
 
@@ -353,9 +367,14 @@ function SimulationViewer({ evaluation }: { evaluation: Evaluation }) {
             const res = await fetch(simulationShow.url(evaluation.id), {
                 headers: { Accept: 'application/json' },
             });
-            if (!res.ok) return;
+
+            if (!res.ok) {
+return;
+}
+
             const data: SimulationStatus = await res.json();
             setSim(data);
+
             if (data.status === 'complete' || data.status === 'failed') {
                 stopPolling();
             }
@@ -369,11 +388,13 @@ function SimulationViewer({ evaluation }: { evaluation: Evaluation }) {
         if (sim.status === 'pending' || sim.status === 'processing') {
             pollRef.current = setInterval(pollStatus, 4000);
         }
+
         return stopPolling;
     }, [sim.status, pollStatus, stopPolling]);
 
     const requestSimulation = async () => {
         setRequesting(true);
+
         try {
             const res = await fetch(simulationStore.url(evaluation.id), {
                 method: 'POST',

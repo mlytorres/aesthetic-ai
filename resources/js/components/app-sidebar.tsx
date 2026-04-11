@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BarChart3, BookOpen, Building2, ClipboardList, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
+import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,12 +16,11 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { analytics, dashboard } from '@/routes';
-import { index as evaluationsIndex } from '@/routes/evaluations';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
 import { index as clinicTeamIndex } from '@/routes/clinic/team';
-import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
-import { useCurrentUrl } from '@/hooks/use-current-url';
+import { index as evaluationsIndex } from '@/routes/evaluations';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [

@@ -1,5 +1,5 @@
-import { type FC } from 'react';
-import { type WizardStep } from '@/types/intake';
+import type {FC} from 'react';
+import type {WizardStep} from '@/types/intake';
 
 const STEPS: { key: WizardStep; label: string }[] = [
     { key: 'procedure', label: 'Procedure' },

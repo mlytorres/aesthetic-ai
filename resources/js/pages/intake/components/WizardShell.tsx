@@ -1,5 +1,5 @@
-import { type FC, type ReactNode } from 'react';
-import { type WizardStep } from '@/types/intake';
+import type {FC, ReactNode} from 'react';
+import type {WizardStep} from '@/types/intake';
 import ProgressBar from './ProgressBar';
 
 interface Props {
