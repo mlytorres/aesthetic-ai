@@ -4,11 +4,11 @@ import {
     index as webhooksIndex,
     retry as webhooksRetry,
 } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
+import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { edit as settingsEdit } from '@/routes/clinic/settings';
 
 interface LastResponse {
     status_code: number;
@@ -128,10 +128,10 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                         <div className="text-sm text-[#F5F0E8]">
                             No webhook URL configured.{' '}
                             <a
-                                href={settingsEdit.url()}
+                                href={integrationsIndex.url()}
                                 className="font-medium text-[#C9A84C] underline-offset-4 hover:underline"
                             >
-                                Add one in Clinic Settings
+                                Add one in Integrations
                             </a>{' '}
                             to start receiving events.
                         </div>
@@ -293,7 +293,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
 
 WebhooksPage.layout = {
     breadcrumbs: [
-        { title: 'Clinic Settings', href: settingsEdit.url() },
-        { title: 'Webhooks', href: webhooksIndex.url() },
+        { title: 'Integrations', href: integrationsIndex.url() },
+        { title: 'Delivery Logs', href: webhooksIndex.url() },
     ],
 };

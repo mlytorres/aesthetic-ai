@@ -1,7 +1,7 @@
-import { createInertiaApp } from '@inertiajs/react';
-import * as Sentry from '@sentry/react';
+import { createInertiaApp, router } from '@inertiajs/react';
+// import * as Sentry from '@sentry/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot, hydrateRoot } from 'react-dom/client';
+import { hydrateRoot } from 'react-dom/client';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -13,20 +13,20 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 // ── Sentry — client-side error & performance monitoring ──────────────────────
 // DSN is baked in at build time via an env variable. If missing, Sentry is
 // a no-op so local dev without a DSN works without errors.
-if (import.meta.env.VITE_SENTRY_DSN_PUBLIC) {
-    Sentry.init({
-        dsn: import.meta.env.VITE_SENTRY_DSN_PUBLIC,
-        environment: import.meta.env.VITE_APP_ENV ?? 'local',
-        release: import.meta.env.VITE_APP_VERSION,
-
-        // Capture 20% of transactions for performance monitoring
-        tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
-
-        integrations: [
-            Sentry.browserTracingIntegration(),
-        ],
-    });
-}
+// if (import.meta.env.VITE_SENTRY_DSN_PUBLIC) {
+//     Sentry.init({
+//         dsn: import.meta.env.VITE_SENTRY_DSN_PUBLIC,
+//         environment: import.meta.env.VITE_APP_ENV ?? 'local',
+//         release: import.meta.env.VITE_APP_VERSION,
+//
+//         // Capture 20% of transactions for performance monitoring
+//         tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
+//
+//         integrations: [
+//             Sentry.browserTracingIntegration(),
+//         ],
+//     });
+// }
 
 // ── Layout resolver ───────────────────────────────────────────────────────────
 // Inertia v3's Page.layout = { ... } (props object) pattern requires a
@@ -77,13 +77,29 @@ createInertiaApp({
             </TooltipProvider>
         );
 
-        if (import.meta.env.DEV) {
-            createRoot(el!).render(appElement);
-
-            return;
+        if (el?.hasChildNodes()) {
+            hydrateRoot(el, appElement);
+        } else {
+            import('react-dom/client').then(({ createRoot }) => {
+                createRoot(el!).render(appElement);
+            });
         }
 
-        hydrateRoot(el!, appElement);
+        if (import.meta.env.DEV) {
+            router.on('invalid', (event) => {
+                console.log('Inertia invalid event:', event);
+                // event.preventDefault();
+            });
+            router.on('exception', (event) => {
+                console.log('Inertia exception event:', event);
+            });
+            router.on('finish', (event) => {
+                console.log('Inertia finish event:', event);
+            });
+            router.on('navigate', (event) => {
+                console.log('Inertia navigate event:', event);
+            });
+        }
     },
 
     progress: {

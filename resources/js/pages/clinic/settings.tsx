@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -7,13 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { update } from '@/routes/clinic/settings';
 
@@ -28,7 +21,6 @@ interface ClinicFormData {
 	theme: string;
 	procedures_enabled: string[];
 	coordinator_emails: string[];
-	webhook_url: string;
 }
 
 interface Props {
@@ -37,13 +29,12 @@ interface Props {
 }
 
 export default function ClinicSettings({ clinic, availableProcedures }: Props) {
-	const { data, setData, patch, processing, errors, reset } =
+	const { data, setData, patch, processing, errors } =
 		useForm<ClinicFormData>({
 			name: clinic.name,
 			theme: clinic.theme,
 			procedures_enabled: clinic.procedures_enabled,
 			coordinator_emails: clinic.coordinator_emails,
-			webhook_url: clinic.webhook_url,
 		});
 
 	const [newEmail, setNewEmail] = useState('');
@@ -276,36 +267,6 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 							</div>
 						</div>
 						<InputError message={errors.coordinator_emails} />
-					</div>
-
-					{/* Integrations Card */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-						<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
-							Integrations
-						</h3>
-
-						<div className="space-y-4">
-							<div className="grid gap-2">
-								<Label htmlFor="webhook" className="text-[#F5F0E8]">
-									Webhook URL
-								</Label>
-								<Input
-									id="webhook"
-									type="url"
-									value={data.webhook_url}
-									onChange={(e) =>
-										setData('webhook_url', e.target.value)
-									}
-									placeholder="https://api.example.com/webhook"
-									className="bg-[#0A0A0F] text-[#F5F0E8]"
-								/>
-								<p className="text-xs text-[#9B9B8E]">
-									Webhooks send evaluation tokens to your CRM
-									when analysis completes.
-								</p>
-							</div>
-						</div>
-						<InputError message={errors.webhook_url} />
 					</div>
 
 					{/* Save Button */}

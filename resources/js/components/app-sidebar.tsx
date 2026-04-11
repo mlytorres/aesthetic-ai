@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BarChart3, BookOpen, Building2, ClipboardList, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
+import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -53,18 +54,18 @@ const clinicNavItems: NavItem[] = [
         icon: Users,
     },
     {
-        title: 'Webhooks',
+        title: 'Integrations',
+        href: integrationsIndex.url(),
+        icon: Webhook,
+    },
+    {
+        title: 'Webhooks Hub',
         href: webhooksIndex.url(),
         icon: Webhook,
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
     {
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#react',

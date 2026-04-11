@@ -26,7 +26,6 @@ class ClinicController extends Controller
                 'logo_url'            => $tenant->settings['logo_url'] ?? null,
                 'procedures_enabled'  => $tenant->settings['procedures_enabled'] ?? ['rhinoplasty'],
                 'coordinator_emails'  => $tenant->settings['coordinator_emails'] ?? [],
-                'webhook_url'         => $tenant->webhook_url,
             ],
             'availableProcedures' => \App\Models\Procedure::where('active', true)
                 ->get(['slug', 'label', 'category'])
@@ -46,12 +45,10 @@ class ClinicController extends Controller
             'procedures_enabled.*'        => ['string', 'exists:procedures,slug'],
             'coordinator_emails'          => ['nullable', 'array'],
             'coordinator_emails.*'        => ['email'],
-            'webhook_url'                 => ['nullable', 'url', 'max:2048'],
         ]);
 
         $tenant->update([
             'name'        => $validated['name'],
-            'webhook_url' => $validated['webhook_url'] ?? null,
             'settings'    => array_merge($tenant->settings ?? [], [
                 'theme'              => $validated['theme'],
                 'procedures_enabled' => $validated['procedures_enabled'],
