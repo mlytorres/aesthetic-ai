@@ -94,6 +94,16 @@ class EvaluationController extends Controller
         $evaluation = $this->findByToken($token);
         $validated = $request->validated();
 
+        $turnstileResponse = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => config('services.turnstile.secret_key'),
+            'response' => $validated['turnstile_token'],
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (! $turnstileResponse->json('success')) {
+            abort(403, 'Security validation failed. Please refresh the page and try again.');
+        }
+
         // Create or find patient by email hash (deduplication)
         $emailHash = Patient::hashEmail($validated['patient']['email']);
 

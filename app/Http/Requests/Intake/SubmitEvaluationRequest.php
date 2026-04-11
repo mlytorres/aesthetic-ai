@@ -28,6 +28,9 @@ class SubmitEvaluationRequest extends FormRequest
             'consent.terms_accepted'     => ['required', 'accepted'],
             'consent.photo_use_consent'  => ['required', 'accepted'],
             'consent.consented_at'       => ['required', 'date'],
+
+            // Security
+            'turnstile_token'            => ['required', 'string'],
         ];
     }
 
@@ -38,6 +41,7 @@ class SubmitEvaluationRequest extends FormRequest
             'consent.hipaa_acknowledged.accepted' => 'You must acknowledge the HIPAA notice to continue.',
             'consent.terms_accepted.accepted'      => 'You must accept the terms of service to continue.',
             'consent.photo_use_consent.accepted'   => 'You must consent to photo use for AI analysis to continue.',
+            'turnstile_token.required'             => 'Please complete the security check to continue.',
         ];
     }
 }

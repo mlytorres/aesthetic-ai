@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AestheticAI Widget Test</title>
+    <!-- Required for the selfie camera to work from an embedded iframe -->
+    <meta http-equiv="Permissions-Policy" content="camera=(self 'https://app.aestheticai.com' 'https://aesthetic-ai.test')">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #0f172a;
+            position: relative;
+        }
+
+        p.subtitle {
+            font-size: 1.25rem;
+            color: #475569;
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+
+        .cta-container {
+            /* This div acts as a landing area if they choose the "button" entry point */
+            margin-top: 2rem;
+        }
+
+        footer {
+            background-color: #1e293b;
+            color: #94a3b8;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Acme Clinic</div>
+        <nav style="gap: 1.5rem; display: flex; color: #64748b; font-weight: 500;">
+            <span>Procedures</span>
+            <span>Before & After</span>
+            <span>Contact</span>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Discover Your Best Self</h1>
+        <p class="subtitle">Join thousands of patients who have transformed their confidence with Acme Clinic's world-class surgical team.</p>
+        
+        <div class="cta-container">
+            <!-- 
+                ==========================================================
+                PASTE YOUR GENERATED AESTHETIC-AI <script> TAG RIGHT BELOW
+                ========================================================== 
+            -->
+
+            <!-- AestheticAI Widget -->
+            <script
+            src="https://aesthetic-ai.test/widget/v1/loader.js"
+            data-clinic-id="019d79f4-c147-73ff-884d-f64b78adbf39"
+            data-domain="https://miamilife.aesthetic-ai.test"
+            data-render-mode="inline"
+            data-hide-header="false"
+            data-theme="luxury-dark"
+            data-primary-color="#C9A84C"
+            data-font-family="system-ui, sans-serif"
+            data-language="en"
+            async
+            ></script>
+
+            <!-- End Aesthetic-AI Widget -->
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 Acme Clinic. All rights reserved.
+    </footer>
+
+</body>
+</html>

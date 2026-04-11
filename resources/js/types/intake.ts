@@ -95,6 +95,8 @@ export interface WizardState {
     /** Contact / consent form data (collected together at the end) */
     contact: ContactFormData;
     consent: ConsentFormData;
+    /** Security token from Cloudflare Turnstile */
+    turnstileToken: string | null;
     /** Global loading state */
     loading: boolean;
     /** Global error message */
@@ -128,6 +130,7 @@ export type WizardAction =
     | { type: 'PHOTOS_COMPLETE' }
     | { type: 'SET_CONTACT'; field: keyof ContactFormData; value: string }
     | { type: 'SET_CONSENT'; field: keyof ConsentFormData; value: boolean }
+    | { type: 'SET_TURNSTILE_TOKEN'; token: string | null }
     | { type: 'SET_LOADING'; loading: boolean }
     | { type: 'SET_ERROR'; error: string | null }
     | { type: 'NEXT_STEP' }

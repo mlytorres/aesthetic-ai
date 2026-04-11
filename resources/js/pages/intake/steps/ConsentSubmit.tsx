@@ -1,9 +1,11 @@
+import { Turnstile } from '@marsidev/react-turnstile';
 import type {FC} from 'react';
 import type {WizardState, WizardAction, ConsentFormData} from '@/types/intake';
 
 interface Props {
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    turnstileSiteKey: string;
     onSubmit: () => void;
     onBack: () => void;
 }
@@ -37,13 +39,14 @@ const CONSENTS: {
     },
 ];
 
-const ConsentSubmit: FC<Props> = ({ state, dispatch, onSubmit, onBack }) => {
-    const { consent, contact } = state;
+const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit, onBack }) => {
+    const { consent, contact, turnstileToken } = state;
 
     const allConsented =
         consent.hipaa_acknowledged &&
         consent.terms_accepted &&
-        consent.photo_use_consent;
+        consent.photo_use_consent &&
+        !!turnstileToken;
 
     const toggle = (field: keyof ConsentFormData): void => {
         const current = consent[field] as boolean;
@@ -144,6 +147,17 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, onSubmit, onBack }) => {
                     {state.error}
                 </p>
             )}
+
+            {/* Turnstile / Security widget */}
+            <div className="mt-6 flex justify-center min-h-[65px]">
+                <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => dispatch({ type: 'SET_TURNSTILE_TOKEN', token })}
+                    onError={() => dispatch({ type: 'SET_TURNSTILE_TOKEN', token: null })}
+                    onExpire={() => dispatch({ type: 'SET_TURNSTILE_TOKEN', token: null })}
+                    options={{ theme: 'dark' }}
+                />
+            </div>
 
             <div className="mt-8 flex gap-3">
                 <button

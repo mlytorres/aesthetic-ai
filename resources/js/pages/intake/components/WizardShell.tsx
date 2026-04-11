@@ -7,12 +7,14 @@ interface Props {
     clinicLogo?: string;
     currentStep: WizardStep;
     children: ReactNode;
+    hideHeader?: boolean;
 }
 
-const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, children }) => {
+const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeader = false, children }) => {
     return (
         <div className="flex min-h-screen flex-col bg-[#0A0A0F]">
             {/* Header */}
+            {!hideHeader && (
             <header className="flex items-center justify-between border-b border-white/5 px-6 py-4">
                 <div className="flex items-center gap-3">
                     {clinicLogo ? (
@@ -41,6 +43,7 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, children 
                     AI Evaluation
                 </span>
             </header>
+            )}
 
             {/* Progress */}
             <ProgressBar currentStep={currentStep} />

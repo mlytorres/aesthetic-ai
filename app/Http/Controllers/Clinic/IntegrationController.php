@@ -14,9 +14,6 @@ use Illuminate\Support\Str;
 
 class IntegrationController extends Controller
 {
-    /**
-     * Display the clinic integrations dashboard.
-     */
     public function index(): Response
     {
         $tenant = TenantContext::get();
@@ -26,13 +23,21 @@ class IntegrationController extends Controller
             $tenant->update(['webhook_secret' => Str::random(64)]);
         }
 
+        $appUrl = rtrim(config('app.url'), '/');
+        $parsed = parse_url($appUrl);
+        $scheme = $parsed['scheme'] ?? 'https';
+        $host = $parsed['host'] ?? 'aesthetic-ai.test';
+        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+        $tenantDomain = $scheme . '://' . $tenant->slug . '.' . $host . $port;
+
         return Inertia::render('clinic/integrations', [
             'tenant' => [
                 'id' => $tenant->id,
                 'webhook_url' => $tenant->webhook_url,
                 'webhook_secret' => $tenant->webhook_secret, // Automatically decrypted by Eloquent cast
             ],
-            'widgetUrl' => config('app.url') . '/widget/v1/loader.js',
+            'tenantDomain' => $tenantDomain,
+            'widgetUrl' => $appUrl . '/widget/v1/loader.js',
             'availableProcedures' => \App\Models\Procedure::where('active', true)
                 ->get(['slug', 'label'])
                 ->values(),

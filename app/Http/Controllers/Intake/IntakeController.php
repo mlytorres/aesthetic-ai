@@ -21,7 +21,7 @@ class IntakeController extends Controller
      * Render the intake wizard with all config the frontend needs.
      * The wizard state lives entirely in React after this initial load.
      */
-    public function show(): Response
+    public function show(\Illuminate\Http\Request $request): Response
     {
         $tenant = TenantContext::get();
         $enabledSlugs = $tenant->enabledProcedures();
@@ -38,6 +38,8 @@ class IntakeController extends Controller
                 'theme' => $tenant->settings['theme'] ?? 'luxury-dark',
                 'logo'  => $tenant->settings['logo_url'] ?? null,
             ],
+            'hideHeader' => $request->query('hide_header') === 'true',
+            'turnstileSiteKey' => config('services.turnstile.site_key'),
             // Resolve each resource individually — ::collection() wraps in {data:[]}
             // which Inertia passes through as an object, not an array.
             'procedures' => $procedures->map(fn (Procedure $p) => (new ProcedureResource($p))->resolve())->values(),

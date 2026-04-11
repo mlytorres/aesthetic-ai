@@ -98,12 +98,14 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
     // Evaluation lifecycle (JSON responses — not Inertia redirects)
     Route::post('/evaluations', [EvaluationController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('evaluations.store');
 
     Route::post('/evaluations/{token}/quiz', [EvaluationController::class, 'quiz'])
         ->name('evaluations.quiz');
 
     Route::post('/evaluations/{token}/submit', [EvaluationController::class, 'submit'])
+        ->middleware('throttle:5,1')
         ->name('evaluations.submit');
 
     // Photo upload

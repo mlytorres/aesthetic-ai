@@ -21,11 +21,12 @@ interface Props {
         webhook_url: string | null;
         webhook_secret: string;
     };
+    tenantDomain: string;
     widgetUrl: string;
     availableProcedures: { slug: string; label: string }[];
 }
 
-export default function Integrations({ tenant, widgetUrl, availableProcedures }: Props) {
+export default function Integrations({ tenant, tenantDomain, widgetUrl, availableProcedures }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
         webhook_url: tenant.webhook_url || '',
     });
@@ -38,6 +39,9 @@ export default function Integrations({ tenant, widgetUrl, availableProcedures }:
     const [widgetTheme, setWidgetTheme] = useState('luxury-dark');
     const [widgetLanguage, setWidgetLanguage] = useState('en');
     const [widgetProcedure, setWidgetProcedure] = useState<string>('none');
+    const [widgetRenderMode, setWidgetRenderMode] = useState('inline');
+    const [widgetButtonLabel, setWidgetButtonLabel] = useState('Start Free Evaluation');
+    const [widgetHideHeader, setWidgetHideHeader] = useState('false');
     const [widgetPrimaryColor, setWidgetPrimaryColor] = useState('#C9A84C');
     const [widgetFontFamily, setWidgetFontFamily] = useState('system-ui, sans-serif');
 
@@ -61,7 +65,10 @@ export default function Integrations({ tenant, widgetUrl, availableProcedures }:
     const generatedScript = `<!-- AestheticAI Widget -->
 <script
   src="${widgetUrl}"
-  data-clinic-id="${tenant.id}"${widgetProcedure !== 'none' ? `\n  data-procedure="${widgetProcedure}"` : ''}
+  data-clinic-id="${tenant.id}"
+  data-domain="${tenantDomain}"${widgetProcedure !== 'none' ? `\n  data-procedure="${widgetProcedure}"` : ''}
+  data-render-mode="${widgetRenderMode}"${widgetRenderMode !== 'inline' ? `\n  data-button-label="${widgetButtonLabel.replace(/"/g, "'")}"` : ''}
+  data-hide-header="${widgetHideHeader}"
   data-theme="${widgetTheme}"
   data-primary-color="${widgetPrimaryColor}"
   data-font-family="${widgetFontFamily.replace(/"/g, "'")}"
@@ -90,6 +97,33 @@ export default function Integrations({ tenant, widgetUrl, availableProcedures }:
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="space-y-5">
                             <div className="grid gap-2">
+                                <Label className="text-[#F5F0E8]">Display Mode</Label>
+                                <Select value={widgetRenderMode} onValueChange={setWidgetRenderMode}>
+                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="inline">Inline (Direct Form)</SelectItem>
+                                        <SelectItem value="button-modal">Button Modal</SelectItem>
+                                        <SelectItem value="fab">Floating Action Button (Sticky)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {widgetRenderMode !== 'inline' && (
+                                <div className="grid gap-2">
+                                    <Label className="text-[#F5F0E8]">Button Label</Label>
+                                    <Input 
+                                        type="text" 
+                                        value={widgetButtonLabel}
+                                        onChange={(e) => setWidgetButtonLabel(e.target.value)}
+                                        placeholder="Start Free Evaluation"
+                                        className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid gap-2">
                                 <Label className="text-[#F5F0E8]">Theme</Label>
                                 <Select value={widgetTheme} onValueChange={setWidgetTheme}>
                                     <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
@@ -100,6 +134,19 @@ export default function Integrations({ tenant, widgetUrl, availableProcedures }:
                                         <SelectItem value="luxury-light">Luxury Light</SelectItem>
                                         <SelectItem value="clinical">Clinical</SelectItem>
                                         <SelectItem value="bare">Bare (No CSS)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label className="text-[#F5F0E8]">Hide Widget Header?</Label>
+                                <Select value={widgetHideHeader} onValueChange={setWidgetHideHeader}>
+                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="false">No (Show Logo)</SelectItem>
+                                        <SelectItem value="true">Yes (Hide Logo)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

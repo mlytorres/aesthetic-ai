@@ -15,6 +15,8 @@ import QuizStep        from './steps/QuizStep';
 interface Props {
     clinic: ClinicConfig;
     procedures: Procedure[];
+    hideHeader?: boolean;
+    turnstileSiteKey: string;
 }
 
 // ─── Step order ──────────────────────────────────────────────────────────────
@@ -54,6 +56,7 @@ const initialState: WizardState = {
         photo_use_consent:  false,
         consented_at:       '',
     },
+    turnstileToken: null,
     loading: false,
     error:   null,
 };
@@ -125,6 +128,9 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
         case 'SET_CONSENT':
             return { ...state, consent: { ...state.consent, [action.field]: action.value }, error: null };
 
+        case 'SET_TURNSTILE_TOKEN':
+            return { ...state, turnstileToken: action.token, error: null };
+
         case 'SET_LOADING':
             return { ...state, loading: action.loading };
 
@@ -177,7 +183,7 @@ async function apiPost<T>(url: string, body: unknown): Promise<T> {
 
 // ─── Page component ───────────────────────────────────────────────────────────
 
-const WizardPage: FC<Props> = ({ clinic, procedures }) => {
+const WizardPage: FC<Props> = ({ clinic, procedures, hideHeader = false, turnstileSiteKey }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     // ── Step 1: select procedure → create evaluation ──────────────────────────
@@ -325,6 +331,7 @@ return;
                     photo_use_consent:  state.consent.photo_use_consent,
                     consented_at:       consentedAt,
                 },
+                turnstile_token: state.turnstileToken,
             });
 
             // Inertia visit to success page (full page transition)
@@ -347,6 +354,7 @@ return;
                 clinicName={clinic.name}
                 clinicLogo={clinic.logo}
                 currentStep={state.step}
+                hideHeader={hideHeader}
             >
                 {state.step === 'procedure' && (
                     <ProcedureSelect
@@ -397,6 +405,7 @@ return;
                     <ConsentSubmit
                         state={state}
                         dispatch={dispatch}
+                        turnstileSiteKey={turnstileSiteKey}
                         onSubmit={() => {
  void handleSubmit(); 
 }}
