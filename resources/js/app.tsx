@@ -55,7 +55,7 @@ createInertiaApp({
 
     resolve: (name) => {
 
-        const pages = import.meta.glob('./pages/**/*.tsx', { eager: true }) as any;
+        const pages = import.meta.glob('./pages/**/*.tsx') as any;
 
         return resolvePageComponent(`./pages/${name}.tsx`, pages);
     },
@@ -79,6 +79,7 @@ createInertiaApp({
 
         if (import.meta.env.DEV) {
             createRoot(el!).render(appElement);
+
             return;
         }
 
