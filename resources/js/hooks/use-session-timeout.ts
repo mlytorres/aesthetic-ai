@@ -28,7 +28,12 @@ interface UseSessionTimeoutReturn {
 }
 
 export function useSessionTimeout(): UseSessionTimeoutReturn {
-    const lastActivityRef = useRef<number>(Date.now());
+    const lastActivityRef = useRef<number>(0);
+
+    useEffect(() => {
+        lastActivityRef.current = Date.now();
+    }, []);
+
     const [showWarning, setShowWarning] = useState(false);
     const [remainingSeconds, setRemainingSeconds] = useState(WARN_BEFORE / 1000);
     const loggedOutRef = useRef(false);

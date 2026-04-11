@@ -14,7 +14,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
 interface TenantData {
@@ -343,14 +342,10 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 	);
 }
 
-TenantShow.layout = (page: React.ReactNode) => (
-	<AppLayout
-		breadcrumbs={[
-			{ title: 'Admin', href: '/admin' },
-			{ title: 'Tenants', href: '/admin/tenants' },
-			{ title: 'Manage', href: '#' },
-		]}
-	>
-		{page}
-	</AppLayout>
-);
+TenantShow.layout = {
+	breadcrumbs: [
+		{ title: 'Admin', href: '/admin' },
+		{ title: 'Tenants', href: '/admin/tenants' },
+		{ title: 'Manage', href: '#' },
+	],
+};
