@@ -68,12 +68,12 @@ class CalculateProportionsJob implements ShouldQueue
         $landmarks = $analysisData['landmarks'] ?? [];
 
         // Average photo quality — stored in proportions for downstream jobs and clinical brief
-        $avgPhotoQuality = (int) round(
-            Photo::where('evaluation_id', $this->evaluationId)
-                ->where('analysis_status', Photo::ANALYSIS_COMPLETE)
-                ->whereNotNull('quality_score')
-                ->avg('quality_score') ?? 0
-        );
+        $avgScore = Photo::where('evaluation_id', $this->evaluationId)
+            ->where('analysis_status', Photo::ANALYSIS_COMPLETE)
+            ->whereNotNull('quality_score')
+            ->avg('quality_score');
+
+        $avgPhotoQuality = (int) round((float) ($avgScore ?? 0));
 
         if (empty($landmarks)) {
             Log::info('CalculateProportionsJob: no landmarks, skipping proportions', [

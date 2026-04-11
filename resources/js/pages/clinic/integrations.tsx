@@ -265,6 +265,68 @@ export default function Integrations({ tenant, widgetUrl, availableProcedures }:
                     </div>
                 </form>
 
+                <div className="border-t border-[#2A2A3A] w-full mt-8 mb-8"></div>
+
+                {/* Developer Documentation */}
+                <div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-[#F5F0E8]">Developer Documentation & Payload Specs</h3>
+                    <p className="mb-6 text-sm text-[#9B9B8E]">
+                        When an evaluation is completed, we will POST a JSON payload to your webhook. Note that the payload intentionally contains no Protected Health Information (PHI) to maintain HIPAA standards in transit. Use the provided <code>evaluation_token</code> to fetch the full patient details securely via our REST API.
+                    </p>
+
+                    <div className="grid gap-8 lg:grid-cols-2">
+                        <div className="space-y-3">
+                            <Label className="text-[#F5F0E8]">Webhook Payload Example (POST)</Label>
+                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs text-[#D4D4D4] overflow-x-auto whitespace-pre">
+{`{
+  "event": "evaluation.completed",
+  "api_version": "2025-01",
+  "idempotency_key": "eval_01HXYZ...",
+  "timestamp": "2025-06-15T14:32:00Z",
+  "data": {
+    "evaluation_token": "eyJhbGciOi...",
+    "procedure_interest": "rhinoplasty",
+    "lead_score": 87,
+    "priority": "high",
+    "ready_for_call": true,
+    "timeline": "within_3_months",
+    "budget_range": "15000_25000",
+    "photos_available": true,
+    "ai_analysis_complete": true
+  }
+}`}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label className="text-[#F5F0E8]">Fetch Patient API (GET)</Label>
+                            <p className="text-xs text-[#9B9B8E] mb-2 leading-relaxed">
+                                Call this endpoint using the token from the webhook to retrieve the full patient profile, including name, email, phone, and securely signed photo URLs.
+                            </p>
+                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] px-4 py-3 font-mono text-xs text-[#C9A84C] overflow-x-auto whitespace-pre">
+                                GET /api/v1/evaluations/{"{"}evaluation_token{"}"}
+                            </div>
+                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs text-[#D4D4D4] overflow-x-auto whitespace-pre mt-3">
+{`{
+  "data": {
+    "id": "eval_01HXYZ...",
+    "patient": {
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+13055550123"
+    },
+    "quiz_summary": { ... },
+    "ai_analysis": { ... },
+    "photos": {
+      "front": { "url": "https://...", "expires_at": "..." }
+    }
+  }
+}`}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </>
     );

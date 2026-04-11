@@ -33,13 +33,13 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
     const advance = (): void => {
         // ── Boolean branching ─────────────────────────────────────────────────
         if (question.type === 'boolean') {
-            if (currentAnswer === true && question.skipToOnTrue !== undefined) {
+            if (currentAnswer === true && question.skipToOnTrue != null) {
                 setActiveIndex(question.skipToOnTrue);
 
                 return;
             }
 
-            if (currentAnswer === false && question.skipToOnFalse !== undefined) {
+            if (currentAnswer === false && question.skipToOnFalse != null) {
                 setActiveIndex(question.skipToOnFalse);
 
                 return;
@@ -56,7 +56,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                 return;
             }
 
-            if (selected?.skipTo !== undefined) {
+            if (selected?.skipTo != null) {
                 setActiveIndex(selected.skipTo);
 
                 return;
@@ -64,7 +64,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
         }
 
         // ── Wildcard / text branching ─────────────────────────────────────────
-        if (question.skipToAlways !== undefined) {
+        if (question.skipToAlways != null) {
             setActiveIndex(question.skipToAlways);
 
             return;
