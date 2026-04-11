@@ -10,17 +10,17 @@
 
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 11px;
+            font-size: 10px;
             color: #1a1a1a;
             background: #fff;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         /* ── Page layout ── */
         .page {
             width: 210mm;
             min-height: 297mm;
-            padding: 14mm 14mm 12mm 14mm;
+            padding: 10mm 12mm 10mm 12mm;
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -31,9 +31,9 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 2px solid #C9A84C;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .header-left .clinic-name {
@@ -71,7 +71,7 @@
         .score-banner {
             display: flex;
             gap: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .score-box {
@@ -122,13 +122,14 @@
         .card {
             border: 1px solid #e5e5e5;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             overflow: hidden;
+            page-break-inside: avoid;
         }
 
         .card-header {
             background: #f5f5f5;
-            padding: 5px 10px;
+            padding: 4px 8px;
             font-size: 9px;
             font-weight: 700;
             text-transform: uppercase;
@@ -138,7 +139,7 @@
         }
 
         .card-body {
-            padding: 9px 10px;
+            padding: 6px 8px;
         }
 
         /* ── Grid layouts ── */
@@ -451,28 +452,34 @@
                                 <div class="field-value">{{ $proportions['overall_harmony'] }} / 100</div>
                             </div>
                         @endif
-                        @if (isset($proportions['nasal_symmetry']['symmetry_score']))
+                        @if (isset($proportions['nasal_symmetry']['score']))
                             <div>
                                 <div class="field-label">Nasal Symmetry</div>
-                                <div class="field-value">{{ $proportions['nasal_symmetry']['symmetry_score'] }} / 100</div>
+                                <div class="field-value">{{ $proportions['nasal_symmetry']['score'] }} / 100</div>
                             </div>
                         @endif
-                        @if (isset($proportions['nasal_symmetry']['deviation_mm']))
+                        @if (isset($proportions['eye_symmetry']['score']))
                             <div>
-                                <div class="field-label">Deviation</div>
-                                <div class="field-value">{{ number_format($proportions['nasal_symmetry']['deviation_mm'], 1) }} mm</div>
+                                <div class="field-label">Eye Symmetry</div>
+                                <div class="field-value">{{ $proportions['eye_symmetry']['score'] }} / 100</div>
                             </div>
                         @endif
-                        @if (isset($proportions['goodes_ratio']))
+                        @if (isset($proportions['nasal_projection']['goodes_ratio']))
                             <div>
                                 <div class="field-label">Goode's Ratio</div>
-                                <div class="field-value">{{ number_format($proportions['goodes_ratio'], 2) }}</div>
+                                <div class="field-value">{{ number_format($proportions['nasal_projection']['goodes_ratio'], 2) }}</div>
                             </div>
                         @endif
-                        @if (isset($proportions['nasal_width']['width_to_intercanthal_ratio']))
+                        @if (isset($proportions['nasal_width_ratio']['ratio']))
                             <div>
                                 <div class="field-label">Width / Intercanthal</div>
-                                <div class="field-value">{{ number_format($proportions['nasal_width']['width_to_intercanthal_ratio'], 2) }}</div>
+                                <div class="field-value">{{ number_format($proportions['nasal_width_ratio']['ratio'], 2) }}</div>
+                            </div>
+                        @endif
+                        @if (isset($analysis['_face_attributes']['age_range']['midpoint']))
+                            <div>
+                                <div class="field-label">Est. Age</div>
+                                <div class="field-value">~{{ $analysis['_face_attributes']['age_range']['midpoint'] }} yrs</div>
                             </div>
                         @endif
                         @if (isset($proportions['_avg_photo_quality']))

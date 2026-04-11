@@ -67,20 +67,7 @@ class ValidatePhotoQualityJob implements ShouldQueue
         $passCount = 0;
 
         foreach ($photos as $photo) {
-            $photo->update(['analysis_status' => Photo::ANALYSIS_PROCESSING]);
-
-            if (config('features.ai_vision', false)) {
-                $score = $this->runRekognition($photo, $fileService);
-            } else {
-                $score = $this->simulateQualityScore($photo);
-            }
-
-            $passed = $score >= 50;
-
-            $photo->update([
-                'quality_score'   => $score,
-                'analysis_status' => $passed ? Photo::ANALYSIS_COMPLETE : Photo::ANALYSIS_FAILED,
-            ]);
+            $passed = $photo->quality_score >= 50;
 
             if ($passed) {
                 $passCount++;
@@ -107,72 +94,7 @@ class ValidatePhotoQualityJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Real Rekognition call — only runs in production/staging.
-     */
-    private function runRekognition(Photo $photo, SecureFileService $fileService): int
-    {
-        try {
-            $client = new RekognitionClient([
-                'version' => 'latest',
-                'region'  => config('services.rekognition.region', 'us-east-1'),
-            ]);
 
-            // Dekrypt the S3 key (cast handles decryption automatically)
-            $s3Key  = $photo->s3_key;
-            $bucket = config('filesystems.disks.s3.bucket');
-
-            $result = $client->detectFaces([
-                'Image' => [
-                    'S3Object' => [
-                        'Bucket' => $bucket,
-                        'Name'   => $s3Key,
-                    ],
-                ],
-                'Attributes' => ['QUALITY'],
-            ]);
-
-            $faces = $result->get('FaceDetails');
-
-            if (empty($faces)) {
-                return 0; // No face detected
-            }
-
-            $face      = $faces[0]; // Primary face
-            $quality   = $face['Quality'] ?? [];
-            $sharpness = (float) ($quality['Sharpness'] ?? 0);
-            $brightness = (float) ($quality['Brightness'] ?? 0);
-
-            // Weighted average: sharpness is more important for surgical analysis
-            $score = (int) round(($sharpness * 0.7) + ($brightness * 0.3));
-
-            return max(0, min(100, $score));
-        } catch (\Throwable $e) {
-            Log::error('Rekognition DetectFaces failed', [
-                'evaluation_id' => $this->evaluationId,
-                'photo_id'      => $photo->id,
-                'error'         => $e->getMessage(),
-            ]);
-            return 0;
-        }
-    }
-
-    /**
-     * Simulation mode — returns plausible quality scores by photo type.
-     * Front photos tend to be better quality than profiles.
-     */
-    private function simulateQualityScore(Photo $photo): int
-    {
-        $base = match ($photo->type) {
-            Photo::TYPE_FRONT         => 78,
-            Photo::TYPE_LEFT_PROFILE  => 72,
-            Photo::TYPE_RIGHT_PROFILE => 74,
-            default                   => 65,
-        };
-
-        // Add ±8 random variance to make it realistic
-        return max(0, min(100, $base + random_int(-8, 8)));
-    }
 
     private function markEvaluationFailed(Evaluation $evaluation, string $reason): void
     {

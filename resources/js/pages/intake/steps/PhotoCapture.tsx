@@ -1,6 +1,7 @@
-import { useRef   } from 'react';
+import { useRef, useState } from 'react';
 import type {FC, ChangeEvent} from 'react';
 import type {PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
+import { WebcamCapture } from './WebcamCapture';
 
 interface Props {
     requiredTypes: PhotoType[];
@@ -153,6 +154,7 @@ interface PhotoSlotProps {
 
 const PhotoSlot: FC<PhotoSlotProps> = ({ type, required, uploaded, onUpload, dispatch }) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const [isStreaming, setIsStreaming] = useState(false);
 
     const handleChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0];
@@ -239,7 +241,7 @@ return;
             </div>
 
             {/* Action */}
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-2">
                 {uploaded && !uploaded.uploading ? (
                     <button
                         type="button"
@@ -254,6 +256,7 @@ return;
                             ref={inputRef}
                             type="file"
                             accept="image/jpeg,image/png"
+                            capture="environment"
                             className="sr-only"
                             onChange={handleChange}
                             disabled={uploaded?.uploading}
@@ -266,9 +269,29 @@ return;
                         >
                             {uploaded?.uploading ? 'Uploading…' : 'Upload'}
                         </button>
+                        {!uploaded?.uploading && (
+                            <button
+                                type="button"
+                                onClick={() => setIsStreaming(true)}
+                                className="rounded-lg border border-[#C9A84C]/50 px-3 py-1.5 text-xs font-medium text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors hidden sm:block"
+                            >
+                                Camera
+                            </button>
+                        )}
                     </>
                 )}
             </div>
+
+            {isStreaming && (
+                <WebcamCapture
+                    type={type}
+                    onCapture={async (file) => {
+                        setIsStreaming(false);
+                        await onUpload(file, type);
+                    }}
+                    onCancel={() => setIsStreaming(false)}
+                />
+            )}
         </div>
     );
 };
