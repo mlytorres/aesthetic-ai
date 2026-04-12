@@ -6,7 +6,6 @@ namespace App\Jobs\AI;
 
 use App\Concerns\ResolvesJobTenant;
 use App\Models\Evaluation;
-use App\Services\OpenAIService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,6 +14,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Files;
+use Laravel\Ai\Image;
 
 /**
  * Generates an AI before/after simulation image for an evaluation.
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\Storage;
  * Flow:
  *   1. Resolve primary front photo for the evaluation
  *   2. Build a procedure-specific prompt using body proportion data
- *   3. Call OpenAI image edit API (gpt-image-1)
+ *   3. Call OpenAI image generation via the Laravel AI SDK (gpt-image-1)
  *   4. Store the generated PNG to S3 / local disk
  *   5. Update evaluation simulation_status to 'complete'
  *
@@ -40,7 +41,7 @@ class GenerateSimulationJob implements ShouldQueue
 
     public function __construct(private readonly string $evaluationId) {}
 
-    public function handle(OpenAIService $openAI): void
+    public function handle(): void
     {
         $this->setTenantFromEvaluation($this->evaluationId);
 
@@ -50,7 +51,7 @@ class GenerateSimulationJob implements ShouldQueue
 
         try {
             $result = config('features.ai_vision', false)
-                ? $this->runRealSimulation($evaluation, $openAI)
+                ? $this->runRealSimulation($evaluation)
                 : $this->runSimulatedSimulation($evaluation);
 
             $evaluation->update([
@@ -69,29 +70,40 @@ class GenerateSimulationJob implements ShouldQueue
         }
     }
 
-    // ─── Real OpenAI simulation ───────────────────────────────────────────────
+    // ─── Real simulation via Laravel AI SDK ──────────────────────────────────
 
     /**
      * @return array<string, mixed>
      */
-    private function runRealSimulation(Evaluation $evaluation, OpenAIService $openAI): array
+    private function runRealSimulation(Evaluation $evaluation): array
     {
         $prompt    = $this->buildPrompt($evaluation);
         $photoPath = $this->resolvePhotoPath($evaluation);
 
-        $b64 = $photoPath !== null
-            ? $openAI->editImage($photoPath, $prompt)
-            : $openAI->generateImage($prompt);
+        // Build the image request — attach the patient photo when available so
+        // the model performs an image edit; otherwise generate from prompt alone.
+        // HIPAA: image bytes are never logged; raw S3 path never exposed.
+        $imageRequest = Image::of($prompt)->timeout(180);
 
-        $s3Key = $this->storeSimulationImage($evaluation, $b64);
+        if ($photoPath !== null) {
+            // Files\Image::fromPath() uploads the source photo inline for editing.
+            $imageRequest = $imageRequest->attachments([
+                Files\Image::fromPath($photoPath),
+            ]);
+        }
+
+        $imageResponse = $imageRequest->generate();
+
+        // The SDK returns raw PNG bytes via (string) cast.
+        $s3Key = $this->storeSimulationImage($evaluation, base64_encode((string) $imageResponse));
 
         return [
-            'mode'             => 'openai',
-            'model'            => 'gpt-image-1',
-            'prompt'           => $prompt,
+            'mode'              => 'openai',
+            'model'             => 'gpt-image-1',
+            'prompt'            => $prompt,
             'simulation_s3_key' => $s3Key,
-            'has_source_photo' => $photoPath !== null,
-            'generated_at'     => now()->toIso8601String(),
+            'has_source_photo'  => $photoPath !== null,
+            'generated_at'      => now()->toIso8601String(),
         ];
     }
 
@@ -161,8 +173,8 @@ class GenerateSimulationJob implements ShouldQueue
      */
     private function lipo360Prompt(array $data): string
     {
-        $proportions     = $data['body_proportions'] ?? [];
-        $abdominalValue  = $proportions['abdominal_projection']['value'] ?? 0.12;
+        $proportions    = $data['body_proportions'] ?? [];
+        $abdominalValue = $proportions['abdominal_projection']['value'] ?? 0.12;
 
         return sprintf(
             'Professional cosmetic surgery simulation for Lipo 360. '

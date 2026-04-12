@@ -9,6 +9,7 @@ import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
+import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/security';
 import { disable, enable } from '@/routes/two-factor';
 
@@ -49,7 +50,7 @@ export default function Security({
     }, [twoFactorEnabled, clearTwoFactorAuthData]);
 
     return (
-        <>
+        <SettingsLayout>
             <Head title="Security settings" />
 
             <h1 className="sr-only">Security settings</h1>
@@ -234,7 +235,7 @@ export default function Security({
                     />
                 </div>
             )}
-        </>
+        </SettingsLayout>
     );
 }
 

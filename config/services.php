@@ -35,10 +35,7 @@ return [
         ],
     ],
 
-    // OpenAI — image editing for AI simulation (before/after visuals).
-    'openai' => [
-        'key' => env('OPENAI_API_KEY'),
-    ],
+
 
     // AWS Rekognition — face detection and landmark extraction for AI Vision pipeline.
     // Uses the same IAM credentials as S3 (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).

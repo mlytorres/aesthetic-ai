@@ -58,9 +58,11 @@
         .credentials-box .row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            align-items: center;
+            padding: 12px 0;
             font-size: 14px;
             border-bottom: 1px solid #e5e0d8;
+            gap: 16px;
         }
         .credentials-box .row:last-child { border-bottom: none; }
         .credentials-box .label { color: #9B9B8E; font-weight: 500; }
@@ -136,7 +138,7 @@
 
             <p class="note">
                 ⚠️ For security, please change your password immediately after your first login
-                via <strong>Settings → Profile</strong>.
+                via <strong>Settings → Security</strong>.
             </p>
         </div>
 

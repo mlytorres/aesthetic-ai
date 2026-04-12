@@ -8,10 +8,11 @@ use App\Models\Evaluation;
 use App\Models\Patient;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Services\OpenAIService;
 use App\Services\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Laravel\Ai\Image;
+use Laravel\Ai\Prompts\ImagePrompt;
 
 uses(RefreshDatabase::class);
 
@@ -19,15 +20,15 @@ uses(RefreshDatabase::class);
 
 function makeSimulationEvaluation(string $procedure = 'bbl'): array
 {
-    $tenant = Tenant::factory()->create();
+    $tenant  = Tenant::factory()->create();
     $patient = Patient::factory()->create(['tenant_id' => $tenant->id]);
-    $user = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'coordinator']);
+    $user    = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'coordinator']);
 
     $evaluation = Evaluation::factory()->create([
-        'tenant_id' => $tenant->id,
-        'patient_id' => $patient->id,
+        'tenant_id'      => $tenant->id,
+        'patient_id'     => $patient->id,
         'procedure_slug' => $procedure,
-        'status' => Evaluation::STATUS_COMPLETE,
+        'status'         => Evaluation::STATUS_COMPLETE,
     ]);
 
     return [$tenant, $evaluation, $user];
@@ -38,17 +39,13 @@ function makeSimulationEvaluation(string $procedure = 'bbl'): array
 test('GenerateSimulationJob stores placeholder simulation when AI Vision disabled', function (): void {
     config(['features.ai_vision' => false]);
 
+    // Image::fake() prevents any real API calls — asserts none were made below.
+    Image::fake();
+
     [$tenant, $evaluation] = makeSimulationEvaluation('bbl');
     $evaluation->update(['simulation_status' => 'processing']);
 
-    // Bind a mock OpenAIService to ensure no real API calls
-    $mock = Mockery::mock(OpenAIService::class);
-    $mock->shouldNotReceive('editImage');
-    $mock->shouldNotReceive('generateImage');
-    app()->instance(OpenAIService::class, $mock);
-
-    $job = new GenerateSimulationJob($evaluation->id);
-    $job->handle(app(OpenAIService::class));
+    (new GenerateSimulationJob($evaluation->id))->handle();
 
     $evaluation->refresh();
 
@@ -56,6 +53,9 @@ test('GenerateSimulationJob stores placeholder simulation when AI Vision disable
         ->and($evaluation->simulation_data)->not->toBeNull()
         ->and($evaluation->simulation_data['mode'])->toBe('simulated')
         ->and($evaluation->simulation_data['placeholder'])->toBeTrue();
+
+    // No real image generation should have occurred in placeholder mode.
+    Image::assertNothingGenerated();
 });
 
 test('GenerateSimulationJob marks simulation failed when an exception is thrown', function (): void {
@@ -64,12 +64,12 @@ test('GenerateSimulationJob marks simulation failed when an exception is thrown'
     [$tenant, $evaluation] = makeSimulationEvaluation('bbl');
     $evaluation->update(['simulation_status' => 'processing']);
 
-    $mock = Mockery::mock(OpenAIService::class);
-    $mock->shouldReceive('editImage')->andThrow(new RuntimeException('API error'));
-    $mock->shouldReceive('generateImage')->andThrow(new RuntimeException('API error'));
-    app()->instance(OpenAIService::class, $mock);
+    // Fake a failed generation response to simulate an API error without real calls.
+    Image::fake(function (ImagePrompt $prompt): never {
+        throw new RuntimeException('API error');
+    });
 
-    expect(fn () => (new GenerateSimulationJob($evaluation->id))->handle(app(OpenAIService::class)))
+    expect(fn () => (new GenerateSimulationJob($evaluation->id))->handle())
         ->toThrow(RuntimeException::class);
 
     $evaluation->refresh();
@@ -79,13 +79,15 @@ test('GenerateSimulationJob marks simulation failed when an exception is thrown'
 test('GenerateSimulationJob builds a procedure-specific prompt', function (): void {
     config(['features.ai_vision' => false]);
 
+    Image::fake();
+
     $procedures = ['bbl', 'lipo_360', 'breast_augmentation', 'rhinoplasty', 'facelift'];
 
     foreach ($procedures as $procedure) {
         [$tenant, $evaluation] = makeSimulationEvaluation($procedure);
         $evaluation->update(['simulation_status' => 'processing']);
 
-        (new GenerateSimulationJob($evaluation->id))->handle(app(OpenAIService::class));
+        (new GenerateSimulationJob($evaluation->id))->handle();
 
         $evaluation->refresh();
         expect($evaluation->simulation_data['prompt'])->toBeString()->not->toBeEmpty();
@@ -95,10 +97,12 @@ test('GenerateSimulationJob builds a procedure-specific prompt', function (): vo
 test('GenerateSimulationJob stores generated_at timestamp', function (): void {
     config(['features.ai_vision' => false]);
 
+    Image::fake();
+
     [$tenant, $evaluation] = makeSimulationEvaluation('bbl');
     $evaluation->update(['simulation_status' => 'processing']);
 
-    (new GenerateSimulationJob($evaluation->id))->handle(app(OpenAIService::class));
+    (new GenerateSimulationJob($evaluation->id))->handle();
 
     $evaluation->refresh();
     expect($evaluation->simulation_data)->toHaveKey('generated_at');
@@ -168,7 +172,7 @@ test('coordinator can poll simulation status', function (): void {
     [$tenant, $evaluation, $user] = makeSimulationEvaluation('bbl');
     $evaluation->update([
         'simulation_status' => 'complete',
-        'simulation_data' => ['mode' => 'simulated', 'placeholder' => true, 'generated_at' => now()->toIso8601String()],
+        'simulation_data'   => ['mode' => 'simulated', 'placeholder' => true, 'generated_at' => now()->toIso8601String()],
     ]);
 
     app(TenantContext::class)->set($tenant);
