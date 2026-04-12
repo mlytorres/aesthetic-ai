@@ -42,6 +42,9 @@ jobs:
       - name: Lint Frontend
         run: npm run lint
 
+      - name: TypeScript Type Check
+        run: npm run types:check
+
       # - name: Commit Changes
       #   uses: stefanzweifel/git-auto-commit-action@v7
       #   with:
