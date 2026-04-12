@@ -64,7 +64,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
             {/* Summary card */}
             <div className="mt-6 rounded-xl border border-white/10 bg-[#111118] overflow-hidden">
                 <div className="px-5 py-3 border-b border-white/5">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-[#C9A84C]">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[#0E9E8E]">
                         Your submission
                     </p>
                 </div>
@@ -102,7 +102,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                             className={[
                                 'flex w-full items-start gap-4 rounded-xl border px-4 py-4 text-left transition-all duration-150',
                                 checked
-                                    ? 'border-[#C9A84C]/30 bg-[#C9A84C]/5'
+                                    ? 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5'
                                     : 'border-white/10 bg-[#111118] hover:border-white/20',
                             ].join(' ')}
                         >
@@ -110,7 +110,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                             <span
                                 className={[
                                     'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all',
-                                    checked ? 'border-[#C9A84C] bg-[#C9A84C]' : 'border-white/30 bg-transparent',
+                                    checked ? 'border-[#0E9E8E] bg-[#0E9E8E]' : 'border-white/30 bg-transparent',
                                 ].join(' ')}
                             >
                                 {checked && (
@@ -131,7 +131,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                                     'text-sm font-semibold',
                                     checked ? 'text-[#F5F0E8]' : 'text-[#9B9B8E]',
                                 ].join(' ')}>
-                                    {label} <span className="text-[#C9A84C]">*</span>
+                                    {label} <span className="text-[#0E9E8E]">*</span>
                                 </p>
                                 <p className="mt-1 text-xs text-[#9B9B8E] leading-relaxed">
                                     {description}
@@ -176,7 +176,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                     className={[
                         'flex-[2] rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-200',
                         allConsented && !state.loading
-                            ? 'bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                            ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >

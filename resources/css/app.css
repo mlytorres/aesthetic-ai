@@ -8,13 +8,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    /* ── AestheticAI Intake Palette ─────────────────────────────────── */
-    --color-abyss:   #0A0A0F;   /* patient wizard background */
-    --color-surface: #111118;   /* wizard card surface */
-    --color-gold:    #C9A84C;   /* primary accent */
-    --color-gold-dim: #a8883e;  /* hover state */
-    --color-cream:   #F5F0E8;   /* primary text on dark */
-    --color-mist:    #9B9B8E;   /* secondary text on dark */
+    /* ── SymetriHealth Design Tokens ────────────────────────────────── */
+    --color-abyss:    #0A0A0F;   /* patient wizard background */
+    --color-surface:  #111118;   /* wizard card surface */
+    --color-teal:     #0E9E8E;   /* primary accent */
+    --color-teal-dim: #0C8A7C;   /* hover / pressed state */
+    --color-teal-lt:  #2DD4BF;   /* highlight / gradient end */
+    --color-cream:    #F5F0E8;   /* primary text on dark */
+    --color-mist:     #9B9B8E;   /* secondary text on dark */
     /* ─────────────────────────────────────────────────────────────── */
 
     --font-sans:
@@ -107,11 +108,12 @@
 }
 
 .dark {
-    /* ── Aesthetic AI luxury dark palette ──────────────────────────────
+    /* ── SymetriHealth luxury dark palette ────────────────────────────
        #0A0A0F = abyss (deepest background)
        #111118 = surface (cards/panels)
        #1A1A24 = elevated (inputs, hover states)
-       #C9A84C = gold (primary accent)
+       #0E9E8E = teal (primary accent)
+       #2DD4BF = teal-light (gradient highlight)
        #F5F0E8 = cream (primary text)
        #9B9B8E = mist (secondary text)
     ─────────────────────────────────────────────────────────────── */
@@ -121,7 +123,7 @@
     --card-foreground:         #F5F0E8;
     --popover:                 #111118;
     --popover-foreground:      #F5F0E8;
-    --primary:                 #C9A84C;
+    --primary:                 #0E9E8E;
     --primary-foreground:      #0A0A0F;
     --secondary:               #1A1A24;
     --secondary-foreground:    #F5F0E8;
@@ -133,8 +135,8 @@
     --destructive-foreground:  oklch(0.637 0.237 25.331);
     --border:                  rgba(255, 255, 255, 0.08);
     --input:                   #1A1A24;
-    --ring:                    #C9A84C;
-    --chart-1:                 #C9A84C;
+    --ring:                    #0E9E8E;
+    --chart-1:                 #0E9E8E;
     --chart-2:                 oklch(0.696 0.17 162.48);
     --chart-3:                 oklch(0.769 0.188 70.08);
     --chart-4:                 oklch(0.627 0.265 303.9);
@@ -142,12 +144,12 @@
     /* sidebar = slightly lighter than abyss so content area has depth */
     --sidebar:                 #0D0D14;
     --sidebar-foreground:      #F5F0E8;
-    --sidebar-primary:         #C9A84C;
+    --sidebar-primary:         #0E9E8E;
     --sidebar-primary-foreground: #0A0A0F;
     --sidebar-accent:          #111118;
     --sidebar-accent-foreground: #F5F0E8;
     --sidebar-border:          rgba(255, 255, 255, 0.06);
-    --sidebar-ring:            #C9A84C;
+    --sidebar-ring:            #0E9E8E;
 }
 
 @layer base {

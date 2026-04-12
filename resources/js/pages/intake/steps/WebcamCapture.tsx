@@ -89,7 +89,7 @@ export const WebcamCapture: FC<Props> = ({ type, onCapture, onCancel }) => {
                         onClick={capture}
                         disabled={!!error}
                         title="Snap Photo"
-                        className="w-16 h-16 rounded-full border-4 border-[#C9A84C]/50 bg-[#C9A84C] hover:bg-[#a8883e] hover:scale-105 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100"
+                        className="w-16 h-16 rounded-full border-4 border-[#0E9E8E]/50 bg-[#0E9E8E] hover:bg-[#a8883e] hover:scale-105 transition-all flex items-center justify-center disabled:opacity-50 disabled:hover:scale-100"
                     >
                     </button>
                 </div>

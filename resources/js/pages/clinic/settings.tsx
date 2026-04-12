@@ -125,8 +125,8 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 										className={cn(
 											'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all',
 											data.theme === 'luxury-dark'
-												? 'border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]'
-												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#C9A84C]/50'
+												? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
+												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#0E9E8E]/50'
 										)}
 									>
 										Luxury Dark
@@ -139,8 +139,8 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 										className={cn(
 											'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all',
 											data.theme === 'clean-light'
-												? 'border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]'
-												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#C9A84C]/50'
+												? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
+												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#0E9E8E]/50'
 										)}
 									>
 										Clean Light
@@ -259,7 +259,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 										type="button"
 										onClick={handleAddEmail}
 										disabled={!newEmail.trim()}
-										className="bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90"
+										className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
 									>
 										Add
 									</Button>
@@ -274,7 +274,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 						<Button
 							type="submit"
 							disabled={processing}
-							className="bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90"
+							className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
 						>
 							{processing ? 'Saving...' : 'Save Changes'}
 						</Button>

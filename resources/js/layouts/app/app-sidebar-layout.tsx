@@ -41,7 +41,7 @@ export default function AppSidebarLayout({
                         <DialogDescription className="text-[#9B9B8E]">
                             For HIPAA compliance, your session will automatically end after 30
                             minutes of inactivity. You will be logged out in{' '}
-                            <span className="font-semibold text-[#C9A84C]">
+                            <span className="font-semibold text-[#0E9E8E]">
                                 {remainingSeconds}s
                             </span>
                             .
@@ -56,7 +56,7 @@ export default function AppSidebarLayout({
                         </button>
                         <button
                             onClick={extendSession}
-                            className="rounded-md bg-[#C9A84C] px-4 py-2 text-sm font-medium text-[#0A0A0F] transition-colors hover:bg-[#B8943D]"
+                            className="rounded-md bg-[#0E9E8E] px-4 py-2 text-sm font-medium text-[#0A0A0F] transition-colors hover:bg-[#B8943D]"
                         >
                             Stay Logged In
                         </button>

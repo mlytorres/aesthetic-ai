@@ -71,7 +71,7 @@ const STATUS_COLORS: Record<string, string> = {
     analyzing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     complete:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
     contacted: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-    booked:    'bg-[#C9A84C]/15 text-[#C9A84C] border-[#C9A84C]/30',
+    booked:    'bg-[#0E9E8E]/15 text-[#0E9E8E] border-[#0E9E8E]/30',
     no_show:   'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
     not_a_fit: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
 };
@@ -160,7 +160,7 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
                         key={photo.id}
                         type="button"
                         onClick={() => setLightbox(photo.signed_url)}
-                        className="group relative overflow-hidden rounded-lg border border-sidebar-border/50 bg-[#0A0A0F] aspect-square focus:outline-none focus:ring-2 focus:ring-[#C9A84C]"
+                        className="group relative overflow-hidden rounded-lg border border-sidebar-border/50 bg-[#0A0A0F] aspect-square focus:outline-none focus:ring-2 focus:ring-[#0E9E8E]"
                     >
                         <img
                             src={photo.signed_url}
@@ -323,7 +323,7 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
 
                         {/* Metadata badge for status changes */}
                         {entry.metadata?.new_status != null && (
-                            <span className="mt-1 inline-block rounded bg-[#1E1E28] px-1.5 py-0.5 text-[10px] capitalize text-[#C9A84C]">
+                            <span className="mt-1 inline-block rounded bg-[#1E1E28] px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
                                 → {String(entry.metadata.new_status).replace('_', ' ')}
                             </span>
                         )}
@@ -432,14 +432,14 @@ return;
                     <Button
                         onClick={requestSimulation}
                         disabled={requesting}
-                        className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 text-sm"
+                        className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-sm"
                     >
                         {requesting ? 'Requesting…' : '✦ Generate Simulation'}
                     </Button>
                 </div>
             ) : sim.status === 'pending' || sim.status === 'processing' ? (
                 <div className="flex flex-col items-center gap-3 py-4">
-                    <div className="size-8 animate-spin rounded-full border-2 border-[#C9A84C] border-t-transparent" />
+                    <div className="size-8 animate-spin rounded-full border-2 border-[#0E9E8E] border-t-transparent" />
                     <p className="text-xs text-[#9B9B8E]">
                         {sim.status === 'pending' ? 'Queued…' : 'Generating simulation…'}
                     </p>
@@ -465,7 +465,7 @@ return;
                             className="w-full rounded-lg border border-sidebar-border/50 object-cover"
                         />
                     ) : (
-                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#C9A84C]/30 bg-[#0A0A0F] py-8 px-4">
+                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-[#0A0A0F] py-8 px-4">
                             <span className="text-2xl">✦</span>
                             <p className="text-center text-xs text-[#9B9B8E]">
                                 {sim.simulation_data?.placeholder_message as string
@@ -556,7 +556,7 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                     <Button
                         type="submit"
                         disabled={statusForm.processing}
-                        className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 text-sm"
+                        className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-sm"
                     >
                         {statusForm.processing ? 'Saving…' : 'Update Status'}
                     </Button>
@@ -572,7 +572,7 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                     href={brief.url(evaluation.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-[#F5F0E8] transition-colors hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-[#F5F0E8] transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0" aria-hidden="true">
                         <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
@@ -591,7 +591,7 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                             onChange={(e) => notesForm.setData('coordinator_notes', e.target.value)}
                             rows={4}
                             placeholder="Add notes about this patient…"
-                            className="w-full rounded-md border border-sidebar-border/50 bg-[#0A0A0F] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#9B9B8E] focus:border-[#C9A84C]/50 focus:outline-none resize-none"
+                            className="w-full rounded-md border border-sidebar-border/50 bg-[#0A0A0F] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#9B9B8E] focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
                         />
                     </div>
                     <div className="grid gap-1.5">
@@ -607,7 +607,7 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                         type="submit"
                         disabled={notesForm.processing}
                         variant="outline"
-                        className="w-full text-sm border-sidebar-border/50 text-[#F5F0E8] hover:border-[#C9A84C]/50"
+                        className="w-full text-sm border-sidebar-border/50 text-[#F5F0E8] hover:border-[#0E9E8E]/50"
                     >
                         {notesForm.processing ? 'Saving…' : 'Save Notes'}
                     </Button>
@@ -646,7 +646,7 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                     <div className="flex items-center gap-4">
                         <div className="text-right">
                             <p className="text-xs text-[#9B9B8E]">Lead Score</p>
-                            <p className="text-lg font-semibold text-[#C9A84C]">
+                            <p className="text-lg font-semibold text-[#0E9E8E]">
                                 {evaluation.lead_score ?? '—'}
                             </p>
                         </div>
@@ -661,7 +661,7 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                             href={brief.url(evaluation.id)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-[#F5F0E8] transition-colors hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-[#F5F0E8] transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-3.5 shrink-0" aria-hidden="true">
                                 <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />

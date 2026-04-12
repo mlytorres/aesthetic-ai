@@ -42,7 +42,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     const [widgetRenderMode, setWidgetRenderMode] = useState('inline');
     const [widgetButtonLabel, setWidgetButtonLabel] = useState('Start Free Evaluation');
     const [widgetHideHeader, setWidgetHideHeader] = useState('false');
-    const [widgetPrimaryColor, setWidgetPrimaryColor] = useState('#C9A84C');
+    const [widgetPrimaryColor, setWidgetPrimaryColor] = useState('#0E9E8E');
     const [widgetFontFamily, setWidgetFontFamily] = useState('system-ui, sans-serif');
 
     const handleCopy = (text: string, type: 'script' | 'secret') => {
@@ -217,7 +217,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                     size="icon"
                                     variant="ghost"
                                     onClick={() => handleCopy(generatedScript, 'script')}
-                                    className="absolute right-2 top-2 h-8 w-8 text-[#9B9B8E] hover:bg-[#1E1E28] hover:text-[#C9A84C]"
+                                    className="absolute right-2 top-2 h-8 w-8 text-[#9B9B8E] hover:bg-[#1E1E28] hover:text-[#0E9E8E]"
                                 >
                                     {copiedContent === 'script' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 </Button>
@@ -246,7 +246,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 whitespace-nowrap"
+                                className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 whitespace-nowrap"
                             >
                                 {processing ? 'Saving...' : 'Save Configuration'}
                             </Button>
@@ -285,7 +285,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleCopy(tenant.webhook_secret, 'secret')}
-                                                className="h-7 w-7 text-[#9B9B8E] hover:text-[#C9A84C]"
+                                                className="h-7 w-7 text-[#9B9B8E] hover:text-[#0E9E8E]"
                                                 title="Copy secret"
                                             >
                                                 {copiedContent === 'secret' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -350,7 +350,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             <p className="text-xs text-[#9B9B8E] mb-2 leading-relaxed">
                                 Call this endpoint using the token from the webhook to retrieve the full patient profile, including name, email, phone, and securely signed photo URLs.
                             </p>
-                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] px-4 py-3 font-mono text-xs text-[#C9A84C] overflow-x-auto whitespace-pre">
+                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] px-4 py-3 font-mono text-xs text-[#0E9E8E] overflow-x-auto whitespace-pre">
                                 GET /api/v1/evaluations/{"{"}evaluation_token{"}"}
                             </div>
                             <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs text-[#D4D4D4] overflow-x-auto whitespace-pre mt-3">

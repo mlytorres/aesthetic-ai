@@ -82,7 +82,7 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild className="h-14 hover:bg-transparent">
                             <Link href={isSuperAdmin ? '/admin' : dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
@@ -123,7 +123,7 @@ function NavAdmin() {
         <>
             <SidebarGroup className="px-2 py-0">
                 <SidebarGroupLabel className="flex items-center gap-1.5">
-                    <ShieldCheck className="h-3 w-3 text-[#C9A84C]" />
+                    <ShieldCheck className="h-3 w-3 text-[#0E9E8E]" />
                     Platform Admin
                 </SidebarGroupLabel>
                 <SidebarMenu>

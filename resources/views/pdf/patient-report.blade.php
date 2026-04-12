@@ -36,7 +36,7 @@
             font-size: 8.5px;
             text-transform: uppercase;
             letter-spacing: 1.8px;
-            color: #C9A84C;
+            color: #0E9E8E;
             margin-bottom: 6px;
         }
 
@@ -59,7 +59,7 @@
             gap: 24px;
             margin-top: 14px;
             padding-top: 14px;
-            border-top: 1px solid rgba(201, 168, 76, 0.25);
+            border-top: 1px solid rgba(14, 158, 142, 0.25);
         }
 
         .cover-meta-item {
@@ -94,7 +94,7 @@
         .greeting {
             padding: 10px 14px;
             background: #fffdf7;
-            border-left: 3px solid #C9A84C;
+            border-left: 3px solid #0E9E8E;
             border-radius: 0 4px 4px 0;
         }
 
@@ -147,7 +147,7 @@
         .score-circle .score-num {
             font-size: 18px;
             font-weight: 700;
-            color: #C9A84C;
+            color: #0E9E8E;
             line-height: 1;
         }
 
@@ -176,7 +176,7 @@
 
         .score-tier {
             font-size: 8.5px;
-            background: #C9A84C;
+            background: #0E9E8E;
             color: #fff;
             padding: 1px 7px;
             border-radius: 999px;
@@ -258,7 +258,7 @@
         .insight-dot {
             width: 5px;
             height: 5px;
-            background: #C9A84C;
+            background: #0E9E8E;
             border-radius: 50%;
             margin-top: 4px;
             flex-shrink: 0;
@@ -320,7 +320,7 @@
             align-items: center;
             justify-content: center;
             font-size: 8px;
-            color: #C9A84C;
+            color: #0E9E8E;
             font-weight: 700;
             flex-shrink: 0;
             margin-top: 1px;

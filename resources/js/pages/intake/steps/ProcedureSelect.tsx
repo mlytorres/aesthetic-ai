@@ -46,7 +46,7 @@ acc[cat] = [];
             <div className="mt-8 space-y-6">
                 {Object.entries(groups).map(([category, procs]) => (
                     <div key={category}>
-                        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#C9A84C]">
+                        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#0E9E8E]">
                             {CATEGORY_LABELS[category] ?? category}
                         </p>
 
@@ -62,7 +62,7 @@ acc[cat] = [];
                                         className={[
                                             'group w-full rounded-xl border px-5 py-4 text-left transition-all duration-200',
                                             isSelected
-                                                ? 'border-[#C9A84C] bg-[#C9A84C]/10 ring-1 ring-[#C9A84C]/30'
+                                                ? 'border-[#0E9E8E] bg-[#0E9E8E]/10 ring-1 ring-[#0E9E8E]/30'
                                                 : 'border-white/10 bg-[#111118] hover:border-white/25 hover:bg-white/[0.04]',
                                         ].join(' ')}
                                     >
@@ -71,7 +71,7 @@ acc[cat] = [];
                                                 className={[
                                                     'text-sm font-medium transition-colors',
                                                     isSelected
-                                                        ? 'text-[#C9A84C]'
+                                                        ? 'text-[#0E9E8E]'
                                                         : 'text-[#F5F0E8] group-hover:text-white',
                                                 ].join(' ')}
                                             >
@@ -83,7 +83,7 @@ acc[cat] = [];
                                                 className={[
                                                     'flex h-5 w-5 items-center justify-center rounded-full border transition-all',
                                                     isSelected
-                                                        ? 'border-[#C9A84C] bg-[#C9A84C]'
+                                                        ? 'border-[#0E9E8E] bg-[#0E9E8E]'
                                                         : 'border-white/20',
                                                 ].join(' ')}
                                             >
@@ -127,7 +127,7 @@ acc[cat] = [];
                 className={[
                     'mt-8 w-full rounded-xl px-6 py-4 text-sm font-semibold tracking-wide transition-all duration-200',
                     state.selectedProcedure && !state.loading
-                        ? 'bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                        ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
                         : 'cursor-not-allowed bg-white/10 text-white/30',
                 ].join(' ')}
             >

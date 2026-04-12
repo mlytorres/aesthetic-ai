@@ -42,7 +42,7 @@ return;
 						description="Manage all clinic accounts on the platform"
 					/>
 					<Link href="/admin/tenants/create">
-						<Button className="bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 gap-2">
+						<Button className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 gap-2">
 							<Plus className="h-4 w-4" />
 							New Clinic
 						</Button>
@@ -89,7 +89,7 @@ return;
 							<Link href="/admin/tenants/create" className="mt-4">
 								<Button
 									variant="outline"
-									className="border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/10"
+									className="border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
 								>
 									Create the first clinic
 								</Button>
@@ -121,7 +121,7 @@ return;
 											<td className="px-4 py-3">
 												<Link
 													href={`/admin/tenants/${tenant.id}`}
-													className="font-medium text-[#F5F0E8] hover:text-[#C9A84C] transition-colors"
+													className="font-medium text-[#F5F0E8] hover:text-[#0E9E8E] transition-colors"
 												>
 													{tenant.name}
 												</Link>
@@ -154,7 +154,7 @@ return;
 												<div className="flex items-center justify-end gap-3">
 													<Link
 														href={`/admin/tenants/${tenant.id}`}
-														className="text-sm text-[#C9A84C] hover:text-[#C9A84C]/80"
+														className="text-sm text-[#0E9E8E] hover:text-[#0E9E8E]/80"
 													>
 														Manage
 													</Link>

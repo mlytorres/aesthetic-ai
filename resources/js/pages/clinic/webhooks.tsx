@@ -129,7 +129,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                             No webhook URL configured.{' '}
                             <a
                                 href={integrationsIndex.url()}
-                                className="font-medium text-[#C9A84C] underline-offset-4 hover:underline"
+                                className="font-medium text-[#0E9E8E] underline-offset-4 hover:underline"
                             >
                                 Add one in Integrations
                             </a>{' '}
@@ -200,7 +200,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                             key={delivery.id}
                                             className="transition-colors hover:bg-[#0A0A0F]/50"
                                         >
-                                            <td className="px-4 py-3 font-mono text-xs text-[#C9A84C]">
+                                            <td className="px-4 py-3 font-mono text-xs text-[#0E9E8E]">
                                                 {formatEvent(delivery.event)}
                                             </td>
                                             <td className="px-4 py-3">
@@ -241,7 +241,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handleRetry(delivery)}
-                                                        className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-[#F5F0E8] hover:border-[#C9A84C]/50 hover:text-[#C9A84C]"
+                                                        className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-[#F5F0E8] hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                                                     >
                                                         <RefreshCw className="h-3 w-3" />
                                                         Retry
@@ -276,7 +276,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                             className={cn(
                                                 'h-7 w-7 p-0 text-xs',
                                                 link.active &&
-                                                    'bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90',
+                                                    'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90',
                                             )}
                                         >
                                             {link.label}

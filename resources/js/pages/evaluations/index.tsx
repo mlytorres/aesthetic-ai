@@ -73,7 +73,7 @@ const STATUS_COLORS: Record<string, string> = {
     analyzing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     complete:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
     contacted: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-    booked:    'bg-[#C9A84C]/15 text-[#C9A84C] border-[#C9A84C]/30',
+    booked:    'bg-[#0E9E8E]/15 text-[#0E9E8E] border-[#0E9E8E]/30',
     no_show:   'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
     not_a_fit: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
     submitted: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
@@ -98,7 +98,7 @@ return <span className="text-[#9B9B8E] text-xs">—</span>;
 }
 
     const pct = Math.min(100, Math.max(0, score));
-    const color = pct >= 75 ? '#C9A84C' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
+    const color = pct >= 75 ? '#0E9E8E' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
 
     return (
         <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                         { label: 'Analyzing',  count: statusCounts.analyzing,  color: 'text-blue-400' },
                         { label: 'Complete',   count: statusCounts.complete,   color: 'text-emerald-400' },
                         { label: 'Contacted',  count: statusCounts.contacted,  color: 'text-purple-400' },
-                        { label: 'Booked',     count: statusCounts.booked,     color: 'text-[#C9A84C]' },
+                        { label: 'Booked',     count: statusCounts.booked,     color: 'text-[#0E9E8E]' },
                     ].map(({ label, count, color }) => (
                         <div
                             key={label}
@@ -176,7 +176,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             className={[
                                 'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
                                 activeTab === key
-                                    ? 'bg-[#C9A84C] text-[#0A0A0F]'
+                                    ? 'bg-[#0E9E8E] text-[#0A0A0F]'
                                     : 'text-[#9B9B8E] hover:text-[#F5F0E8]',
                             ].join(' ')}
                         >
@@ -263,7 +263,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                                         <td className="px-4 py-3 text-right">
                                             <Link
                                                 href={show.url(ev.id)}
-                                                className="text-xs font-medium text-[#C9A84C] opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                                className="text-xs font-medium text-[#0E9E8E] opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
                                             >
                                                 Review →
                                             </Link>
@@ -285,7 +285,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             {evaluations.links.prev && (
                                 <Link
                                     href={evaluations.links.prev}
-                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#C9A84C]/50 transition-colors"
+                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#0E9E8E]/50 transition-colors"
                                 >
                                     ← Previous
                                 </Link>
@@ -293,7 +293,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             {evaluations.links.next && (
                                 <Link
                                     href={evaluations.links.next}
-                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#C9A84C]/50 transition-colors"
+                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#0E9E8E]/50 transition-colors"
                                 >
                                     Next →
                                 </Link>

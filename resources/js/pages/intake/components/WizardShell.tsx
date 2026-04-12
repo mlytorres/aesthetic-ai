@@ -26,8 +26,8 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
                     ) : (
                         <div className="flex items-center gap-2">
                             {/* Wordmark fallback */}
-                            <div className="h-7 w-7 rounded-full bg-[#C9A84C]/20 ring-1 ring-[#C9A84C]/40 flex items-center justify-center">
-                                <span className="text-[10px] font-bold text-[#C9A84C]">
+                            <div className="h-7 w-7 rounded-full bg-[#0E9E8E]/20 ring-1 ring-[#0E9E8E]/40 flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-[#0E9E8E]">
                                     {clinicName.charAt(0).toUpperCase()}
                                 </span>
                             </div>

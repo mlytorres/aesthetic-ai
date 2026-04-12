@@ -153,7 +153,7 @@ export default function CreateTenant({ plans }: Props) {
 											onClick={() => handleProcedureToggle(proc.value)}
 											className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
 												active
-													? 'bg-[#C9A84C] text-[#0A0A0F]'
+													? 'bg-[#0E9E8E] text-[#0A0A0F]'
 													: 'bg-white/5 text-[#9B9B8E] hover:bg-white/10'
 											}`}
 										>
@@ -207,7 +207,7 @@ export default function CreateTenant({ plans }: Props) {
 					<Button
 						type="submit"
 						disabled={processing}
-						className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90 font-semibold"
+						className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 font-semibold"
 					>
 						{processing ? 'Creating Clinic...' : 'Create Clinic & Send Invite'}
 					</Button>

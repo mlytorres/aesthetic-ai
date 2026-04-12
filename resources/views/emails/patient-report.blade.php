@@ -8,7 +8,7 @@
         body { margin: 0; padding: 0; background: #f4f4f0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .wrapper { max-width: 580px; margin: 32px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
         .header { background: #1a1a24; padding: 28px 32px 22px; }
-        .header-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #C9A84C; margin-bottom: 8px; }
+        .header-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #0E9E8E; margin-bottom: 8px; }
         .header-title { font-size: 22px; font-weight: 700; color: #F5F0E8; line-height: 1.25; }
         .header-sub { font-size: 12px; color: #9B9B8E; margin-top: 4px; }
         .body { padding: 28px 32px; }
@@ -17,7 +17,7 @@
         .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #B8912B; margin-bottom: 8px; }
         .card-text { font-size: 13px; color: #444; line-height: 1.6; }
         .cta-wrap { text-align: center; margin: 24px 0; }
-        .cta-btn { display: inline-block; background: #C9A84C; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; padding: 13px 32px; border-radius: 5px; letter-spacing: 0.3px; }
+        .cta-btn { display: inline-block; background: #0E9E8E; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; padding: 13px 32px; border-radius: 5px; letter-spacing: 0.3px; }
         .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
         .disclaimer { font-size: 10px; color: #bbb; line-height: 1.6; }
         .footer { background: #f9f9f9; padding: 16px 32px; border-top: 1px solid #eee; }

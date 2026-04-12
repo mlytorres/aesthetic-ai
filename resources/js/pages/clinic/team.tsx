@@ -41,7 +41,7 @@ interface Props {
 }
 
 const roleColorMap: Record<string, { text: string; bg: string }> = {
-	owner: { text: 'text-[#C9A84C]', bg: 'bg-[#C9A84C]/10' },
+	owner: { text: 'text-[#0E9E8E]', bg: 'bg-[#0E9E8E]/10' },
 	admin: { text: 'text-blue-400', bg: 'bg-blue-400/10' },
 	coordinator: { text: 'text-emerald-400', bg: 'bg-emerald-400/10' },
 	surgeon: { text: 'text-purple-400', bg: 'bg-purple-400/10' },
@@ -176,7 +176,7 @@ export default function Team({ members, availableRoles }: Props) {
 						<Button
 							type="submit"
 							disabled={processing}
-							className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90"
+							className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
 						>
 							{processing ? 'Adding...' : 'Add Member'}
 						</Button>

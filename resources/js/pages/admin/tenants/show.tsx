@@ -54,7 +54,7 @@ interface Props {
 }
 
 const roleColorMap: Record<string, { text: string; bg: string }> = {
-	owner:       { text: 'text-[#C9A84C]',   bg: 'bg-[#C9A84C]/10' },
+	owner:       { text: 'text-[#0E9E8E]',   bg: 'bg-[#0E9E8E]/10' },
 	admin:       { text: 'text-blue-400',     bg: 'bg-blue-400/10' },
 	coordinator: { text: 'text-emerald-400',  bg: 'bg-emerald-400/10' },
 	surgeon:     { text: 'text-purple-400',   bg: 'bg-purple-400/10' },
@@ -201,7 +201,7 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 								<Button
 									type="submit"
 									disabled={editForm.processing}
-									className="w-full bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90"
+									className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
 								>
 									{editForm.processing ? 'Saving...' : 'Save Changes'}
 								</Button>
@@ -211,7 +211,7 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 						{/* Add User */}
 						<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
 							<h3 className="mb-1 flex items-center gap-2 text-base font-semibold text-[#F5F0E8]">
-								<UserPlus className="h-4 w-4 text-[#C9A84C]" />
+								<UserPlus className="h-4 w-4 text-[#0E9E8E]" />
 								Add Team Member
 							</h3>
 							<p className="mb-4 text-sm text-[#9B9B8E]">
@@ -271,7 +271,7 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 									type="submit"
 									disabled={addUserForm.processing}
 									variant="outline"
-									className="w-full border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/10"
+									className="w-full border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
 								>
 									{addUserForm.processing ? 'Adding...' : 'Add & Send Invite'}
 								</Button>
@@ -325,7 +325,7 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 													onClick={() => handleResend(user)}
 													disabled={resendingId === user.id}
 													title="Resend invite"
-													className="text-[#9B9B8E] hover:text-[#C9A84C] disabled:opacity-40 transition-colors"
+													className="text-[#9B9B8E] hover:text-[#0E9E8E] disabled:opacity-40 transition-colors"
 												>
 													<Mail className="h-4 w-4" />
 												</button>

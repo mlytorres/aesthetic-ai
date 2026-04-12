@@ -26,7 +26,7 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.08em;
-            color: #C9A84C;
+            color: #0E9E8E;
             text-transform: uppercase;
         }
         .header .clinic-name {
@@ -79,7 +79,7 @@
             color: #F5F0E8;
         }
         .score-value {
-            color: #C9A84C;
+            color: #0E9E8E;
             font-size: 20px;
         }
         .priority-badge {
@@ -99,7 +99,7 @@
         }
         .cta a {
             display: inline-block;
-            background: #C9A84C;
+            background: #0E9E8E;
             color: #0A0A0F;
             text-decoration: none;
             font-weight: 700;
@@ -126,7 +126,7 @@
             line-height: 1.8;
         }
         .footer a {
-            color: #C9A84C;
+            color: #0E9E8E;
             text-decoration: none;
         }
     </style>
@@ -186,7 +186,7 @@
                 This link grants you <strong>one-time direct access</strong> to the evaluation
                 — no login required. It expires in <strong>15 minutes</strong>.<br><br>
                 If the link has expired, log in at
-                <a href="{{ config('app.url') }}" style="color:#C9A84C;">{{ parse_url(config('app.url'), PHP_URL_HOST) }}</a>
+                <a href="{{ config('app.url') }}" style="color:#0E9E8E;">{{ parse_url(config('app.url'), PHP_URL_HOST) }}</a>
                 and find the evaluation in your queue.
             </p>
         </div>

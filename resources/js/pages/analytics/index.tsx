@@ -87,7 +87,7 @@ const STATUS_COLORS: Record<string, string> = {
     analyzing:  'bg-blue-500',
     complete:   'bg-emerald-500',
     contacted:  'bg-purple-500',
-    booked:     'bg-[#C9A84C]',
+    booked:     'bg-[#0E9E8E]',
     no_show:    'bg-zinc-500',
     not_a_fit:  'bg-zinc-600',
     failed:     'bg-red-600',
@@ -101,7 +101,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const PROCEDURE_COLORS = [
-    'bg-[#C9A84C]',
+    'bg-[#0E9E8E]',
     'bg-purple-500',
     'bg-sky-500',
     'bg-emerald-500',
@@ -197,7 +197,7 @@ function DualBarChart({ data }: { data: ProcedureRow[] | ScoreVsBookingRow[] }) 
                         <span className="font-medium text-zinc-200">{row.label}</span>
                         <span className="tabular-nums text-zinc-400">
                             {row.count} evals
-                            <span className="ml-3 text-[#C9A84C]">{row.booking_rate}% booked</span>
+                            <span className="ml-3 text-[#0E9E8E]">{row.booking_rate}% booked</span>
                         </span>
                     </div>
                     {/* Volume bar */}
@@ -210,15 +210,15 @@ function DualBarChart({ data }: { data: ProcedureRow[] | ScoreVsBookingRow[] }) 
                     {/* Booking rate bar */}
                     <div className="h-2 overflow-hidden rounded bg-zinc-800">
                         <div
-                            className="h-full rounded bg-[#C9A84C] transition-all"
+                            className="h-full rounded bg-[#0E9E8E] transition-all"
                             style={{ width: `${row.booking_rate}%`, opacity: 0.6 }}
                         />
                     </div>
                 </div>
             ))}
             <div className="mt-1 flex gap-4 text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#C9A84C] opacity-75" /> Volume</span>
-                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#C9A84C] opacity-60" /> Booking rate</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#0E9E8E] opacity-75" /> Volume</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-3 rounded bg-[#0E9E8E] opacity-60" /> Booking rate</span>
             </div>
         </div>
     );
@@ -248,15 +248,15 @@ function SparkLine({ data }: { data: WeekPoint[] }) {
             >
                 <defs>
                     <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#C9A84C" stopOpacity="0.4" />
-                        <stop offset="100%" stopColor="#C9A84C" stopOpacity="0.0" />
+                        <stop offset="0%" stopColor="#0E9E8E" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#0E9E8E" stopOpacity="0.0" />
                     </linearGradient>
                 </defs>
                 <polygon points={area} fill="url(#sparkGrad)" />
                 <polyline
                     points={polyline}
                     fill="none"
-                    stroke="#C9A84C"
+                    stroke="#0E9E8E"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -265,7 +265,7 @@ function SparkLine({ data }: { data: WeekPoint[] }) {
                     const [x, y] = pts[i].split(',').map(Number);
 
                     return (
-                        <circle key={i} cx={x} cy={y} r="2" fill="#C9A84C" />
+                        <circle key={i} cx={x} cy={y} r="2" fill="#0E9E8E" />
                     );
                 })}
             </svg>
@@ -304,7 +304,7 @@ function IntakeFunnelChart({ data }: { data: FunnelStep[] }) {
                         </div>
                         <div className="h-6 overflow-hidden rounded bg-zinc-800">
                             <div
-                                className="h-full rounded bg-[#C9A84C] transition-all"
+                                className="h-full rounded bg-[#0E9E8E] transition-all"
                                 style={{ width: `${step.rate}%`, opacity: 0.6 + (step.rate / 100) * 0.4 }}
                             />
                         </div>
@@ -502,7 +502,7 @@ export default function Analytics({
                                     data={scoreDistrib as unknown as Record<string, unknown>[]}
                                     labelKey="bucket"
                                     valueKey="count"
-                                    colorFn={() => 'bg-[#C9A84C]'}
+                                    colorFn={() => 'bg-[#0E9E8E]'}
                                 />
                             )}
                         </Deferred>

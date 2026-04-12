@@ -23,7 +23,7 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.08em;
-            color: #C9A84C;
+            color: #0E9E8E;
             text-transform: uppercase;
         }
         .header .clinic-name {
@@ -67,7 +67,7 @@
         .credentials-box .value { color: #0A0A0F; font-weight: 600; font-family: monospace; }
         .cta {
             display: block;
-            background: #C9A84C;
+            background: #0E9E8E;
             color: #0A0A0F;
             text-decoration: none;
             text-align: center;
@@ -82,7 +82,7 @@
             font-size: 13px;
             color: #9B9B8E;
             background: #fafafa;
-            border-left: 3px solid #C9A84C;
+            border-left: 3px solid #0E9E8E;
             padding: 10px 14px;
             border-radius: 0 6px 6px 0;
         }

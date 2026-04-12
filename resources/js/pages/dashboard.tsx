@@ -42,7 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
     analyzing: 'bg-blue-500/15 text-blue-400',
     complete:  'bg-emerald-500/15 text-emerald-400',
     contacted: 'bg-purple-500/15 text-purple-400',
-    booked:    'bg-[#C9A84C]/15 text-[#C9A84C]',
+    booked:    'bg-[#0E9E8E]/15 text-[#0E9E8E]',
     submitted: 'bg-sky-500/15 text-sky-400',
 };
 
@@ -156,7 +156,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
                         </button>
                         <Link
                             href={evaluationsIndex.url()}
-                            className="rounded-lg border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-4 py-2 text-sm font-medium text-[#C9A84C] hover:bg-[#C9A84C]/20 transition-colors"
+                            className="rounded-lg border border-[#0E9E8E]/30 bg-[#0E9E8E]/10 px-4 py-2 text-sm font-medium text-[#0E9E8E] hover:bg-[#0E9E8E]/20 transition-colors"
                         >
                             View all evaluations →
                         </Link>
@@ -175,7 +175,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
                     <StatCard
                         label="New today"
                         value={stats.new_today}
-                        color="text-[#C9A84C]"
+                        color="text-[#0E9E8E]"
                         href={evaluationsIndex.url()}
                     />
                     <StatCard
@@ -198,7 +198,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
                         <h2 className="text-sm font-semibold text-[#F5F0E8]">Recent evaluations</h2>
                         <Link
                             href={evaluationsIndex.url()}
-                            className="text-xs text-[#9B9B8E] hover:text-[#C9A84C] transition-colors"
+                            className="text-xs text-[#9B9B8E] hover:text-[#0E9E8E] transition-colors"
                         >
                             View all
                         </Link>
@@ -215,7 +215,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
                                 <p className="text-sm font-medium text-[#F5F0E8]">No evaluations yet</p>
                                 <p className="mt-1 text-xs text-[#9B9B8E]">
                                     Patients submit via{' '}
-                                    <span className="font-mono text-[#C9A84C]">
+                                    <span className="font-mono text-[#0E9E8E]">
                                         {window.location.hostname}/intake
                                     </span>
                                 </p>
@@ -283,8 +283,8 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
                         href={evaluationsIndex.url({ query: { status: 'active' } })}
                         className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#111118] px-4 py-3 hover:border-white/20 hover:bg-white/[0.04] transition-all"
                     >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#C9A84C]/10">
-                            <svg className="h-4 w-4 text-[#C9A84C]" viewBox="0 0 24 24" fill="none">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E9E8E]/10">
+                            <svg className="h-4 w-4 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
                                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             </svg>
                         </div>

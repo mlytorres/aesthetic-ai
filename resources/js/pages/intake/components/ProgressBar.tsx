@@ -25,7 +25,7 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
 
                 {/* Progress fill */}
                 <div
-                    className="absolute top-1/2 left-0 h-px -translate-y-1/2 bg-[#C9A84C] transition-all duration-500"
+                    className="absolute top-1/2 left-0 h-px -translate-y-1/2 bg-[#0E9E8E] transition-all duration-500"
                     style={{
                         width:
                             currentIndex === 0
@@ -45,9 +45,9 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                 className={[
                                     'flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-300 z-10',
                                     isDone
-                                        ? 'border-[#C9A84C] bg-[#C9A84C]'
+                                        ? 'border-[#0E9E8E] bg-[#0E9E8E]'
                                         : isCurrent
-                                        ? 'border-[#C9A84C] bg-[#111118]'
+                                        ? 'border-[#0E9E8E] bg-[#111118]'
                                         : 'border-white/20 bg-[#111118]',
                                 ].join(' ')}
                             >
@@ -65,7 +65,7 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                     <span
                                         className={[
                                             'text-[10px] font-semibold',
-                                            isCurrent ? 'text-[#C9A84C]' : 'text-white/30',
+                                            isCurrent ? 'text-[#0E9E8E]' : 'text-white/30',
                                         ].join(' ')}
                                     >
                                         {index + 1}
@@ -80,7 +80,7 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                     isCurrent
                                         ? 'text-[#F5F0E8]'
                                         : isDone
-                                        ? 'text-[#C9A84C]'
+                                        ? 'text-[#0E9E8E]'
                                         : 'text-white/30',
                                 ].join(' ')}
                             >

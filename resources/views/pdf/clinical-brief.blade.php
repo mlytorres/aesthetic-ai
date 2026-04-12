@@ -32,7 +32,7 @@
             align-items: flex-start;
             justify-content: space-between;
             padding-bottom: 8px;
-            border-bottom: 2px solid #C9A84C;
+            border-bottom: 2px solid #0E9E8E;
             margin-bottom: 8px;
         }
 
@@ -83,7 +83,7 @@
 
         .score-box.lead {
             background: #fdf8ee;
-            border: 1px solid #C9A84C;
+            border: 1px solid #0E9E8E;
         }
 
         .score-box.priority {
