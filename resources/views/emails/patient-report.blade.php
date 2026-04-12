@@ -86,7 +86,7 @@
 
     <div class="footer">
         <div class="footer-text">
-            {{ $clinicName }} &bull; Powered by AestheticAI<br>
+            {{ $clinicName }} &bull; Powered by SymetriHealth<br>
             You received this email because you submitted an aesthetic evaluation request.
         </div>
     </div>

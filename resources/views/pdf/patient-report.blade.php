@@ -506,7 +506,7 @@
     {{-- ── FOOTER ──────────────────────────────────────────────────────────── --}}
     <div class="footer">
         <div class="footer-clinic">{{ $report['clinic_name'] }}</div>
-        <div class="footer-tagline">Powered by AestheticAI — Beauty Intelligence Platform</div>
+        <div class="footer-tagline">Powered by SymetriHealth — Clinical Intelligence Platform</div>
         <div class="footer-date">{{ $report['generated_at'] }}</div>
     </div>
 

@@ -39,7 +39,7 @@ class UserInviteMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "You're invited to {$this->tenant->name} on Aesthetic AI",
+            subject: "You're invited to {$this->tenant->name} on SymetriHealth",
         );
     }
 

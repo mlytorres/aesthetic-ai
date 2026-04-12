@@ -85,6 +85,38 @@ class ProcedureSeeder extends Seeder
             ],
         ];
 
+        // ─── 13 New Procedures ────────────────────────────────────────────────
+        $newProcedures = [
+            ['slug' => 'tummy_tuck', 'label' => 'Tummy Tuck', 'category' => 'body'],
+            ['slug' => 'abdominal_etching', 'label' => 'Abdominal Etching', 'category' => 'body'],
+            ['slug' => 'mommy_makeover', 'label' => 'Mommy Makeover', 'category' => 'body'],
+            ['slug' => 'skinny_bbl', 'label' => 'Skinny BBL', 'category' => 'body'],
+            ['slug' => 'j_plasma', 'label' => 'J Plasma', 'category' => 'body'],
+            ['slug' => 'arm_lipo_lift', 'label' => 'Arm Lipo & Lift', 'category' => 'body'],
+            ['slug' => 'back_liposuction_lift', 'label' => 'Back Liposuction & Lift', 'category' => 'body'],
+            ['slug' => 'axillary_liposuction', 'label' => 'Axillary Liposuction', 'category' => 'body'],
+            ['slug' => 'reverse_bbl', 'label' => 'Reverse BBL', 'category' => 'body'],
+            ['slug' => 'liposuction', 'label' => 'Liposuction', 'category' => 'body'],
+            ['slug' => 'breast_lift', 'label' => 'Breast Lift', 'category' => 'body'],
+            ['slug' => 'breast_reduction', 'label' => 'Breast Reduction', 'category' => 'body'],
+            ['slug' => 'face_and_neck_lift', 'label' => 'Face and Neck Lift', 'category' => 'face'],
+            ['slug' => 'chin_lipo', 'label' => 'Chin Lipo', 'category' => 'face'],
+        ];
+
+        foreach ($newProcedures as $newReq) {
+            $procedures[] = [
+                'slug' => $newReq['slug'],
+                'label' => $newReq['label'],
+                'category' => $newReq['category'],
+                'photo_protocol' => [
+                    ['type' => 'front', 'required' => true, 'guide_label' => 'Front view'],
+                    ['type' => 'left_profile', 'required' => true, 'guide_label' => 'Left profile'],
+                    ['type' => 'right_profile', 'required' => true, 'guide_label' => 'Right profile'],
+                ],
+                'active' => true,
+            ];
+        }
+
         foreach ($procedures as $data) {
             Procedure::updateOrCreate(['slug' => $data['slug']], $data);
         }
@@ -604,6 +636,93 @@ class ProcedureSeeder extends Seeder
             ]
         );
 
-        $this->command->info('✅ Procedures and quiz definitions seeded for all 5 procedures.');
+        // ─── Generate Generic Quizzes for non-MVP procedures ───────────────────
+        
+        $mvpSlugs = ['rhinoplasty', 'bbl', 'lipo_360', 'breast_augmentation', 'facelift'];
+        
+        foreach ($procedures as $data) {
+            if (!in_array($data['slug'], $mvpSlugs)) {
+                $this->buildGenericQuiz($data['slug']);
+            }
+        }
+
+        $this->command->info('✅ Procedures and quiz definitions completely seeded.');
+    }
+
+    private function buildGenericQuiz(string $slug): void
+    {
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => $slug, 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'text',
+                        'label' => 'Please briefly describe your primary concerns and goals for this procedure.',
+                        'required' => true,
+                        'branches' => ['*' => ['next' => 'q_prior_surgery']],
+                    ],
+                    [
+                        'id' => 'q_prior_surgery',
+                        'type' => 'boolean',
+                        'label' => 'Have you previously had surgery in this specific area?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_prior_details'],
+                            'false' => ['next' => 'q_timeline'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_prior_details',
+                        'type' => 'text',
+                        'label' => 'Please briefly describe your previous surgery.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $10,000'],
+                            ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
+                            ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ]
+            ]
+        );
     }
 }

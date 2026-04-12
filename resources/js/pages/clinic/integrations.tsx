@@ -62,7 +62,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
         }
     };
 
-    const generatedScript = `<!-- AestheticAI Widget -->
+    const generatedScript = `<!-- SymetriHealth Widget -->
 <script
   src="${widgetUrl}"
   data-clinic-id="${tenant.id}"
@@ -83,7 +83,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
             <div className="space-y-8 pb-12">
                 <Heading
                     title="Integrations & Embeds"
-                    description="Connect AestheticAI to your existing systems and embed the intake widget."
+                    description="Connect SymetriHealth to your existing systems and embed the intake widget."
                 />
 
                 {/* Widget SDK Generator */}
@@ -304,7 +304,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                         </div>
                                     </div>
                                     <p className="text-xs text-[#9B9B8E]">
-                                        Use this secret to independently verify inbound <code>X-AestheticAI-Signature</code> headers. Give it only to trusted developers.
+                                        Use this secret to independently verify inbound <code>X-SymetriHealth-Signature</code> headers. Give it only to trusted developers.
                                     </p>
                                 </div>
                             </div>

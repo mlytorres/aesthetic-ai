@@ -102,14 +102,14 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <div class="logo-text">Aesthetic AI</div>
+            <div class="logo-text">SymetriHealth</div>
             <div class="clinic-name">{{ $tenant->name }}</div>
         </div>
 
         <div class="body">
             <h1>Welcome, {{ $user->name }}!</h1>
             <p>
-                You've been invited to join <strong>{{ $tenant->name }}</strong> on Aesthetic AI.
+                You've been invited to join <strong>{{ $tenant->name }}</strong> on SymetriHealth.
                 Your account has been created with the following credentials:
             </p>
 
@@ -142,7 +142,7 @@
 
         <div class="footer">
             <p>
-                This invitation was sent by the Aesthetic AI platform.<br>
+                This invitation was sent by the SymetriHealth platform.<br>
                 If you did not expect this email, please ignore it.
             </p>
         </div>

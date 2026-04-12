@@ -158,7 +158,7 @@ test('DispatchWebhookJob sends HMAC-SHA256 signature header', function (): void 
     );
 
     Http::assertSent(function ($request) use ($expectedSig) {
-        return $request->hasHeader('X-AestheticAI-Signature', $expectedSig);
+        return $request->hasHeader('X-SymetriHealth-Signature', $expectedSig);
     });
 });
 

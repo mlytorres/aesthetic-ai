@@ -18,6 +18,7 @@ use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
+use App\Http\Controllers\ClinicAccessRequestController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -26,6 +27,8 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+
+Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])->name('access-requests.store');
 
 // ─── Magic link authentication ────────────────────────────────────────────────
 // One-time coordinator login links sent in evaluation notification emails.

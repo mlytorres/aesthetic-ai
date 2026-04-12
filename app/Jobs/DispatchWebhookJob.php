@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Log;
  *
  * After all attempts fail, failed() marks the delivery as permanently failed.
  *
- * Signature: X-AestheticAI-Signature: sha256={hex_hmac}
+ * Signature: X-SymetriHealth-Signature: sha256={hex_hmac}
  * The HMAC is computed over the raw JSON body using the tenant's webhook_secret.
  */
 class DispatchWebhookJob implements ShouldQueue
@@ -78,9 +78,9 @@ class DispatchWebhookJob implements ShouldQueue
         $response = Http::timeout(10)
             ->withHeaders([
                 'Content-Type' => 'application/json',
-                'X-AestheticAI-Signature' => $signature,
-                'X-AestheticAI-Event' => $delivery->event,
-                'User-Agent' => 'AestheticAI-Webhook/1.0',
+                'X-SymetriHealth-Signature' => $signature,
+                'X-SymetriHealth-Event' => $delivery->event,
+                'User-Agent' => 'SymetriHealth-Webhook/1.0',
             ])
             ->withBody($body, 'application/json')
             ->post($tenant->webhook_url);

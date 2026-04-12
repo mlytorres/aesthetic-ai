@@ -136,7 +136,7 @@
 
         <!-- Header -->
         <div class="header">
-            <div class="logo-text">AestheticAI</div>
+            <div class="logo-text">SymetriHealth</div>
             <div class="clinic-name">{{ $clinicName }}</div>
         </div>
 
@@ -194,7 +194,7 @@
         <!-- Footer -->
         <div class="footer">
             <p>
-                AestheticAI · HIPAA-Compliant Pre-Qualification Platform<br>
+                SymetriHealth · HIPAA-Compliant Pre-Qualification Platform<br>
                 You're receiving this because you're listed as a coordinator for {{ $clinicName }}.<br>
                 <a href="{{ config('app.url') }}/clinic/settings">Manage notification preferences</a>
             </p>

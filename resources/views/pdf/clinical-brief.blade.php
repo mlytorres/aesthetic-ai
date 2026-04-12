@@ -563,7 +563,7 @@
             This document is intended solely for authorized clinic staff. Unauthorized disclosure is prohibited.
         </div>
         <div class="footer-right">
-            {{ $evaluation->tenant?->name ?? config('app.name') }} &bull; AestheticAI Platform
+            {{ $evaluation->tenant?->name ?? config('app.name') }} &bull; SymetriHealth Platform
         </div>
     </div>
 

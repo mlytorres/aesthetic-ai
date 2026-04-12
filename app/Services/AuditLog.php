@@ -102,7 +102,7 @@ class AuditLog
                 'subject_id'   => $subject?->getKey(),
                 'metadata'     => array_merge($metadata, ['_source' => 'queue_job']),
                 'ip_address'   => '127.0.0.1',
-                'user_agent'   => 'AestheticAI/QueueWorker',
+                'user_agent'   => 'SymetriHealth/QueueWorker',
             ]);
         } catch (\Throwable $e) {
             Log::critical('AuditLog::recordSystem write failed', [
