@@ -17,12 +17,15 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // TenantContext is a per-request singleton — holds the resolved tenant
-        $this->app->singleton(TenantContext::class);
+        // Scoped bindings reset between requests under Octane — safe alternative to singleton.
+        // TenantContext holds the resolved tenant for the current request; must never bleed
+        // across requests in long-running Octane workers.
+        $this->app->scoped(TenantContext::class);
 
-        // AuditLog depends on the current request for IP/user-agent
-        $this->app->singleton(AuditLog::class);
-        $this->app->singleton(SecureFileService::class);
+        // AuditLog captures request IP/user-agent; SecureFileService uses the tenant context.
+        // Both must be request-scoped under Octane.
+        $this->app->scoped(AuditLog::class);
+        $this->app->scoped(SecureFileService::class);
     }
 
 
