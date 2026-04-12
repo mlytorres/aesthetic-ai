@@ -12,14 +12,36 @@ import {
 } from '@/components/ui/dialog';
 import { useSessionTimeout } from '@/hooks/use-session-timeout';
 import type { AppLayoutProps } from '@/types';
+import { router, usePage } from '@inertiajs/react';
 
 export default function AppSidebarLayout({
     children,
     breadcrumbs = [],
 }: AppLayoutProps) {
     const { showWarning, remainingSeconds, extendSession, logout } = useSessionTimeout();
+    const { impersonating } = usePage().props;
+
+    const stopImpersonating = () => {
+        router.delete('/impersonate');
+    };
 
     return (
+        <>
+        {impersonating && (
+            <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-amber-400 px-4 py-2 shadow-md">
+                <span className="text-sm font-semibold text-black">
+                    👤 Impersonating <strong>{impersonating.as}</strong> — changes you make affect this tenant's data.
+                </span>
+                <button
+                    type="button"
+                    onClick={stopImpersonating}
+                    className="rounded bg-black/10 px-3 py-1 text-xs font-bold text-black hover:bg-black/20 transition-colors"
+                >
+                    Stop Impersonating
+                </button>
+            </div>
+        )}
+        <div className={impersonating ? 'pt-10' : undefined}>
         <AppShell variant="sidebar">
             <AppSidebar />
             <AppContent variant="sidebar" className="overflow-x-hidden">
@@ -64,5 +86,7 @@ export default function AppSidebarLayout({
                 </DialogContent>
             </Dialog>
         </AppShell>
+        </div>
+        </>
     );
 }

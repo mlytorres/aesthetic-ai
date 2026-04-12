@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireRole;
 use App\Http\Middleware\TenantMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -28,8 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Named middleware aliases — use in route groups
         $middleware->alias([
-            'tenant'       => TenantMiddleware::class,
-            'super-admin'  => EnsureSuperAdmin::class,
+            'tenant' => TenantMiddleware::class,
+            'super-admin' => EnsureSuperAdmin::class,
+            'role' => RequireRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

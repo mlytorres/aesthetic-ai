@@ -42,6 +42,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Non-null when a super admin is currently impersonating a tenant user.
+            'impersonating' => session()->has('impersonating_id')
+                ? ['as' => $request->user()?->name]
+                : null,
         ];
     }
 }

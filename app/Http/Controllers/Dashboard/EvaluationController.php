@@ -12,6 +12,7 @@ use App\Services\AuditLog;
 use App\Services\WebhookService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -112,6 +113,7 @@ class EvaluationController extends Controller
     public function updateStatus(Request $request, string $evaluationId): RedirectResponse
     {
         $evaluation = Evaluation::findOrFail($evaluationId);
+        Gate::authorize('updateStatus', $evaluation);
 
         $validated = $request->validate([
             'status' => ['required', Rule::in([
@@ -145,6 +147,7 @@ class EvaluationController extends Controller
     public function updateNotes(Request $request, string $evaluationId): RedirectResponse
     {
         $evaluation = Evaluation::findOrFail($evaluationId);
+        Gate::authorize('updateNotes', $evaluation);
 
         $validated = $request->validate([
             'coordinator_notes' => ['nullable', 'string', 'max:5000'],

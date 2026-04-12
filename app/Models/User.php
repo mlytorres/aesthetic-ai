@@ -15,7 +15,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
- * Clinic staff account (coordinator, surgeon, admin, owner).
+ * Clinic staff account (coordinator, surgeon, admin, owner) OR platform super-admin.
+ *
+ * Super-admins have tenant_id = null. They access /admin/* only and can never
+ * be created by a tenant — only via Artisan or by another super-admin.
  *
  * NOTE: User intentionally does NOT use HasTenantScope.
  * Laravel's session guard calls User::find($id) on every request before any
@@ -31,18 +34,22 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
-    // Role constants — always use these, never raw strings
-    public const ROLE_OWNER       = 'owner';
-    public const ROLE_ADMIN       = 'admin';
+    // Tenant role constants — always use these, never raw strings
+    public const ROLE_OWNER = 'owner';
+
+    public const ROLE_ADMIN = 'admin';
+
     public const ROLE_COORDINATOR = 'coordinator';
-    public const ROLE_SURGEON     = 'surgeon';
-    public const ROLE_VIEWER      = 'viewer';
+
+    public const ROLE_SURGEON = 'surgeon';
+
+    public const ROLE_VIEWER = 'viewer';
 
     protected function casts(): array
     {
         return [
-            'email_verified_at'       => 'datetime',
-            'password'                => 'hashed',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
@@ -54,19 +61,77 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
-    // ─── Role helpers ─────────────────────────────────────────────────────────
+    // ─── Platform-level helpers ───────────────────────────────────────────────
 
-    public function isOwner(): bool      { return $this->role === self::ROLE_OWNER; }
-    public function isAdmin(): bool      { return in_array($this->role, [self::ROLE_OWNER, self::ROLE_ADMIN]); }
-    public function isCoordinator(): bool { return $this->role === self::ROLE_COORDINATOR; }
-    public function isSurgeon(): bool    { return $this->role === self::ROLE_SURGEON; }
+    /**
+     * Super-admins are platform operators with no clinic affiliation.
+     * Detected by tenant_id = null — there is no separate "super_admin" column.
+     * Can only be created via Artisan or by another super-admin in /admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->tenant_id === null;
+    }
+
+    // ─── Tenant role helpers ──────────────────────────────────────────────────
+
+    /** Clinic owner — highest tenant role, sole ability to assign the Owner role. */
+    public function isOwner(): bool
+    {
+        return $this->role === self::ROLE_OWNER;
+    }
+
+    /**
+     * Owner OR Admin — can manage clinic settings, team, and integrations.
+     * Use this for any check that applies equally to both management roles.
+     */
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, [self::ROLE_OWNER, self::ROLE_ADMIN]);
+    }
+
+    /** Coordinator — primary clinical role; can update evaluation status and notes. */
+    public function isCoordinator(): bool
+    {
+        return $this->role === self::ROLE_COORDINATOR;
+    }
+
+    /** Surgeon — sees clinical analysis only; cannot view patient contact info or manage clinic. */
+    public function isSurgeon(): bool
+    {
+        return $this->role === self::ROLE_SURGEON;
+    }
+
+    /** Viewer — read-only access to evaluations and analytics; cannot take any action. */
+    public function isViewer(): bool
+    {
+        return $this->role === self::ROLE_VIEWER;
+    }
+
+    /**
+     * Clinical actors — can update evaluation state, notes, and request simulations.
+     * Owner, Admin, Coordinator. NOT Surgeon or Viewer.
+     */
+    public function isClinicalActor(): bool
+    {
+        return in_array($this->role, [self::ROLE_OWNER, self::ROLE_ADMIN, self::ROLE_COORDINATOR]);
+    }
 
     /**
      * Can this user view patient PII (name, email, phone)?
-     * Surgeons see clinical data only — no contact info.
+     * Surgeons and Viewers see clinical/aggregate data only — no contact info.
      */
     public function canViewPhi(): bool
     {
-        return in_array($this->role, [self::ROLE_OWNER, self::ROLE_ADMIN, self::ROLE_COORDINATOR]);
+        return $this->isClinicalActor();
+    }
+
+    /**
+     * Can this user manage clinic-level settings, team, and integrations?
+     * Owner and Admin only.
+     */
+    public function canManageClinic(): bool
+    {
+        return $this->isAdmin();
     }
 }

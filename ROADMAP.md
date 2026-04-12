@@ -13,10 +13,11 @@
 | **Deployed** | April 2026 |
 | **Local dev URL** | https://aesthetic-ai.test (Laravel Herd) |
 | **Admin panel** | https://aesthetic-ai.test/admin (super-admin only) |
-| **Pilot clinic** | https://miamilife.aesthetic-ai.test |
+| **Pilot clinic (local)** | https://miamilife.aesthetic-ai.test |
+| **Pilot clinic (prod)** | https://miamilife.symetrihealth.com |
 
+> **Production APP_URL:** Must be set to `https://symetrihealth.com` — TenantMiddleware resolves tenants from subdomains of this domain (e.g. `miamilife.symetrihealth.com` → slug `miamilife`).
 > When testing webhooks in production, set the webhook URL in Clinic Settings to your CRM endpoint and verify the `X-AestheticAI-Signature` header using the tenant's `webhook_secret`.
-> For smoke-testing the intake wizard against production, use the tenant subdomain once configured (e.g. `https://miamilife.aesthai.laravel.cloud/intake`).
 
 ---
 
@@ -82,7 +83,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 **DevOps:**
 - [x] GitHub repo established, branch protection configured
-- [ ] GitHub Actions CI: PHPStan level 8, Pest tests, TypeScript `tsc --noEmit` *(not configured yet)*
+- [x] GitHub Actions CI: Pest tests (`tests.yml` — PHP 8.3/8.4/8.5 matrix), Pint + ESLint + Prettier + `tsc --noEmit` (`lint.yml`)
 - [ ] Staging environment on AWS *(using local dev — `aesthetic-ai.test`)*
 - [ ] `.env` secrets management via AWS Secrets Manager *(local `.env` in dev)*
 
@@ -344,16 +345,18 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [ ] Full skin texture / laxity estimation from photo (dedicated ML model, not proxy)
 - [ ] Improved ML-based procedure matching trained on historical outcome data
 
-**AI Simulation (High Impact Feature):** 🚧 *Partially delivered (Sprint 8)*
-- [x] `OpenAIService` — typed HTTP wrapper for `gpt-image-1` image edit + generation endpoints
-- [x] `GenerateSimulationJob` — procedure-specific prompts using body proportion data; stores result to S3; placeholder in dev (no OpenAI key required)
-- [x] `SimulationController` — `POST` to request simulation, `GET` to poll status (async, 'ai' queue)
-- [x] `SimulationViewer` React component — request button, 4-second status polling, result display, "not a guarantee" disclaimer, regenerate button
+**AI Simulation (High Impact Feature):** ✅ *Complete (Sprint 8 + extended)*
+- [x] `laravel/ai` SDK — official Laravel AI package used for image generation
+- [x] `ProcedureRegistry` — central registry of all 26 procedure slugs; drives pipeline type (body vs face), high-revenue flags, and prompt routing across the platform
+- [x] `GenerateSimulationJob` — procedure-specific prompts for all 26 procedures; body proportions + facial landmarks baked into prompt; stores result to S3; placeholder mode when `FEATURE_AI_VISION=false`
+- [x] `SimulationController` — `POST` to request simulation, `GET` to poll signed S3 URL (async, `ai` queue); fixed for Octane tenant scoping via `string $id` + manual `findOrFail()`
+- [x] `SimulationViewer` React component — request button, 4-second status polling, result hydrated on page refresh (one-shot fetch on mount when already complete), "not a guarantee" disclaimer, regenerate button, copy share link
+- [x] `SimulationShareController` + `/intake/simulations/{token}` — public share page gated by `secure_token`
 - [x] Migration — `simulation_status`, `simulation_data`, `simulation_requested_at` on evaluations
-- [x] 12 body landmark tests (`BodyLandmarkTest.php`) + 11 simulation tests (`AISimulationTest.php`)
-- [ ] Morphing preview for Rhinoplasty (facial photo edit, not just generation)
-- [ ] Shareable secure link for simulation result
-- [ ] S3 photo download for real OpenAI image edit (currently generates from prompt only in prod)
+- [x] 12 body landmark tests + 11 simulation tests + 39 unit + 51 feature tests for `ProcedureRegistry`
+- [x] Shareable secure link for simulation result (`/intake/simulations/{token}` — gated by `secure_token`, no auth required)
+- [ ] Morphing preview for Rhinoplasty (facial photo edit using patient's actual photo)
+- [ ] S3 photo download for real OpenAI image edit (currently generates from prompt only)
 
 **Patient Experience Enhancements:**
 - [x] Beauty Roadmap PDF — personalized report emailed to patient ✅ *Sprint 6*
@@ -424,13 +427,14 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 |---|---|---|---|
 | 🔥 1 | Stripe billing + plan enforcement (Starter / Growth / Pro) | Phase 2 | Large |
 | 🔥 2 | Tenant self-registration flow (public sign-up → auto-onboard) | Phase 2 | Medium |
-| 🔥 3 | GitHub Actions CI (PHPStan + Pest + tsc) | Infra | Small |
-| 4 | CloudWatch / production alerts | Infra | Small |
-| 5 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
-| 6 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
-| 7 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
-| 8 | Shareable secure link for simulation result | Phase 3 | Small |
-| 9 | Multilingual support (Spanish — Miami market priority) | Backlog | Large |
+| 3 | CloudWatch / production alerts | Infra | Small |
+| 4 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
+| 5 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
+| 6 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| 7 | Multilingual support (Spanish — Miami market priority) | Backlog | Large |
+| ✅ | GitHub Actions CI (Pest + tsc + Pint + ESLint) | Infra | Done |
+| ✅ | Shareable secure link for simulation result | Phase 3 | Done |
+| ✅ | Full procedure library (26 procedures via ProcedureRegistry) | Phase 2 | Done |
 
 ---
 

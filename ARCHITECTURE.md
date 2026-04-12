@@ -19,7 +19,7 @@
 ┌─────────────────────────────────▼───────────────────────────────────┐
 │                         Application Layer                             │
 │                                                                       │
-│   Laravel 12 (PHP 8.3)           React 18 + Inertia.js              │
+│   Laravel 13 (PHP 8.5)           React 19 + Inertia.js v3           │
 │   ├── API Routes                 ├── Patient Portal                  │
 │   ├── Inertia Routes             ├── Clinic Dashboard                │
 │   ├── Webhook Receivers          └── Embed Widget                    │
@@ -29,15 +29,18 @@
 ┌───────────▼──────────┐                 ┌────────────▼──────────────┐
 │    Data Layer        │                 │    AI Processing Layer     │
 │                      │                 │                            │
-│  PostgreSQL (RLS)    │                 │  Laravel Horizon (Redis)        │
-│  ├── tenants         │                 │  ├── ValidatePhotoQualityJob    │
-│  ├── patients        │                 │  ├── ExtractFacialLandmarksJob  │
-│  ├── evaluations     │                 │  ├── CalculateProportionsJob    │
-│  ├── audit_logs      │                 │  ├── GenerateRecommendationsJob │
-│  └── webhooks        │                 │  └── NotifyClinicNewEvalJob     │
-│                      │                 │                            │
-│  S3 (KMS encrypted)  │                 │  AWS Rekognition           │
-│  └── patient-photos/ │                 │  Custom ML Models          │
+│  PostgreSQL (RLS)    │                 │  Laravel Horizon (Redis)           │
+│  ├── tenants         │                 │  ├── ValidatePhotoQualityJob       │
+│  ├── patients        │                 │  ├── ExtractFacialLandmarksJob     │
+│  ├── evaluations     │                 │  ├── ExtractBodyLandmarksJob       │
+│  ├── audit_logs      │                 │  ├── CalculateProportionsJob       │
+│  └── webhooks        │                 │  ├── CalculateBodyProportionsJob   │
+│                      │                 │  ├── GenerateRecommendationsJob    │
+│  S3 (KMS encrypted)  │                 │  ├── GenerateSimulationJob         │
+│  └── patient-photos/ │                 │  └── NotifyClinicNewEvalJob        │
+│                      │                 │                                    │
+│                      │                 │  AWS Rekognition                   │
+│                      │                 │  laravel/ai → OpenAI gpt-image-1   │
 └──────────────────────┘                 └────────────────────────────┘
             │
 ┌───────────▼──────────────────────────────────────────────────────────┐
@@ -80,11 +83,14 @@ clinic-a.aestheticai.com → TenantResolver → tenant_id: uuid-a
 clinic-b.aestheticai.com → TenantResolver → tenant_id: uuid-b
 ```
 
-**Tenant Resolution Order:**
-1. Subdomain: `{slug}.aestheticai.com`
-2. Custom domain: Clinic's own domain via CNAME
-3. Embed token: Widget JWT contains `tenant_id` claim
-4. Magic link token: Patient link contains encrypted `tenant_id`
+**Tenant Resolution Order (`TenantMiddleware`):**
+1. Subdomain: `{slug}.symetrihealth.com` (production) / `{slug}.aesthetic-ai.test` (local) — resolved from `APP_URL`
+2. `X-Clinic-ID` header: REST API routes with Bearer token
+3. Authenticated user: Staff on main domain — resolved from `user.tenant_id`
+
+> **Important for production:** `APP_URL` must be set to the root domain (e.g. `https://symetrihealth.com`) so subdomain resolution works correctly for unauthenticated requests (patient intake).
+
+> **Octane note:** `TenantContext`, `AuditLog`, and `SecureFileService` are bound as `scoped()` (not `singleton()`) in `AppServiceProvider` so they reset between requests in long-running Octane workers. Never change these to `singleton()` — it would cause tenant context to bleed across requests.
 
 ---
 
@@ -353,6 +359,24 @@ ECS Fargate (Laravel + Octane)
 - TensorFlow.js face-api: heavier bundle, slower inference on low-end phones
 - Server-side pre-validation: adds a round-trip and exposes a pre-upload endpoint to abuse
 - No client validation: too many poor-quality photos would degrade AI pipeline results
+
+---
+
+### ADR-006: ProcedureRegistry as Single Source of Truth
+
+**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `App\Services\ProcedureRegistry` as `public const` arrays.
+
+**Rationale:**
+- Adding a new procedure previously required changes in 5+ places (controller, simulation job, recommendations job, lead scoring, seeder). Now it requires adding the slug to one const array.
+- `isBodyProcedure()` / `isFaceProcedure()` drive which AI job chain fires (`ExtractBodyLandmarksJob` vs `ExtractFacialLandmarksJob`).
+- `isHighRevenue()` drives minimum priority tier in `LeadScoringService` (Mommy Makeover, Tummy Tuck, Facelift, Face & Neck Lift, Breast Augmentation always get at least High priority).
+- 26 procedures currently registered (19 body, 7 face).
+
+**Adding a new procedure:**
+1. Add slug to `BODY_PROCEDURES` or `FACE_PROCEDURES` in `ProcedureRegistry`.
+2. Add a prompt method in `GenerateSimulationJob::buildPrompt()`.
+3. Add a recommendations method in `GenerateBasicRecommendationsJob`.
+4. Add the procedure row in `ProcedureSeeder`.
 
 ---
 

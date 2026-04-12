@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Mail, UserPlus } from 'lucide-react';
+import { ArrowLeft, LogIn, Mail, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -101,12 +101,26 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 		});
 	};
 
+	const [impersonatingId, setImpersonatingId] = useState<number | null>(null);
+
 	const handleResend = (user: User) => {
 		setResendingId(user.id);
 		router.post(
 			`/admin/tenants/${tenant.id}/users/${user.id}/resend-invite`,
 			{},
 			{ onFinish: () => setResendingId(null) },
+		);
+	};
+
+	const handleImpersonate = (user: User) => {
+		if (!confirm(`Impersonate "${user.name}" (${user.email})? You will be logged in as this user.`)) {
+			return;
+		}
+		setImpersonatingId(user.id);
+		router.post(
+			`/admin/users/${user.id}/impersonate`,
+			{},
+			{ onFinish: () => setImpersonatingId(null) },
 		);
 	};
 
@@ -328,6 +342,16 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 													className="text-[#9B9B8E] hover:text-[#0E9E8E] disabled:opacity-40 transition-colors"
 												>
 													<Mail className="h-4 w-4" />
+												</button>
+
+												<button
+													type="button"
+													onClick={() => handleImpersonate(user)}
+													disabled={impersonatingId === user.id}
+													title="Impersonate user"
+													className="text-[#9B9B8E] hover:text-amber-400 disabled:opacity-40 transition-colors"
+												>
+													<LogIn className="h-4 w-4" />
 												</button>
 											</div>
 										</div>

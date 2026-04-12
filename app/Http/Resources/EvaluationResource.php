@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Evaluation;
+use App\Models\User;
 use App\Services\SecureFileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,6 +16,9 @@ class EvaluationResource extends JsonResource
     public function toArray(Request $request): array
     {
         /** @var Evaluation $this */
+        $user = $request->user();
+        $canViewPhi = $user instanceof User && $user->canViewPhi();
+
         return [
             'id' => $this->id,
             'procedure_slug' => $this->procedure_slug,
@@ -27,13 +31,22 @@ class EvaluationResource extends JsonResource
             'completed_at' => $this->completed_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
 
-            // Patient — partial PHI (decrypted for authorised staff)
-            'patient' => $this->whenLoaded('patient', fn () => [
-                'id' => $this->patient->id,
-                'name' => $this->patient->name_encrypted,   // cast decrypts automatically
-                'email' => $this->patient->email_encrypted,
-                'phone' => $this->patient->phone_encrypted,
-            ]),
+            // Patient PHI — name, email, phone only for clinical actors (owner, admin, coordinator).
+            // Surgeons and Viewers receive only the patient ID for cross-referencing.
+            'patient' => $this->whenLoaded('patient', fn () => $canViewPhi
+                ? [
+                    'id' => $this->patient->id,
+                    'name' => $this->patient->name_encrypted,   // cast decrypts automatically
+                    'email' => $this->patient->email_encrypted,
+                    'phone' => $this->patient->phone_encrypted,
+                ]
+                : [
+                    'id' => $this->patient->id,
+                    'name' => null,
+                    'email' => null,
+                    'phone' => null,
+                ]
+            ),
 
             // Photos — return signed URLs, never raw S3 keys
             'photos' => $this->whenLoaded('photos', function () {
@@ -49,7 +62,13 @@ class EvaluationResource extends JsonResource
             }),
 
             'photos_count' => $this->whenCounted('photos'),
-            'quiz_answers' => $this->when($this->relationLoaded('patient'), fn () => $this->quiz_answers),
+
+            // Quiz answers and analysis — available to all roles with access to this evaluation.
+            // PHI may appear in free-text quiz fields, so quiz_answers is restricted to PHI-capable roles.
+            'quiz_answers' => $this->when(
+                $this->relationLoaded('patient') && $canViewPhi,
+                fn () => $this->quiz_answers
+            ),
             'analysis_data' => $this->when($this->analysis_data !== [], fn () => $this->analysis_data),
 
             // Simulation

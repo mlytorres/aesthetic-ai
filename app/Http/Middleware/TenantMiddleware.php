@@ -14,7 +14,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Resolves the current tenant for every request and loads it into TenantContext.
  *
  * Resolution order:
- *  1. Subdomain       — {slug}.aesthetic-ai.test (local) / {slug}.aestheticai.com (prod)
+ *  1. Subdomain       — {slug}.aesthetic-ai.test (local) / {slug}.symetrihealth.com (prod)
  *  2. API header      — X-Clinic-ID header with Bearer token (REST API routes)
  *  3. Authenticated user — staff accessing the dashboard on the main domain; their
  *                          tenant_id attribute is authoritative (requires auth middleware
@@ -44,7 +44,7 @@ class TenantMiddleware
     }
 
     /**
-     * Resolve tenant from subdomain: miamilife.aesthetic-ai.test → slug = 'miamilife'
+     * Resolve tenant from subdomain: miamilife.symetrihealth.com → slug = 'miamilife'
      */
     private function resolveFromSubdomain(Request $request): ?Tenant
     {

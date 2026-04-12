@@ -79,6 +79,9 @@ erDiagram
         integer lead_score
         string priority
         string secure_token UK
+        string simulation_status
+        jsonb simulation_data
+        timestamptz simulation_requested_at
         timestamptz completed_at
         timestamptz created_at
         timestamptz updated_at
@@ -315,7 +318,10 @@ CREATE TABLE evaluations (
     analysis_data       jsonb NOT NULL DEFAULT '{}',    -- AI pipeline output
     lead_score          smallint,                       -- 0–100, null until analysis complete
     priority            varchar(16),                    -- urgent|high|medium|standard
-    secure_token        varchar(64) NOT NULL UNIQUE,    -- SHA-256 random, used in magic links
+    secure_token            varchar(64) NOT NULL UNIQUE,    -- SHA-256 random, used in magic links + simulation share
+    simulation_status       varchar(16),                    -- null|pending|processing|complete|failed
+    simulation_data         jsonb,                          -- prompt metadata, placeholder_message, etc.
+    simulation_requested_at timestamptz,                    -- when GenerateSimulationJob was dispatched
     coordinator_notes   text,
     follow_up_at        timestamptz,
     external_id         varchar(128),                   -- CRM reference after sync

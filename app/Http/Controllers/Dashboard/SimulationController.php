@@ -9,6 +9,7 @@ use App\Jobs\AI\GenerateSimulationJob;
 use App\Models\Evaluation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -36,6 +37,7 @@ class SimulationController extends Controller
     public function store(Request $request, string $evaluationId): JsonResponse
     {
         $evaluation = Evaluation::findOrFail($evaluationId);
+        Gate::authorize('requestSimulation', $evaluation);
 
         // Prevent duplicate requests
         if (in_array($evaluation->simulation_status, ['pending', 'processing'], strict: true)) {

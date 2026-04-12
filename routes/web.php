@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
 use App\Http\Controllers\Intake\SimulationShareController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -43,50 +45,76 @@ Route::middleware(['tenant'])->group(function (): void {
 // ─── Clinic dashboard (authenticated staff) ───────────────────────────────────
 // 'tenant' runs after 'auth' so TenantMiddleware can fall back to the
 // authenticated user's tenant_id when staff access the main domain directly.
+//
+// Role access summary:
+//   All roles          → dashboard, evaluations (view only)
+//   Owner/Admin/Coord  → evaluation actions (status, notes), simulation, analytics
+//   Owner/Admin        → clinic settings, team, integrations, webhooks
+//   Owner/Admin/Coord/Surgeon → clinical brief download
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
     // ── Session keepalive (HIPAA inactivity timer) ────────────────────────
-    // Touching this endpoint resets the server-side session lifetime.
-    // Called by the client-side useSessionTimeout hook when the user confirms
-    // they are still active.
     Route::get('keepalive', fn () => response()->noContent())->name('keepalive');
 
     // ── Local-dev photo streaming (FEATURE_AI_VISION=false only) ─────────
-    // In production this route is never hit — SecureFileService returns S3 pre-signed URLs.
     Route::get('/photos/{hash}', PhotoStreamController::class)->name('photos.stream');
 
-    // ── Evaluations (coordinator priority queue) ──────────────────────────
+    // ── Analytics — all roles except Surgeon ─────────────────────────────
+    Route::get('analytics', [AnalyticsController::class, 'index'])
+        ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_VIEWER]))
+        ->name('analytics');
+
+    // ── Evaluations ───────────────────────────────────────────────────────
     Route::prefix('evaluations')->name('evaluations.')->group(function (): void {
+        // View — all roles
         Route::get('/', [DashboardEvaluationController::class, 'index'])->name('index');
         Route::get('/{evaluation}', [DashboardEvaluationController::class, 'show'])->name('show');
-        Route::patch('/{evaluation}/status', [DashboardEvaluationController::class, 'updateStatus'])->name('update-status');
-        Route::patch('/{evaluation}/notes', [DashboardEvaluationController::class, 'updateNotes'])->name('update-notes');
-        Route::get('/{evaluation}/brief', [ClinicalBriefController::class, 'download'])->name('brief');
 
-        // ── AI Simulation ──────────────────────────────────────────────────
-        Route::post('/{evaluation}/simulation', [SimulationController::class, 'store'])->name('simulation.store');
-        Route::get('/{evaluation}/simulation', [SimulationController::class, 'show'])->name('simulation.show');
+        // Mutating actions — clinical actors only (owner, admin, coordinator)
+        // Policy checks are also applied inside each controller method.
+        Route::patch('/{evaluation}/status', [DashboardEvaluationController::class, 'updateStatus'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+            ->name('update-status');
+
+        Route::patch('/{evaluation}/notes', [DashboardEvaluationController::class, 'updateNotes'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+            ->name('update-notes');
+
+        // Clinical brief — owner, admin, coordinator, surgeon (not viewer)
+        Route::get('/{evaluation}/brief', [ClinicalBriefController::class, 'download'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
+            ->name('brief');
+
+        // ── AI Simulation — owner, admin, coordinator, surgeon (not viewer) ──
+        Route::post('/{evaluation}/simulation', [SimulationController::class, 'store'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
+            ->name('simulation.store');
+
+        Route::get('/{evaluation}/simulation', [SimulationController::class, 'show'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
+            ->name('simulation.show');
     });
 
-    // ── Clinic settings & team (owner / admin only) ───────────────────────
-    Route::prefix('clinic')->name('clinic.')->group(function (): void {
-        Route::get('/settings', [ClinicController::class, 'edit'])->name('settings.edit');
-        Route::patch('/settings', [ClinicController::class, 'update'])->name('settings.update');
+    // ── Clinic settings, team & integrations — owner and admin only ───────
+    Route::prefix('clinic')->name('clinic.')
+        ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN]))
+        ->group(function (): void {
+            Route::get('/settings', [ClinicController::class, 'edit'])->name('settings.edit');
+            Route::patch('/settings', [ClinicController::class, 'update'])->name('settings.update');
 
-        Route::get('/team', [TeamController::class, 'index'])->name('team.index');
-        Route::post('/team', [TeamController::class, 'store'])->name('team.store');
-        Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+            Route::get('/team', [TeamController::class, 'index'])->name('team.index');
+            Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+            Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
 
-        Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
-        Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
-        Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
+            Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
+            Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
+            Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
 
-        Route::get('/webhooks', [WebhookDeliveryController::class, 'index'])->name('webhooks.index');
-        Route::post('/webhooks/{webhookDelivery}/retry', [WebhookDeliveryController::class, 'retry'])->name('webhooks.retry');
-    });
+            Route::get('/webhooks', [WebhookDeliveryController::class, 'index'])->name('webhooks.index');
+            Route::post('/webhooks/{webhookDelivery}/retry', [WebhookDeliveryController::class, 'retry'])->name('webhooks.retry');
+        });
 });
 
 // ─── Patient Intake Wizard ────────────────────────────────────────────────────
@@ -127,7 +155,8 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
 // ─── Super-admin panel ────────────────────────────────────────────────────────
 // Accessible to platform operators (tenant_id = null users) only.
-// No 'tenant' middleware — these users don't belong to a clinic.
+// No 'tenant' middleware — super-admins don't belong to a clinic.
+// Cannot be reached by any tenant user regardless of role.
 
 Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', fn () => redirect()->route('admin.tenants.index'));
@@ -136,7 +165,7 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
         Route::get('/', [TenantAdminController::class, 'index'])->name('index');
         Route::get('/create', [TenantAdminController::class, 'create'])->name('create');
         Route::post('/', [TenantAdminController::class, 'store'])->name('store');
-        // Note: show/update use string $id in the controller so they work with soft-deleted tenants.
+        // Note: show/update use string $id so they work with soft-deleted tenants.
         Route::get('/{id}', [TenantAdminController::class, 'show'])->name('show');
         Route::patch('/{id}', [TenantAdminController::class, 'update'])->name('update');
         Route::delete('/{tenant}', [TenantAdminController::class, 'deactivate'])->name('deactivate');
@@ -144,6 +173,14 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
         Route::post('/{tenant}/users', [TenantAdminController::class, 'addUser'])->name('users.store');
         Route::post('/{tenant}/users/{user}/resend-invite', [TenantAdminController::class, 'resendInvite'])->name('users.resend');
     });
+
+    // Impersonation — at /admin/users/{user}/impersonate (outside the tenants prefix).
+    Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'impersonate'])->name('users.impersonate');
 });
+
+// Stop impersonating — accessible while logged in as a tenant user (no super-admin middleware).
+Route::delete('/impersonate', [ImpersonationController::class, 'leave'])
+    ->middleware(['auth'])
+    ->name('impersonate.leave');
 
 require __DIR__.'/settings.php';

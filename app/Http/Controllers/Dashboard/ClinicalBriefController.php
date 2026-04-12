@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Evaluation;
 use App\Services\AuditLog;
 use App\Services\ClinicalBriefService;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,6 +31,7 @@ class ClinicalBriefController extends Controller
     public function download(string $evaluationId): Response|StreamedResponse
     {
         $evaluation = Evaluation::with(['patient', 'photos', 'tenant'])->findOrFail($evaluationId);
+        Gate::authorize('downloadBrief', $evaluation);
 
         $this->auditLog->record('evaluation.brief.downloaded', $evaluation);
 

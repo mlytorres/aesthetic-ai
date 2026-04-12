@@ -16,15 +16,17 @@
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Backend | Laravel | 12 |
-| Language | PHP (strict_types=1 always) | 8.3 |
-| Frontend | React + Inertia.js | 18 / latest |
+| Backend | Laravel | 13 |
+| Language | PHP (strict_types=1 always) | 8.5 |
+| Frontend | React + Inertia.js | 19 / v3 |
 | Types | TypeScript (strict: true, no any) | 5+ |
 | Styling | TailwindCSS + Shadcn/UI | 4 |
 | Database | PostgreSQL with Row-Level Security | 16 |
 | Queue | Laravel Horizon + Redis | — |
+| Server | Laravel Octane | — |
 | Storage | AWS S3 (KMS encrypted) | — |
-| AI/Vision | AWS Rekognition + custom jobs | — |
+| AI/Vision | AWS Rekognition + `laravel/ai` SDK | — |
+| AI/Simulation | OpenAI `gpt-image-1` via `laravel/ai` | — |
 
 ---
 
@@ -93,15 +95,37 @@ webhooks          -- Per-tenant CRM integration config
 ## Key Services
 
 ```php
-TenantContext::getId()                    // Get current tenant ID
-TenantContext::set($tenantId)            // Set for testing
-AuditLog::record($action, $model)        // Log PHI access
-SecureFileService::getSignedUrl($key)    // Get photo URL
-SecureFileService::storeEncrypted($file) // Upload to S3
-MagicLinkService::generate($patient)     // Create portal link
-MagicLinkService::validate($token)       // Validate + single-use
-LeadScoringService::calculate($eval)     // 0-100 score
-DispatchWebhook::dispatch($tenant, ...)  // Fire CRM webhook
+TenantContext::getId()                        // Get current tenant ID
+TenantContext::set($tenantId)                // Set for testing
+AuditLog::record($action, $model)            // Log PHI access
+SecureFileService::getSignedUrl($key)        // Get photo URL
+SecureFileService::storeEncrypted($file)     // Upload to S3
+MagicLinkService::generate($patient)         // Create portal link
+MagicLinkService::validate($token)           // Validate + single-use
+LeadScoringService::calculate($eval)         // 0-100 score + priority
+DispatchWebhook::dispatch($tenant, ...)      // Fire CRM webhook
+
+// Procedure registry — single source of truth for all 26 procedures
+ProcedureRegistry::isBodyProcedure($slug)   // Routes to body AI pipeline
+ProcedureRegistry::isFaceProcedure($slug)   // Routes to facial AI pipeline
+ProcedureRegistry::isHighRevenue($slug)     // Forces min PRIORITY_HIGH in lead scoring
+ProcedureRegistry::allSlugs()              // All 26 registered procedure slugs
+```
+
+### Octane Safety
+`TenantContext`, `AuditLog`, and `SecureFileService` are bound as `scoped()` in `AppServiceProvider` — they reset between requests. Never change to `singleton()` as it causes tenant bleed across requests in long-running Octane workers.
+
+### Dashboard Controllers — Tenant Binding Pattern
+Due to `TenantScope` + `SubstituteBindings` ordering, **never use implicit route model binding** in dashboard controllers. Always use `string $id` + manual `findOrFail()`:
+```php
+// ✅ Correct
+public function show(Request $request, string $evaluationId): Response
+{
+    $evaluation = Evaluation::findOrFail($evaluationId);
+}
+
+// ❌ Wrong — TenantContext not set yet when binding resolves
+public function show(Request $request, Evaluation $evaluation): Response
 ```
 
 ---
