@@ -29,12 +29,29 @@ function tenantHeaders(Tenant $tenant): array
 
 // ─── Procedure + Quiz Seeding ─────────────────────────────────────────────────
 
-test('all 5 procedures are seeded and active', function (): void {
+test('all procedures are seeded and active', function (): void {
     $this->seed(ProcedureSeeder::class);
 
     $slugs = Procedure::where('active', true)->pluck('slug')->sort()->values()->all();
 
-    expect($slugs)->toBe(['bbl', 'breast_augmentation', 'facelift', 'lipo_360', 'rhinoplasty']);
+    // Core MVP procedures are always present
+    expect($slugs)->toContain('bbl')
+        ->and($slugs)->toContain('breast_augmentation')
+        ->and($slugs)->toContain('facelift')
+        ->and($slugs)->toContain('lipo_360')
+        ->and($slugs)->toContain('rhinoplasty')
+        // New procedures
+        ->and($slugs)->toContain('tummy_tuck')
+        ->and($slugs)->toContain('mommy_makeover')
+        ->and($slugs)->toContain('breast_lift')
+        ->and($slugs)->toContain('breast_reduction')
+        ->and($slugs)->toContain('skinny_bbl')
+        ->and($slugs)->toContain('eyelid_surgery')
+        ->and($slugs)->toContain('gynecomastia')
+        ->and($slugs)->toContain('face_and_neck_lift');
+
+    // Total must include all MVP + all new procedures
+    expect(count($slugs))->toBeGreaterThanOrEqual(26);
 });
 
 test('each active procedure has exactly one active quiz definition', function (): void {

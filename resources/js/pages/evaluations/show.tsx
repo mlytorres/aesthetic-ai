@@ -340,6 +340,7 @@ interface SimulationStatus {
     status: string | null;
     simulation_data: Record<string, unknown> | null;
     simulation_url: string | null;
+    share_url: string | null;
     requested_at: string | null;
 }
 
@@ -348,12 +349,12 @@ function SimulationViewer({ evaluation }: { evaluation: Evaluation }) {
         status: evaluation.simulation_status,
         simulation_data: evaluation.simulation_data,
         simulation_url: null,
+        share_url: null,
         requested_at: evaluation.simulation_requested_at,
     });
     const [requesting, setRequesting] = useState(false);
+    const [copied, setCopied] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const isBodyProcedure = ['bbl', 'lipo_360', 'breast_augmentation'].includes(evaluation.procedure_slug);
 
     const stopPolling = useCallback(() => {
         if (pollRef.current) {
@@ -383,6 +384,16 @@ return;
         }
     }, [evaluation.id, stopPolling]);
 
+    // On mount, if the simulation is already complete, fetch once to hydrate the signed URL.
+    // simulation_url is a temporary S3 signed URL — it's never stored in the DB or passed as
+    // an Inertia prop, so we must fetch it from the API on every page load.
+    useEffect(() => {
+        if (evaluation.simulation_status === 'complete') {
+            pollStatus();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Start polling when status is pending/processing
     useEffect(() => {
         if (sim.status === 'pending' || sim.status === 'processing') {
@@ -411,19 +422,28 @@ return;
         }
     };
 
-    const isBodyComplete = evaluation.status === 'complete' || evaluation.analysis_data?.body_proportions != null;
+    // Ready when analysis is complete — body procedures store 'body_proportions',
+    // face procedures store 'proportions'. Either key signals analysis is done.
+    const isAnalysisReady =
+        evaluation.status === 'complete' ||
+        evaluation.analysis_data?.body_proportions != null ||
+        evaluation.analysis_data?.proportions != null;
+
+    const copyShareLink = async () => {
+        if (!sim.share_url) return;
+        await navigator.clipboard.writeText(sim.share_url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <SectionCard title="AI Simulation">
-            {!isBodyProcedure ? (
-                <p className="text-xs text-[#9B9B8E] italic">
-                    AI simulation is available for body procedures (BBL, Lipo 360, Breast Augmentation).
-                </p>
-            ) : !isBodyComplete && sim.status === null ? (
+            {!isAnalysisReady && sim.status === null ? (
                 <p className="text-xs text-[#9B9B8E] italic">
                     Simulation will be available once AI analysis is complete.
                 </p>
-            ) : sim.status === null ? (
+
+            ) : (sim.status === null) ? (
                 <div className="space-y-3">
                     <p className="text-xs text-[#9B9B8E]">
                         Generate an AI before/after simulation for this patient's procedure.
@@ -477,6 +497,16 @@ return;
                     <p className="text-[10px] text-[#9B9B8E] italic text-center">
                         ⚠ AI simulation for consultation purposes only. Results are not a medical guarantee.
                     </p>
+
+                    {sim.share_url && (
+                        <Button
+                            onClick={copyShareLink}
+                            variant="outline"
+                            className="w-full text-xs border-[#C9A84C]/40 text-[#C9A84C] hover:text-[#C9A84C]/80"
+                        >
+                            {copied ? '✓ Link copied!' : '⎘ Copy patient share link'}
+                        </Button>
+                    )}
 
                     <Button
                         onClick={requestSimulation}

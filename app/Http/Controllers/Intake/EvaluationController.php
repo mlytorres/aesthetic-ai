@@ -17,9 +17,11 @@ use App\Jobs\AI\ValidatePhotoQualityJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
 use App\Services\AuditLog;
+use App\Services\ProcedureRegistry;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -94,7 +96,7 @@ class EvaluationController extends Controller
         $evaluation = $this->findByToken($token);
         $validated = $request->validated();
 
-        $turnstileResponse = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+        $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
             'secret' => config('services.turnstile.secret_key'),
             'response' => $validated['turnstile_token'],
             'remoteip' => $request->ip(),
@@ -141,9 +143,10 @@ class EvaluationController extends Controller
         $evaluationId = $evaluation->id;
         $procedureSlug = $evaluation->procedure_slug;
 
-        // Body procedures use landmark + proportion jobs specific to body geometry.
-        // Face procedures use the facial landmark + facial proportion jobs.
-        $isBodyProcedure = in_array($procedureSlug, ['bbl', 'lipo_360', 'breast_augmentation'], strict: true);
+        // ProcedureRegistry determines whether to use the body or face AI pipeline.
+        // Body: ExtractBodyLandmarksJob → CalculateBodyProportionsJob
+        // Face: ExtractFacialLandmarksJob → CalculateProportionsJob
+        $isBodyProcedure = ProcedureRegistry::isBodyProcedure($procedureSlug);
 
         $landmarkJob = $isBodyProcedure
             ? new ExtractBodyLandmarksJob($evaluationId)

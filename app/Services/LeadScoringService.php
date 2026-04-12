@@ -30,6 +30,7 @@ use App\Models\Evaluation;
  * Automatic priority boosts:
  *   - Revision rhinoplasty patient → +1 tier (higher clinical complexity)
  *   - Functional component (breathing) → +1 tier
+ *   - High-revenue procedure (mommy_makeover, tummy_tuck, facelift, etc.) → force at least 'high'
  *   - Budget ≥ $15k + timeline ≤ 3 months → force at least 'high'
  */
 class LeadScoringService
@@ -37,9 +38,9 @@ class LeadScoringService
     /**
      * Score an evaluation and return [score (int), priority (string)].
      *
-     * @param array<string, mixed> $proportions  From analysis_data.proportions
-     * @param array<string, mixed> $quizAnswers   From evaluation.quiz_answers
-     * @return array{int, string}                 [score, priority]
+     * @param  array<string, mixed>  $proportions  From analysis_data.proportions
+     * @param  array<string, mixed>  $quizAnswers  From evaluation.quiz_answers
+     * @return array{int, string} [score, priority]
      */
     public function score(
         Evaluation $evaluation,
@@ -51,21 +52,21 @@ class LeadScoringService
         // ── Timeline (30 pts) ─────────────────────────────────────────────────
         $timeline = $quizAnswers['q_timeline'] ?? 'researching';
         $score += match ($timeline) {
-            'asap'        => 30,
-            '3_months'    => 22,
-            '6_months'    => 12,
+            'asap' => 30,
+            '3_months' => 22,
+            '6_months' => 12,
             'researching' => 3,
-            default       => 5,
+            default => 5,
         };
 
         // ── Budget (25 pts) ───────────────────────────────────────────────────
         $budget = $quizAnswers['q_budget'] ?? 'under_10k';
         $score += match ($budget) {
-            'over_25k'   => 25,
-            '15k_25k'    => 20,
-            '10k_15k'    => 13,
-            'under_10k'  => 5,
-            default      => 5,
+            'over_25k' => 25,
+            '15k_25k' => 20,
+            '10k_15k' => 13,
+            'under_10k' => 5,
+            default => 5,
         };
 
         // ── AI Harmony Score (20 pts) ─────────────────────────────────────────
@@ -87,17 +88,17 @@ class LeadScoringService
             $concernCount >= 3 => 8,
             $concernCount >= 2 => 6,
             $concernCount >= 1 => 4,
-            default            => 0,
+            default => 0,
         };
 
         // ── Referral source (5 pts) ───────────────────────────────────────────
         $referral = $quizAnswers['q_referral'] ?? null;
         $score += match ($referral) {
-            'referral'  => 5,  // Word-of-mouth = high intent
-            'google'    => 4,  // Active searcher
+            'referral' => 5,  // Word-of-mouth = high intent
+            'google' => 4,  // Active searcher
             'instagram' => 3,  // Social discovery
-            'tiktok'    => 2,
-            default     => 1,
+            'tiktok' => 2,
+            default => 1,
         };
 
         // ── Clamp to 0–100 ────────────────────────────────────────────────────
@@ -108,18 +109,24 @@ class LeadScoringService
 
         // ── Priority boosts ───────────────────────────────────────────────────
         $priorSurgery = $quizAnswers['q_prior_surgery'] ?? false;
-        $isRevision   = ($priorSurgery === true || $priorSurgery === 'true' || $priorSurgery === 1);
+        $isRevision = ($priorSurgery === true || $priorSurgery === 'true' || $priorSurgery === 1);
 
-        $breathing    = $quizAnswers['q_breathing'] ?? false;
+        $breathing = $quizAnswers['q_breathing'] ?? false;
         $hasFunctional = ($breathing === true || $breathing === 'true' || $breathing === 1);
 
         if ($isRevision || $hasFunctional) {
             $priority = $this->boostPriority($priority);
         }
 
+        // High-revenue procedures always warrant at least 'high' priority —
+        // the consultation value justifies immediate coordinator follow-up.
+        if ($evaluation->procedure_slug && ProcedureRegistry::isHighRevenue($evaluation->procedure_slug)) {
+            $priority = $this->atLeast($priority, Evaluation::PRIORITY_HIGH);
+        }
+
         // Force at least 'high' for serious budget + timeline combo
-        $seriousBudget   = in_array($budget, ['15k_25k', 'over_25k'], true);
-        $urgentTimeline  = in_array($timeline, ['asap', '3_months'], true);
+        $seriousBudget = in_array($budget, ['15k_25k', 'over_25k'], true);
+        $urgentTimeline = in_array($timeline, ['asap', '3_months'], true);
 
         if ($seriousBudget && $urgentTimeline) {
             $priority = $this->atLeast($priority, Evaluation::PRIORITY_HIGH);
@@ -134,7 +141,7 @@ class LeadScoringService
             $score >= 80 => Evaluation::PRIORITY_URGENT,
             $score >= 60 => Evaluation::PRIORITY_HIGH,
             $score >= 40 => Evaluation::PRIORITY_MEDIUM,
-            default      => Evaluation::PRIORITY_STANDARD,
+            default => Evaluation::PRIORITY_STANDARD,
         };
     }
 
@@ -146,9 +153,9 @@ class LeadScoringService
     {
         return match ($priority) {
             Evaluation::PRIORITY_STANDARD => Evaluation::PRIORITY_MEDIUM,
-            Evaluation::PRIORITY_MEDIUM   => Evaluation::PRIORITY_HIGH,
-            Evaluation::PRIORITY_HIGH     => Evaluation::PRIORITY_URGENT,
-            default                       => $priority,
+            Evaluation::PRIORITY_MEDIUM => Evaluation::PRIORITY_HIGH,
+            Evaluation::PRIORITY_HIGH => Evaluation::PRIORITY_URGENT,
+            default => $priority,
         };
     }
 
@@ -159,13 +166,13 @@ class LeadScoringService
     {
         $order = [
             Evaluation::PRIORITY_STANDARD => 0,
-            Evaluation::PRIORITY_MEDIUM   => 1,
-            Evaluation::PRIORITY_HIGH     => 2,
-            Evaluation::PRIORITY_URGENT   => 3,
+            Evaluation::PRIORITY_MEDIUM => 1,
+            Evaluation::PRIORITY_HIGH => 2,
+            Evaluation::PRIORITY_URGENT => 3,
         ];
 
-        $currentRank = $order[$current]  ?? 0;
-        $minimumRank = $order[$minimum]  ?? 0;
+        $currentRank = $order[$current] ?? 0;
+        $minimumRank = $order[$minimum] ?? 0;
 
         return $currentRank >= $minimumRank ? $current : $minimum;
     }

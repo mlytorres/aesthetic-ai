@@ -28,9 +28,15 @@ class SimulationController extends Controller
      *
      * Returns immediately with status='pending'. The job runs asynchronously.
      * If a simulation is already in progress or complete, it returns the current state.
+     *
+     * NOTE: Uses string $evaluationId instead of implicit route model binding because
+     * SubstituteBindings fires before the 'tenant' middleware sets TenantContext,
+     * causing TenantScope to apply WHERE false and return a 404.
      */
-    public function store(Request $request, Evaluation $evaluation): JsonResponse
+    public function store(Request $request, string $evaluationId): JsonResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
+
         // Prevent duplicate requests
         if (in_array($evaluation->simulation_status, ['pending', 'processing'], strict: true)) {
             return response()->json([
@@ -58,10 +64,13 @@ class SimulationController extends Controller
      *
      * Used by the React SimulationViewer to poll until complete.
      *
+     * NOTE: Uses string $evaluationId — see store() for the SubstituteBindings explanation.
+     *
      * @return JsonResponse{status: string, simulation_data: array|null, simulation_s3_url: string|null}
      */
-    public function show(Request $request, Evaluation $evaluation): JsonResponse
+    public function show(Request $request, string $evaluationId): JsonResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
         $data = $evaluation->simulation_data;
         $simulationUrl = null;
 
@@ -70,15 +79,29 @@ class SimulationController extends Controller
             $simulationUrl = $this->signedSimulationUrl($data['simulation_s3_key']);
         }
 
+        $shareUrl = $evaluation->simulation_status === 'complete'
+            ? $this->shareUrl($evaluation)
+            : null;
+
         return response()->json([
             'status' => $evaluation->simulation_status,
             'simulation_data' => $data,
             'simulation_url' => $simulationUrl,
+            'share_url' => $shareUrl,
             'requested_at' => $evaluation->simulation_requested_at?->toIso8601String(),
         ]);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Build a patient-shareable URL for the simulation result.
+     * Uses the evaluation's secure_token — no authentication required.
+     */
+    private function shareUrl(Evaluation $evaluation): string
+    {
+        return route('intake.simulation.share', ['token' => $evaluation->secure_token]);
+    }
 
     private function signedSimulationUrl(string $s3Key): ?string
     {

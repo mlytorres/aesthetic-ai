@@ -5,9 +5,10 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\ClinicController;
+use App\Http\Controllers\Clinic\IntegrationController;
 use App\Http\Controllers\Clinic\TeamController;
 use App\Http\Controllers\Clinic\WebhookDeliveryController;
-use App\Http\Controllers\Clinic\IntegrationController;
+use App\Http\Controllers\ClinicAccessRequestController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -18,7 +19,7 @@ use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
-use App\Http\Controllers\ClinicAccessRequestController;
+use App\Http\Controllers\Intake\SimulationShareController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -118,6 +119,10 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
     // Patient Beauty Roadmap PDF (no auth — gated by evaluation token)
     Route::get('/evaluations/{token}/report', [PatientReportController::class, 'download'])
         ->name('evaluations.report');
+
+    // AI simulation share page (no auth — gated by evaluation secure_token)
+    Route::get('/simulations/{token}', [SimulationShareController::class, 'show'])
+        ->name('simulation.share');
 });
 
 // ─── Super-admin panel ────────────────────────────────────────────────────────

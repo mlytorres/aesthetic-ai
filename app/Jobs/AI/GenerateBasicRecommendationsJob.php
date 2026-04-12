@@ -64,12 +64,26 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
 
         // ── Generate procedure-specific recommendations ───────────────────────
         $recommendations = match ($procedure) {
-            'rhinoplasty'         => $this->rhinoplastyRecommendations($proportions, $quizAnswers),
-            'bbl'                 => $this->bblRecommendations($proportions, $quizAnswers),
-            'lipo_360'            => $this->lipo360Recommendations($proportions, $quizAnswers),
+            // ── Original 5 MVP procedures ──────────────────────────────────────
+            'rhinoplasty' => $this->rhinoplastyRecommendations($proportions, $quizAnswers),
+            'bbl' => $this->bblRecommendations($proportions, $quizAnswers),
+            'lipo_360' => $this->lipo360Recommendations($proportions, $quizAnswers),
             'breast_augmentation' => $this->breastAugRecommendations($proportions, $quizAnswers),
-            'facelift'            => $this->faceliftRecommendations($proportions, $quizAnswers, $faceAttrs),
-            default               => $this->genericRecommendations($proportions, $quizAnswers),
+            'facelift' => $this->faceliftRecommendations($proportions, $quizAnswers, $faceAttrs),
+
+            // ── New body procedures ────────────────────────────────────────────
+            'tummy_tuck' => $this->tummyTuckRecommendations($proportions, $quizAnswers),
+            'mommy_makeover' => $this->mommyMakeoverRecommendations($proportions, $quizAnswers),
+            'breast_lift' => $this->breastLiftRecommendations($proportions, $quizAnswers),
+            'breast_reduction' => $this->breastReductionRecommendations($proportions, $quizAnswers),
+            'skinny_bbl' => $this->skinnyBblRecommendations($proportions, $quizAnswers),
+            'gynecomastia' => $this->gynecomastiaRecommendations($proportions, $quizAnswers),
+
+            // ── New face procedures ────────────────────────────────────────────
+            'face_and_neck_lift' => $this->faceNeckLiftRecommendations($proportions, $quizAnswers, $faceAttrs),
+            'eyelid_surgery' => $this->eyelidSurgeryRecommendations($proportions, $quizAnswers, $faceAttrs),
+
+            default => $this->genericRecommendations($proportions, $quizAnswers),
         };
 
         // ── Score the lead ────────────────────────────────────────────────────
@@ -497,6 +511,512 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
             'technique_notes' => array_values(array_unique($techniques)),
             'harmony_score' => $harmonyScore,
             'estimated_age' => $estimatedAge,
+        ];
+    }
+
+    // ─── Tummy Tuck ───────────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function tummyTuckRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $postPregnancy = $quizAnswers['q_post_pregnancy'] ?? null;
+        $diastasis = $quizAnswers['q_diastasis'] ?? null;
+        $priorAbdominal = $quizAnswers['q_prior_surgery'] ?? null;
+        $weightStable = $quizAnswers['q_weight_stable'] ?? null;
+        $futurePregancy = $quizAnswers['q_future_pregnancy'] ?? null;
+
+        // ── Future pregnancy warning ───────────────────────────────────────────
+        if ($this->isTruthy($futurePregancy)) {
+            $flags[] = 'future_pregnancy_planned';
+            $bullets[] = 'Patient has indicated they may be planning future pregnancies. '
+                .'Tummy tuck is generally recommended after completing childbearing — '
+                .'subsequent pregnancy can compromise the surgical result.';
+        }
+
+        // ── Post-pregnancy context ─────────────────────────────────────────────
+        if ($this->isTruthy($postPregnancy)) {
+            $bullets[] = 'Post-pregnancy abdominoplasty patient. '
+                .'Skin redundancy, stretch marks, and diastasis recti are common after pregnancy — '
+                .'all are addressable with a full tummy tuck.';
+        }
+
+        // ── Diastasis recti ───────────────────────────────────────────────────
+        if ($this->isTruthy($diastasis)) {
+            $flags[] = 'diastasis_recti_suspected';
+            $bullets[] = 'Patient suspects diastasis recti. '
+                .'Fascial plication should be included in the surgical plan. '
+                .'Pre-operative clinical or ultrasound assessment recommended.';
+            $techniques[] = 'Rectus fascia plication for diastasis repair';
+        }
+
+        // ── Prior abdominal surgery ────────────────────────────────────────────
+        if ($this->isTruthy($priorAbdominal)) {
+            $flags[] = 'prior_abdominal_surgery';
+            $bullets[] = 'Prior abdominal surgery documented (C-section, laparoscopy, etc.). '
+                .'Surgeon should review scar position and assess impact on flap vascularity. '
+                .'Mini-TT or modified approach may be required depending on incision location.';
+            $techniques[] = 'Vascular assessment of abdominal flap';
+        }
+
+        // ── Weight stability ──────────────────────────────────────────────────
+        if ($this->isFalsy($weightStable)) {
+            $flags[] = 'weight_unstable';
+            $bullets[] = 'Weight not currently stable. Tummy tuck results are optimised '
+                .'when BMI and weight have been stable for at least 6 months. '
+                .'Surgeon should discuss timing.';
+        }
+
+        $bullets[] = 'Full abdominoplasty includes excision of excess lower abdominal skin, '
+            .'umbilicoplasty (navel repositioning), and waistline definition. '
+            .'Mini-tuck may be appropriate if laxity is confined to the lower abdomen.';
+
+        $bullets[] = 'Post-operative abdominal binder/compression garment is required for 6–8 weeks. '
+            .'Heavy lifting restrictions for 6 weeks.';
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'tummy_tuck',
+            'confidence' => 'medium',
+            'primary_finding' => $this->isTruthy($diastasis)
+                ? 'Tummy tuck with diastasis repair indicated.'
+                : 'Abdominoplasty consultation — excess skin and contour improvement goal.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Mommy Makeover ───────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function mommyMakeoverRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $components = $quizAnswers['q_concerns'] ?? [];
+        $futurePregancy = $quizAnswers['q_future_pregnancy'] ?? null;
+        $breastfeeding = $quizAnswers['q_breastfeeding'] ?? null;
+        $weightStable = $quizAnswers['q_weight_stable'] ?? null;
+
+        // ── Critical: future pregnancy / breastfeeding ─────────────────────────
+        if ($this->isTruthy($futurePregancy)) {
+            $flags[] = 'future_pregnancy_planned';
+            $bullets[] = 'IMPORTANT: Patient indicated they may plan future pregnancies. '
+                .'Mommy Makeover should be deferred until after completing childbearing — '
+                .'pregnancy reverses the surgical results.';
+        }
+
+        if ($this->isTruthy($breastfeeding)) {
+            $flags[] = 'currently_breastfeeding';
+            $bullets[] = 'Patient is currently breastfeeding or recently stopped. '
+                .'Breast surgery should be deferred until at least 6 months after cessation of breastfeeding '
+                .'to allow breast tissue to fully stabilise.';
+        }
+
+        // ── Weight stability ──────────────────────────────────────────────────
+        if ($this->isFalsy($weightStable)) {
+            $flags[] = 'weight_unstable';
+            $bullets[] = 'Weight not currently stable. Mommy Makeover results — '
+                .'especially liposuction and tummy tuck components — are best when '
+                .'weight has been stable for 6+ months.';
+        }
+
+        // ── Procedure components ──────────────────────────────────────────────
+        if (is_array($components)) {
+            $componentLabels = [
+                'breast' => 'breast enhancement (augmentation or lift)',
+                'abdomen' => 'tummy tuck / abdominoplasty',
+                'lipo' => 'liposuction contouring',
+                'bbl' => 'Brazilian Butt Lift',
+                'labia' => 'labiaplasty',
+            ];
+            $named = array_filter(array_map(fn ($c) => $componentLabels[$c] ?? null, $components));
+
+            if (! empty($named)) {
+                $bullets[] = 'Patient-indicated Mommy Makeover components: '.implode(', ', $named).'. '
+                    .'All components can typically be combined in a single surgical session when safe to do so.';
+                $techniques[] = 'Combined procedure: '.implode(' + ', $named);
+            }
+        }
+
+        $bullets[] = 'Mommy Makeover is a high-revenue, high-complexity combined procedure. '
+            .'Surgical time and anaesthesia risk increase with each added component. '
+            .'Surgeon should assess candidacy and ASA status.';
+
+        $flags[] = 'combined_procedure_complexity';
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'mommy_makeover',
+            'confidence' => 'medium',
+            'primary_finding' => 'Mommy Makeover — combined post-pregnancy body restoration consultation.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Breast Lift ──────────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function breastLiftRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $priorSurgery = $quizAnswers['q_prior_surgery'] ?? null;
+        $breastfeeding = $quizAnswers['q_breastfeeding'] ?? null;
+        $addVolume = $quizAnswers['q_add_volume'] ?? null;
+        $concerns = $quizAnswers['q_concerns'] ?? [];
+
+        // ── Breastfeeding timing ──────────────────────────────────────────────
+        if ($this->isTruthy($breastfeeding)) {
+            $flags[] = 'breastfeeding_timing';
+            $bullets[] = 'Patient recently breastfed or is currently breastfeeding. '
+                .'Breast lift should be deferred for at least 6 months post-breastfeeding '
+                .'to allow tissue to stabilise and final ptosis to be assessed.';
+        }
+
+        // ── Implant augmentation combined ─────────────────────────────────────
+        if ($this->isTruthy($addVolume)) {
+            $flags[] = 'augmentation_mastopexy_combined';
+            $bullets[] = 'Patient wishes to add volume alongside the lift. '
+                .'Augmentation-mastopexy is technically more complex than either procedure alone — '
+                .'tension and blood supply must be carefully balanced. '
+                .'Surgeon should discuss staging (one vs. two operations) based on degree of ptosis.';
+            $techniques[] = 'Augmentation-mastopexy — assess for staged approach';
+        }
+
+        // ── Prior surgery ─────────────────────────────────────────────────────
+        if ($this->isTruthy($priorSurgery)) {
+            $flags[] = 'revision_breast_surgery';
+            $bullets[] = 'Prior breast surgery documented. Revision mastopexy requires assessment '
+                .'of existing scars, nipple-areola complex vascularity, and residual ptosis grade.';
+            $techniques[] = 'Revision mastopexy planning';
+        }
+
+        // ── Ptosis severity ───────────────────────────────────────────────────
+        if (is_array($concerns) && in_array('severe_droop', $concerns, true)) {
+            $flags[] = 'significant_ptosis';
+            $bullets[] = 'Severe sagging reported. Regnault grade 2–3 ptosis typically requires '
+                .'a full (inverted-T / Wise pattern) mastopexy for adequate tissue repositioning.';
+            $techniques[] = 'Wise pattern / anchor mastopexy';
+        }
+
+        $bullets[] = 'Breast lift improves position and shape without adding volume. '
+            .'Skin tightening and nipple elevation are the primary goals.';
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'breast_lift',
+            'confidence' => 'medium',
+            'primary_finding' => $this->isTruthy($addVolume)
+                ? 'Augmentation-mastopexy consultation — lift with volume enhancement.'
+                : 'Breast lift (mastopexy) consultation — ptosis correction.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Breast Reduction ─────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function breastReductionRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        // q_concerns is the universal quiz key — breast_reduction quiz stores symptoms there.
+        $symptoms = $quizAnswers['q_concerns'] ?? [];
+        $priorSurgery = $quizAnswers['q_prior_surgery'] ?? null;
+        $breastfeeding = $quizAnswers['q_breastfeeding'] ?? null;
+
+        // ── Breastfeeding timing ──────────────────────────────────────────────
+        if ($this->isTruthy($breastfeeding)) {
+            $flags[] = 'breastfeeding_timing';
+            $bullets[] = 'Patient recently breastfed. Breast reduction should be deferred '
+                .'at least 6 months post-breastfeeding. Note that reduction may affect '
+                .'future breastfeeding ability — this should be disclosed pre-operatively.';
+        }
+
+        // ── Functional symptoms ───────────────────────────────────────────────
+        if (is_array($symptoms)) {
+            if (in_array('back_pain', $symptoms, true)) {
+                $flags[] = 'functional_back_pain';
+                $bullets[] = 'Chronic back pain reported. This is a common functional indication for '
+                    .'breast reduction and may support insurance coverage in applicable plans.';
+            }
+            if (in_array('skin_rash', $symptoms, true)) {
+                $flags[] = 'inframammary_skin_issues';
+                $bullets[] = 'Skin rash or intertrigo under the breasts reported. '
+                    .'This is a functional symptom that further supports reduction candidacy.';
+            }
+            if (in_array('shoulder_grooving', $symptoms, true)) {
+                $bullets[] = 'Bra strap shoulder grooving noted — a classic functional sign of macromastia.';
+            }
+        }
+
+        // ── Prior surgery ─────────────────────────────────────────────────────
+        if ($this->isTruthy($priorSurgery)) {
+            $flags[] = 'revision_breast_surgery';
+            $bullets[] = 'Prior breast surgery documented. Revision reduction requires '
+                .'careful assessment of existing pedicle and NAC vascularity.';
+            $techniques[] = 'Revision reduction — pedicle assessment critical';
+        }
+
+        $bullets[] = 'Breast reduction relieves functional symptoms and improves aesthetic proportions. '
+            .'Vertical scar (LeJour) or inferior pedicle (Wise pattern) technique selected based on volume.';
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'breast_reduction',
+            'confidence' => 'medium',
+            'primary_finding' => ! empty($flags) && in_array('functional_back_pain', $flags, true)
+                ? 'Breast reduction — functional macromastia with back pain and symptomatic presentation.'
+                : 'Breast reduction consultation — volume and proportion correction goal.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Skinny BBL ───────────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function skinnyBblRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $donorAreas = $quizAnswers['q_donor_areas'] ?? [];
+        $weightStable = $quizAnswers['q_weight_stable'] ?? null;
+        $bmi = $quizAnswers['q_bmi_range'] ?? null;
+
+        // ── Low donor fat concern (key Skinny BBL risk) ───────────────────────
+        if ($bmi === 'low' || in_array('not_sure', (array) $donorAreas, true)) {
+            $flags[] = 'low_donor_fat_concern';
+            $bullets[] = 'Skinny BBL: Low body fat may limit donor fat volume. '
+                .'Surgeon must assess available harvest sites carefully — '
+                .'insufficient donor fat may result in a conservative enhancement only. '
+                .'Patient expectations should be calibrated pre-operatively.';
+            $techniques[] = 'Micro-fat / nano-fat grafting may extend available volume';
+        }
+
+        // ── Safety: same as standard BBL ─────────────────────────────────────
+        $bullets[] = 'BBL safety protocol applies: subcutaneous-only injection mandatory. '
+            .'Extra caution warranted in slender patients due to reduced tissue buffer.';
+        $flags[] = 'bbl_safety_protocol_required';
+
+        // ── Weight stability ──────────────────────────────────────────────────
+        if ($this->isFalsy($weightStable)) {
+            $flags[] = 'weight_unstable';
+            $bullets[] = 'Weight not currently stable. Even small weight changes significantly '
+                .'affect results in lean patients — stability is especially important for Skinny BBL.';
+        }
+
+        $bullets[] = 'Skinny BBL targets subtle, athletic gluteal enhancement in lean-frame patients. '
+            .'Results may be more conservative than standard BBL given available fat volume.';
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'skinny_bbl',
+            'confidence' => 'medium',
+            'primary_finding' => 'Skinny BBL consultation — subtle gluteal enhancement for lean frame.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Gynecomastia ─────────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, mixed>
+     */
+    private function gynecomastiaRecommendations(array $proportions, array $quizAnswers): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $duration = $quizAnswers['q_duration'] ?? null;
+        $medications = $quizAnswers['q_medications'] ?? null;
+        $priorSurgery = $quizAnswers['q_prior_surgery'] ?? null;
+        $gradeEstimate = $quizAnswers['q_grade'] ?? null;
+
+        // ── Medication-induced gynecomastia ───────────────────────────────────
+        if ($this->isTruthy($medications)) {
+            $flags[] = 'medication_induced_gynecomastia';
+            $bullets[] = 'Patient taking medications that may cause or contribute to gynecomastia '
+                .'(anabolic steroids, anti-androgens, some antihypertensives). '
+                .'Surgeon should assess whether discontinuing the causative medication '
+                .'is possible before scheduling surgery.';
+        }
+
+        // ── Grade-based technique guidance ────────────────────────────────────
+        match ($gradeEstimate) {
+            'mild' => ($bullets[] = 'Mild gynecomastia — liposuction alone may achieve adequate contour.')
+                   && ($techniques[] = 'Liposuction-only approach'),
+            'moderate' => ($bullets[] = 'Moderate gynecomastia — combination of liposuction and glandular excision typically required.')
+                       && ($techniques[] = 'Liposuction + glandular excision'),
+            'severe' => ($flags[] = 'skin_excision_likely')
+                    && ($bullets[] = 'Significant gynecomastia — skin excision (chest lift component) may be required for adequate correction.')
+                    && ($techniques[] = 'Liposuction + glandular excision + skin excision'),
+            default => $bullets[] = 'Grade of gynecomastia to be confirmed clinically. Technique selection depends on glandular vs. adipose component and skin laxity.',
+        };
+
+        // ── Duration ──────────────────────────────────────────────────────────
+        if ($duration === 'pubescent' || $duration === 'adolescent') {
+            $flags[] = 'pubertal_onset';
+            $bullets[] = 'Gynecomastia since puberty noted. Long-standing glandular tissue '
+                .'may be more fibrous — pure liposuction less effective. '
+                .'Direct excision likely required.';
+        }
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'gynecomastia',
+            'confidence' => 'medium',
+            'primary_finding' => 'Gynecomastia correction consultation — male chest contouring.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
+        ];
+    }
+
+    // ─── Face & Neck Lift ─────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @param  array<string, mixed>  $faceAttrs
+     * @return array<string, mixed>
+     */
+    private function faceNeckLiftRecommendations(array $proportions, array $quizAnswers, array $faceAttrs): array
+    {
+        // Face and neck lift shares most logic with facelift — delegate and override procedure key.
+        $result = $this->faceliftRecommendations($proportions, $quizAnswers, $faceAttrs);
+        $result['procedure'] = 'face_and_neck_lift';
+
+        // Additional neck-specific note
+        $result['key_points'][] = 'Face and neck lift combines facial rejuvenation with cervicoplasty. '
+            .'The cervicomental angle and submental fat are addressed alongside the lower face.';
+        $result['technique_notes'][] = 'Combined SMAS rhytidectomy + platysmaplasty';
+
+        return $result;
+    }
+
+    // ─── Eyelid Surgery ───────────────────────────────────────────────────────
+
+    /**
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @param  array<string, mixed>  $faceAttrs
+     * @return array<string, mixed>
+     */
+    private function eyelidSurgeryRecommendations(array $proportions, array $quizAnswers, array $faceAttrs): array
+    {
+        $flags = [];
+        $bullets = [];
+        $techniques = [];
+
+        $concerns = $quizAnswers['q_concerns'] ?? [];
+        $priorSurgery = $quizAnswers['q_prior_surgery'] ?? null;
+        $dryEyes = $quizAnswers['q_dry_eyes'] ?? null;
+
+        // ── Dry eye risk ──────────────────────────────────────────────────────
+        if ($this->isTruthy($dryEyes)) {
+            $flags[] = 'dry_eye_risk';
+            $bullets[] = 'Patient reports dry eyes. Upper blepharoplasty can worsen dry eye symptoms '
+                .'if too much skin is removed. Ophthalmology evaluation recommended pre-operatively. '
+                .'Conservative skin excision planned.';
+        }
+
+        // ── Upper vs lower ────────────────────────────────────────────────────
+        if (is_array($concerns)) {
+            if (in_array('upper', $concerns, true)) {
+                $bullets[] = 'Upper blepharoplasty: remove excess upper eyelid skin and/or herniated fat. '
+                    .'Functional improvement (visual field) may qualify for insurance coverage — '
+                    .'visual field testing recommended if functional complaint exists.';
+                $techniques[] = 'Upper blepharoplasty';
+
+                if (in_array('ptosis', $concerns, true)) {
+                    $flags[] = 'ptosis_correction_needed';
+                    $bullets[] = 'Eyelid ptosis reported. True ptosis requires levator aponeurosis repair — '
+                        .'this is distinct from excess skin and changes the surgical approach.';
+                    $techniques[] = 'Ptosis repair (levator advancement)';
+                }
+            }
+
+            if (in_array('lower', $concerns, true)) {
+                $bullets[] = 'Lower blepharoplasty: address under-eye bags (fat repositioning) '
+                    .'and/or excess lower eyelid skin. Transconjunctival approach preferred '
+                    .'to avoid visible external scar when skin removal is not required.';
+                $techniques[] = 'Lower blepharoplasty (transconjunctival or transcutaneous)';
+            }
+        }
+
+        // ── Prior surgery ─────────────────────────────────────────────────────
+        if ($this->isTruthy($priorSurgery)) {
+            $flags[] = 'revision_blepharoplasty';
+            $bullets[] = 'Prior eyelid surgery. Revision blepharoplasty carries higher risk — '
+                .'conservative approach required. Assess for lagophthalmos and residual tissue.';
+        }
+
+        $harmonyScore = $proportions['overall_harmony'] ?? 50;
+
+        return [
+            'procedure' => 'eyelid_surgery',
+            'confidence' => 'medium',
+            'primary_finding' => 'Blepharoplasty consultation — eyelid rejuvenation.',
+            'flags' => array_values(array_unique($flags)),
+            'key_points' => array_values(array_unique($bullets)),
+            'technique_notes' => array_values(array_unique($techniques)),
+            'harmony_score' => $harmonyScore,
         ];
     }
 
