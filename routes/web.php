@@ -15,6 +15,7 @@ use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
+use App\Http\Controllers\Dashboard\OnboardingController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Dashboard\SimulationController;
 use App\Http\Controllers\Intake\EvaluationController;
@@ -67,6 +68,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'role:'.implode(',', [User::ROL
 // ── All other authenticated clinic routes — gated by active billing ──────────
 Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
 
     // ── Session keepalive (HIPAA inactivity timer) ────────────────────────
     Route::get('keepalive', fn () => response()->noContent())->name('keepalive');

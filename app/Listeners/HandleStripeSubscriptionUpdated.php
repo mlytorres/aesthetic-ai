@@ -30,6 +30,33 @@ class HandleStripeSubscriptionUpdated
             return;
         }
 
+        // checkout.session.completed — look up customer differently
+        if ($type === 'checkout.session.completed') {
+            $stripeId = $object['customer'] ?? null;
+            if ($stripeId === null) {
+                return;
+            }
+            $tenant = Tenant::where('stripe_id', $stripeId)->first();
+            if ($tenant === null) {
+                return;
+            }
+            // The subscription was just activated; sync plan_id by refreshing
+            // from the subscription created event that Cashier stores locally.
+            $subscription = $tenant->subscriptions()->latest()->first();
+            if ($subscription) {
+                $plan = Plan::where('stripe_price_id', $subscription->stripe_price)->first();
+                if ($plan !== null && $tenant->plan_id !== $plan->id) {
+                    $tenant->update(['plan_id' => $plan->id]);
+                    Log::info('Tenant plan synced from checkout.session.completed', [
+                        'tenant_id' => $tenant->id,
+                        'plan_slug' => $plan->slug,
+                    ]);
+                }
+            }
+
+            return;
+        }
+
         if (! in_array($type, [
             'customer.subscription.updated',
             'customer.subscription.deleted',

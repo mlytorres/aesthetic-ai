@@ -1,5 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import { index as billingIndex } from '@/routes/clinic/billing';
 import { dashboard } from '@/routes';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
 import { index as evaluationsIndex, show as evaluationShow } from '@/routes/evaluations';
@@ -23,10 +24,24 @@ interface RecentEvaluation {
     patient_name:   string | null;
 }
 
+interface OnboardingStep {
+    key:   string;
+    label: string;
+    done:  boolean;
+    href:  string | null;
+}
+
+interface Onboarding {
+    dismissed: boolean;
+    steps:     OnboardingStep[];
+}
+
 interface Props {
-    stats:              DashboardStats;
-    recent_evaluations: RecentEvaluation[];
-    clinic_name:        string;
+    stats:                DashboardStats;
+    recent_evaluations:   RecentEvaluation[];
+    clinic_name:          string;
+    trial_days_remaining: number | null;
+    onboarding:           Onboarding | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -104,7 +119,7 @@ function StatCard({ label, value, color, href, urgent }: StatCardProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function Dashboard({ stats, recent_evaluations, clinic_name }: Props) {
+export default function Dashboard({ stats, recent_evaluations, clinic_name, trial_days_remaining, onboarding }: Props) {
     const [copied, setCopied] = useState(false);
 
     const handleCopyIntakeLink = () => {
@@ -118,6 +133,116 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name }: Pr
             <Head title="Dashboard" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* Trial banner */}
+                {trial_days_remaining !== null && (
+                    trial_days_remaining === 0 ? (
+                        <div className="flex items-center justify-between rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-3.5">
+                            <div className="flex items-center gap-3">
+                                <span className="text-lg">🔒</span>
+                                <p className="text-sm font-semibold text-red-300">
+                                    Your free trial has ended — access is paused.
+                                </p>
+                            </div>
+                            <Link
+                                href={billingIndex.url()}
+                                className="shrink-0 rounded-lg bg-red-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-400 transition-colors"
+                            >
+                                Choose a plan →
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className={[
+                            'flex items-center justify-between rounded-xl border px-5 py-3.5',
+                            trial_days_remaining <= 3
+                                ? 'border-amber-500/40 bg-amber-500/10'
+                                : 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5',
+                        ].join(' ')}>
+                            <div className="flex items-center gap-3">
+                                <span className="text-lg">🎁</span>
+                                <p className={[
+                                    'text-sm font-medium',
+                                    trial_days_remaining <= 3 ? 'text-amber-300' : 'text-[#9B9B8E]',
+                                ].join(' ')}>
+                                    <span className="font-bold text-[#F5F0E8]">
+                                        {trial_days_remaining} day{trial_days_remaining !== 1 ? 's' : ''} left
+                                    </span>
+                                    {' '}in your free trial.
+                                </p>
+                            </div>
+                            <Link
+                                href={billingIndex.url()}
+                                className={[
+                                    'shrink-0 rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors',
+                                    trial_days_remaining <= 3
+                                        ? 'bg-amber-500 text-[#0A0A0F] hover:bg-amber-400'
+                                        : 'border border-[#0E9E8E]/40 text-[#0E9E8E] hover:bg-[#0E9E8E]/10',
+                                ].join(' ')}
+                            >
+                                Choose a plan →
+                            </Link>
+                        </div>
+                    )
+                )}
+
+                {/* Onboarding checklist */}
+                {onboarding && (
+                    <div className="rounded-xl border border-[#2A2A3A] bg-[#13131A] p-5">
+                        <div className="mb-4 flex items-start justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-[#F5F0E8]">Get started</p>
+                                <p className="mt-0.5 text-xs text-[#9B9B8E]">
+                                    Complete these steps to set up your clinic.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => router.post('/onboarding/dismiss')}
+                                className="text-xs text-[#9B9B8E] hover:text-[#F5F0E8] transition-colors"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            {onboarding.steps.map((step) => (
+                                <div
+                                    key={step.key}
+                                    className="flex items-center gap-3"
+                                >
+                                    <div className={[
+                                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                                        step.done
+                                            ? 'border-[#0E9E8E] bg-[#0E9E8E]/20'
+                                            : 'border-[#2A2A3A] bg-transparent',
+                                    ].join(' ')}>
+                                        {step.done && (
+                                            <svg className="h-3 w-3 text-[#0E9E8E]" viewBox="0 0 12 12" fill="none">
+                                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        )}
+                                    </div>
+
+                                    {step.href && !step.done ? (
+                                        <Link
+                                            href={step.href}
+                                            className="text-sm text-[#0E9E8E] hover:underline"
+                                        >
+                                            {step.label}
+                                        </Link>
+                                    ) : (
+                                        <span className={[
+                                            'text-sm',
+                                            step.done ? 'text-[#9B9B8E] line-through' : 'text-[#F5F0E8]',
+                                        ].join(' ')}>
+                                            {step.label}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex items-center justify-between">

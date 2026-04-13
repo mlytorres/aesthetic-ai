@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Cashier's Stripe webhook endpoint must not be CSRF-protected —
+        // Stripe signs the payload with a secret instead.
+        $middleware->validateCsrfTokens(except: ['stripe/*']);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

@@ -44,6 +44,7 @@ interface Props {
 	subscription: Subscription | null;
 	has_billing_access: boolean;
 	trial_expired: boolean;
+	has_active_subscription: boolean;
 }
 
 const PLAN_PRICES: Record<string, string> = {
@@ -58,7 +59,7 @@ const PLAN_HIGHLIGHTS: Record<string, string[]> = {
 	pro: ['Unlimited procedures', 'Unlimited evaluations', 'API access', 'White-label ready'],
 };
 
-export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access, trial_expired }: Props) {
+export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access, trial_expired, has_active_subscription }: Props) {
 	const checkoutForm = useForm<{ plan_slug: string }>({ plan_slug: '' });
 
 	const handleUpgrade = (planSlug: string) => {
@@ -241,8 +242,10 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 										>
 											<Zap className="mr-2 h-4 w-4" />
 											{checkoutForm.processing && checkoutForm.data.plan_slug === plan.slug
-												? 'Redirecting...'
-												: `Upgrade to ${plan.name}`}
+												? has_active_subscription ? 'Switching...' : 'Redirecting...'
+												: has_active_subscription
+													? `Switch to ${plan.name}`
+													: `Upgrade to ${plan.name}`}
 										</Button>
 									) : isCurrent ? (
 										<Button variant="outline" disabled className="w-full border-[#2A2A3A] text-[#9B9B8E]">

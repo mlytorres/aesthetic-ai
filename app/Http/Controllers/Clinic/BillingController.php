@@ -65,11 +65,16 @@ class BillingController extends Controller
             ] : null,
             'has_billing_access' => $tenant->hasBillingAccess(),
             'trial_expired' => $trialExpired,
+            'has_active_subscription' => $subscription !== null && $subscription->active(),
         ]);
     }
 
     /**
-     * Create a Stripe Checkout session for the given plan and redirect.
+     * Create a Stripe Checkout session (new subscription) or swap an existing one.
+     *
+     * If the tenant already has an active subscription, we call swap() to
+     * prorate and switch plans immediately — no new Checkout session needed.
+     * If not, we open a Stripe Checkout session to collect payment details.
      */
     public function checkout(Request $request): RedirectResponse
     {
@@ -87,6 +92,24 @@ class BillingController extends Controller
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
         $baseUrl = "{$scheme}://{$tenant->slug}.{$domain}";
 
+        // ── Plan swap (already subscribed) ────────────────────────────────────
+        $subscription = $tenant->subscription('default');
+
+        if ($subscription !== null && $subscription->active()) {
+            try {
+                $subscription->swap($plan->stripe_price_id);
+                $tenant->update(['plan_id' => $plan->id]);
+
+                return redirect($baseUrl.'/clinic/billing')->with('success', "Switched to {$plan->name}.");
+            } catch (IncompletePayment $e) {
+                return redirect()->route('cashier.payment', [
+                    $e->payment->id,
+                    'redirect' => $baseUrl.'/clinic/billing',
+                ]);
+            }
+        }
+
+        // ── New subscription (no active subscription yet) ─────────────────────
         try {
             return $tenant->newSubscription('default', $plan->stripe_price_id)
                 ->checkout([
