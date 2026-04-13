@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, Building2, ClipboardList, CreditCard, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
+import { BarChart3, BookOpen, Building2, ClipboardList, CreditCard, FolderGit2, LayoutGrid, ScrollText, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
 import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
@@ -122,7 +122,9 @@ function NavAdmin() {
     const { isCurrentUrl } = useCurrentUrl();
 
     const items: NavItem[] = [
+        { title: 'Overview', href: '/admin', icon: LayoutGrid },
         { title: 'Tenants', href: '/admin/tenants', icon: Building2 },
+        { title: 'Audit Log', href: '/admin/audit-log', icon: ScrollText },
     ];
 
     return (

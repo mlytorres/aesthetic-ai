@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\BillingController;
@@ -190,7 +191,8 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 // Cannot be reached by any tenant user regardless of role.
 
 Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->group(function (): void {
-    Route::get('/', fn () => redirect()->route('admin.tenants.index'));
+    Route::get('/', [PlatformController::class, 'dashboard'])->name('dashboard');
+    Route::get('/audit-log', [PlatformController::class, 'auditLog'])->name('audit-log');
 
     Route::prefix('tenants')->name('tenants.')->group(function (): void {
         Route::get('/', [TenantAdminController::class, 'index'])->name('index');

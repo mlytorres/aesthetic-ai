@@ -92,14 +92,14 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 
 				<form onSubmit={handleSubmit} className="space-y-6">
 					{/* General Settings Card */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-						<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+						<h3 className="mb-6 text-base font-semibold text-foreground">
 							General
 						</h3>
 
 						<div className="space-y-4">
 							<div className="grid gap-2">
-								<Label htmlFor="name" className="text-[#F5F0E8]">
+								<Label htmlFor="name" className="text-foreground">
 									Clinic Name
 								</Label>
 								<Input
@@ -109,42 +109,36 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 										setData('name', e.target.value)
 									}
 									placeholder="Your clinic name"
-									className="bg-[#0A0A0F] text-[#F5F0E8]"
+									className="bg-background text-foreground"
 								/>
 								<InputError message={errors.name} />
 							</div>
 
 							<div className="grid gap-2">
-								<Label className="text-[#F5F0E8]">Theme</Label>
+								<Label className="text-foreground">Intake Page Theme</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									Applies to your hosted intake form. The embedded widget uses this by default but can be overridden per embed in Integrations.
+								</p>
 								<div className="flex gap-3">
-									<button
-										type="button"
-										onClick={() =>
-											setData('theme', 'luxury-dark')
-										}
-										className={cn(
-											'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all',
-											data.theme === 'luxury-dark'
-												? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
-												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#0E9E8E]/50'
-										)}
-									>
-										Luxury Dark
-									</button>
-									<button
-										type="button"
-										onClick={() =>
-											setData('theme', 'clean-light')
-										}
-										className={cn(
-											'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all',
-											data.theme === 'clean-light'
-												? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
-												: 'border-sidebar-border/50 bg-transparent text-[#9B9B8E] hover:border-[#0E9E8E]/50'
-										)}
-									>
-										Clean Light
-									</button>
+									{[
+										{ value: 'luxury-dark', label: 'Luxury Dark' },
+										{ value: 'luxury-light', label: 'Luxury Light' },
+										{ value: 'clinical', label: 'Clinical' },
+									].map(({ value, label }) => (
+										<button
+											key={value}
+											type="button"
+											onClick={() => setData('theme', value)}
+											className={cn(
+												'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all',
+												data.theme === value
+													? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
+													: 'border-sidebar-border/50 bg-transparent text-muted-foreground hover:border-[#0E9E8E]/50'
+											)}
+										>
+											{label}
+										</button>
+									))}
 								</div>
 								<InputError message={errors.theme} />
 							</div>
@@ -152,8 +146,8 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 					</div>
 
 					{/* Procedures Card */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-						<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+						<h3 className="mb-6 text-base font-semibold text-foreground">
 							Procedures
 						</h3>
 
@@ -161,7 +155,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 							{Object.entries(proceduresByCategory).map(
 								([category, procedures]) => (
 									<div key={category}>
-										<p className="mb-2 text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+										<p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 											{category}
 										</p>
 										<div className="ml-2 space-y-2">
@@ -180,7 +174,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 															)
 														}
 													/>
-													<span className="text-sm text-[#F5F0E8]">
+													<span className="text-sm text-foreground">
 														{proc.label}
 													</span>
 													<Badge
@@ -200,14 +194,14 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 					</div>
 
 					{/* Notifications Card */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-						<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+						<h3 className="mb-6 text-base font-semibold text-foreground">
 							Notifications
 						</h3>
 
 						<div className="space-y-4">
 							<div>
-								<Label className="mb-3 block text-[#F5F0E8]">
+								<Label className="mb-3 block text-foreground">
 									Coordinator Emails
 								</Label>
 
@@ -217,9 +211,9 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 											(email) => (
 												<div
 													key={email}
-													className="flex items-center justify-between rounded-md bg-[#0A0A0F] px-3 py-2"
+													className="flex items-center justify-between rounded-md bg-background px-3 py-2"
 												>
-													<span className="text-sm text-[#F5F0E8]">
+													<span className="text-sm text-foreground">
 														{email}
 													</span>
 													<button
@@ -247,7 +241,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 											setNewEmail(e.target.value)
 										}
 										placeholder="email@example.com"
-										className="bg-[#0A0A0F] text-[#F5F0E8]"
+										className="bg-background text-foreground"
 										onKeyDown={(e) => {
 											if (e.key === 'Enter') {
 												e.preventDefault();

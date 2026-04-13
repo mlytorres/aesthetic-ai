@@ -8,14 +8,15 @@ interface Props {
     currentStep: WizardStep;
     children: ReactNode;
     hideHeader?: boolean;
+    theme?: string;
 }
 
-const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeader = false, children }) => {
+const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeader = false, children, theme = 'luxury-dark' }) => {
     return (
-        <div className="flex min-h-screen flex-col bg-[#0A0A0F]">
+        <div className="flex min-h-screen flex-col bg-[var(--intake-bg)]" data-intake-theme={theme}>
             {/* Header */}
             {!hideHeader && (
-            <header className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+            <header className="flex items-center justify-between border-b border-[var(--intake-border-xs)] px-6 py-4">
                 <div className="flex items-center gap-3">
                     {clinicLogo ? (
                         <img
@@ -31,7 +32,7 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
                                     {clinicName.charAt(0).toUpperCase()}
                                 </span>
                             </div>
-                            <span className="text-sm font-semibold tracking-wide text-[#F5F0E8]">
+                            <span className="text-sm font-semibold tracking-wide text-[var(--intake-fg)]">
                                 {clinicName}
                             </span>
                         </div>
@@ -39,7 +40,7 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
                 </div>
 
                 {/* Powered-by badge */}
-                <span className="text-[10px] font-medium tracking-widest text-white/20 uppercase">
+                <span className="text-[10px] font-medium tracking-widest text-[var(--intake-muted-faint)] uppercase">
                     AI Evaluation
                 </span>
             </header>
@@ -54,8 +55,8 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-white/5 py-4 text-center">
-                <p className="text-[11px] text-white/20">
+            <footer className="border-t border-[var(--intake-border-xs)] py-4 text-center">
+                <p className="text-[11px] text-[var(--intake-muted-faint)]">
                     Your information is encrypted and protected under HIPAA.
                 </p>
             </footer>

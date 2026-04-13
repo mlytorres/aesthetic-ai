@@ -35,10 +35,10 @@ acc[cat] = [];
 
     return (
         <div className="py-6">
-            <h1 className="text-2xl font-bold text-[#F5F0E8] tracking-tight">
+            <h1 className="text-2xl font-bold text-[var(--intake-fg)] tracking-tight">
                 What brings you in today?
             </h1>
-            <p className="mt-2 text-sm text-[#9B9B8E]">
+            <p className="mt-2 text-sm text-[var(--intake-muted)]">
                 Select the procedure you are interested in. Our AI will guide you through a
                 personalised evaluation.
             </p>
@@ -63,7 +63,7 @@ acc[cat] = [];
                                             'group w-full rounded-xl border px-5 py-4 text-left transition-all duration-200',
                                             isSelected
                                                 ? 'border-[#0E9E8E] bg-[#0E9E8E]/10 ring-1 ring-[#0E9E8E]/30'
-                                                : 'border-white/10 bg-[#111118] hover:border-white/25 hover:bg-white/[0.04]',
+                                                : 'border-[var(--intake-border)] bg-[var(--intake-surface)] hover:border-[var(--intake-border-hover)] hover:bg-white/[0.04]',
                                         ].join(' ')}
                                     >
                                         <div className="flex items-center justify-between">
@@ -72,7 +72,7 @@ acc[cat] = [];
                                                     'text-sm font-medium transition-colors',
                                                     isSelected
                                                         ? 'text-[#0E9E8E]'
-                                                        : 'text-[#F5F0E8] group-hover:text-white',
+                                                        : 'text-[var(--intake-fg)] group-hover:text-white',
                                                 ].join(' ')}
                                             >
                                                 {proc.label}
@@ -84,12 +84,12 @@ acc[cat] = [];
                                                     'flex h-5 w-5 items-center justify-center rounded-full border transition-all',
                                                     isSelected
                                                         ? 'border-[#0E9E8E] bg-[#0E9E8E]'
-                                                        : 'border-white/20',
+                                                        : 'border-[var(--intake-border-hover)]',
                                                 ].join(' ')}
                                             >
                                                 {isSelected && (
                                                     <svg
-                                                        className="h-3 w-3 text-[#0A0A0F]"
+                                                        className="h-3 w-3 text-[var(--intake-icon-on-teal)]"
                                                         viewBox="0 0 12 12"
                                                         fill="none"
                                                     >
@@ -127,7 +127,7 @@ acc[cat] = [];
                 className={[
                     'mt-8 w-full rounded-xl px-6 py-4 text-sm font-semibold tracking-wide transition-all duration-200',
                     state.selectedProcedure && !state.loading
-                        ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                        ? 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]'
                         : 'cursor-not-allowed bg-white/10 text-white/30',
                 ].join(' ')}
             >

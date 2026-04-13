@@ -22,8 +22,8 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
 
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[#F5F0E8]">Your contact details</h2>
-            <p className="mt-2 text-sm text-[#9B9B8E]">
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">Your contact details</h2>
+            <p className="mt-2 text-sm text-[var(--intake-muted)]">
                 We will use these details to send you your evaluation report and to schedule
                 a consultation. Your information is never sold or shared.
             </p>
@@ -31,7 +31,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
             <div className="mt-8 space-y-4">
                 {/* Name */}
                 <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-[#9B9B8E] uppercase tracking-widest">
+                    <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
                         Full Name <span className="text-[#0E9E8E]">*</span>
                     </label>
                     <input
@@ -40,13 +40,13 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                         placeholder="Jane Smith"
                         value={contact.name}
                         onChange={set('name')}
-                        className="w-full rounded-xl border border-white/10 bg-[#111118] px-4 py-3 text-sm text-[#F5F0E8] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
+                        className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
                     />
                 </div>
 
                 {/* Email */}
                 <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-[#9B9B8E] uppercase tracking-widest">
+                    <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
                         Email Address <span className="text-[#0E9E8E]">*</span>
                     </label>
                     <input
@@ -55,13 +55,13 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                         placeholder="jane@example.com"
                         value={contact.email}
                         onChange={set('email')}
-                        className="w-full rounded-xl border border-white/10 bg-[#111118] px-4 py-3 text-sm text-[#F5F0E8] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
+                        className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
                     />
                 </div>
 
                 {/* Phone */}
                 <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-[#9B9B8E] uppercase tracking-widest">
+                    <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
                         Phone Number{' '}
                         <span className="ml-1 text-white/30 normal-case font-normal tracking-normal">
                             (optional)
@@ -73,13 +73,13 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                         placeholder="+1 (305) 555-0100"
                         value={contact.phone}
                         onChange={set('phone')}
-                        className="w-full rounded-xl border border-white/10 bg-[#111118] px-4 py-3 text-sm text-[#F5F0E8] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
+                        className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
                     />
                 </div>
             </div>
 
             {/* Privacy note */}
-            <div className="mt-5 flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[var(--intake-border-xs)] bg-white/[0.02] px-4 py-3">
                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
                     <path
                         d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
@@ -88,7 +88,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                         strokeLinejoin="round"
                     />
                 </svg>
-                <p className="text-xs text-[#9B9B8E] leading-relaxed">
+                <p className="text-xs text-[var(--intake-muted)] leading-relaxed">
                     Your data is encrypted and stored in compliance with HIPAA. We will never
                     share your information without your explicit consent.
                 </p>
@@ -104,7 +104,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                 <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 rounded-xl border border-white/10 bg-transparent px-6 py-3.5 text-sm font-medium text-[#9B9B8E] hover:border-white/20 hover:text-[#F5F0E8] transition-colors"
+                    className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
                 >
                     ← Back
                 </button>
@@ -115,7 +115,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                     className={[
                         'flex-[2] rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-200',
                         isValid
-                            ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                            ? 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]'
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >

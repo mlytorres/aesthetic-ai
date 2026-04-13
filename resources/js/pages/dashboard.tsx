@@ -95,12 +95,12 @@ interface StatCardProps {
 function StatCard({ label, value, color, href, urgent }: StatCardProps) {
     const inner = (
         <div className={[
-            'rounded-xl border bg-[#111118] px-5 py-4 transition-all',
+            'rounded-xl border bg-card px-5 py-4 transition-all',
             urgent && value > 0
                 ? 'border-red-500/40 ring-1 ring-red-500/20'
-                : 'border-white/10 hover:border-white/20',
+                : 'border-border hover:border-border',
         ].join(' ')}>
-            <p className="text-xs font-medium text-[#9B9B8E]">{label}</p>
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
             <p className={`mt-2 text-3xl font-bold tabular-nums ${color}`}>{value}</p>
             {urgent && value > 0 && (
                 <p className="mt-1 text-[10px] font-semibold text-red-400 uppercase tracking-widest">
@@ -162,9 +162,9 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                 <span className="text-lg">🎁</span>
                                 <p className={[
                                     'text-sm font-medium',
-                                    trial_days_remaining <= 3 ? 'text-amber-300' : 'text-[#9B9B8E]',
+                                    trial_days_remaining <= 3 ? 'text-amber-300' : 'text-muted-foreground',
                                 ].join(' ')}>
-                                    <span className="font-bold text-[#F5F0E8]">
+                                    <span className="font-bold text-foreground">
                                         {trial_days_remaining} day{trial_days_remaining !== 1 ? 's' : ''} left
                                     </span>
                                     {' '}in your free trial.
@@ -187,18 +187,18 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
 
                 {/* Onboarding checklist */}
                 {onboarding && (
-                    <div className="rounded-xl border border-[#2A2A3A] bg-[#13131A] p-5">
+                    <div className="rounded-xl border border-border bg-card p-5">
                         <div className="mb-4 flex items-start justify-between">
                             <div>
-                                <p className="text-sm font-semibold text-[#F5F0E8]">Get started</p>
-                                <p className="mt-0.5 text-xs text-[#9B9B8E]">
+                                <p className="text-sm font-semibold text-foreground">Get started</p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
                                     Complete these steps to set up your clinic.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => router.post('/onboarding/dismiss')}
-                                className="text-xs text-[#9B9B8E] hover:text-[#F5F0E8] transition-colors"
+                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Dismiss
                             </button>
@@ -214,7 +214,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                         'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
                                         step.done
                                             ? 'border-[#0E9E8E] bg-[#0E9E8E]/20'
-                                            : 'border-[#2A2A3A] bg-transparent',
+                                            : 'border-border bg-transparent',
                                     ].join(' ')}>
                                         {step.done && (
                                             <svg className="h-3 w-3 text-[#0E9E8E]" viewBox="0 0 12 12" fill="none">
@@ -233,7 +233,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                     ) : (
                                         <span className={[
                                             'text-sm',
-                                            step.done ? 'text-[#9B9B8E] line-through' : 'text-[#F5F0E8]',
+                                            step.done ? 'text-muted-foreground line-through' : 'text-foreground',
                                         ].join(' ')}>
                                             {step.label}
                                         </span>
@@ -247,8 +247,8 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold text-[#F5F0E8]">{clinic_name}</h1>
-                        <p className="mt-0.5 text-sm text-[#9B9B8E]">
+                        <h1 className="text-xl font-semibold text-foreground">{clinic_name}</h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             {new Intl.DateTimeFormat('en-US', {
                                 weekday: 'long',
                                 month:   'long',
@@ -260,7 +260,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleCopyIntakeLink}
-                            className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#111118] px-4 py-2 text-sm font-medium text-[#F5F0E8] hover:border-white/20 transition-all active:scale-95"
+                            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-border transition-all active:scale-95"
                         >
                             {copied ? (
                                 <>
@@ -271,7 +271,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                 </>
                             ) : (
                                 <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#9B9B8E]" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
                                     </svg>
@@ -320,25 +320,25 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                 {/* Recent evaluations */}
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-semibold text-[#F5F0E8]">Recent evaluations</h2>
+                        <h2 className="text-sm font-semibold text-foreground">Recent evaluations</h2>
                         <Link
                             href={evaluationsIndex.url()}
-                            className="text-xs text-[#9B9B8E] hover:text-[#0E9E8E] transition-colors"
+                            className="text-xs text-muted-foreground hover:text-[#0E9E8E] transition-colors"
                         >
                             View all
                         </Link>
                     </div>
 
-                    <div className="rounded-xl border border-white/10 bg-[#111118] overflow-hidden">
+                    <div className="rounded-xl border border-border bg-card overflow-hidden">
                         {recent_evaluations.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 text-center">
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
-                                    <svg className="h-6 w-6 text-[#9B9B8E]" viewBox="0 0 24 24" fill="none">
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+                                    <svg className="h-6 w-6 text-muted-foreground" viewBox="0 0 24 24" fill="none">
                                         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                                     </svg>
                                 </div>
-                                <p className="text-sm font-medium text-[#F5F0E8]">No evaluations yet</p>
-                                <p className="mt-1 text-xs text-[#9B9B8E]">
+                                <p className="text-sm font-medium text-foreground">No evaluations yet</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
                                     Patients submit via{' '}
                                     <span className="font-mono text-[#0E9E8E]">
                                         {window.location.hostname}/intake
@@ -346,12 +346,12 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                 </p>
                             </div>
                         ) : (
-                            <ul className="divide-y divide-white/5">
+                            <ul className="divide-y divide-border/50">
                                 {recent_evaluations.map((ev) => (
                                     <li key={ev.id}>
                                         <Link
                                             href={evaluationShow.url(ev.id)}
-                                            className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.03] transition-colors"
+                                            className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors"
                                         >
                                             {/* Priority dot */}
                                             <div className={[
@@ -364,10 +364,10 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
 
                                             {/* Name + procedure */}
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-[#F5F0E8] truncate">
+                                                <p className="text-sm font-medium text-foreground truncate">
                                                     {ev.patient_name ?? 'Unknown Patient'}
                                                 </p>
-                                                <p className="text-xs text-[#9B9B8E]">
+                                                <p className="text-xs text-muted-foreground">
                                                     {formatProcedure(ev.procedure_slug)}
                                                 </p>
                                             </div>
@@ -391,7 +391,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                             )}
 
                                             {/* Time */}
-                                            <span className="shrink-0 text-xs text-[#9B9B8E]">
+                                            <span className="shrink-0 text-xs text-muted-foreground">
                                                 {timeAgo(ev.created_at)}
                                             </span>
                                         </Link>
@@ -406,7 +406,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <Link
                         href={evaluationsIndex.url({ query: { status: 'active' } })}
-                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#111118] px-4 py-3 hover:border-white/20 hover:bg-white/[0.04] transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E9E8E]/10">
                             <svg className="h-4 w-4 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
@@ -414,14 +414,14 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-[#F5F0E8]">Priority queue</p>
-                            <p className="text-xs text-[#9B9B8E]">Active evaluations</p>
+                            <p className="text-sm font-medium text-foreground">Priority queue</p>
+                            <p className="text-xs text-muted-foreground">Active evaluations</p>
                         </div>
                     </Link>
 
                     <Link
                         href={evaluationsIndex.url({ query: { status: 'complete' } })}
-                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#111118] px-4 py-3 hover:border-white/20 hover:bg-white/[0.04] transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                             <svg className="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none">
@@ -429,24 +429,24 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-[#F5F0E8]">AI complete</p>
-                            <p className="text-xs text-[#9B9B8E]">Ready to review</p>
+                            <p className="text-sm font-medium text-foreground">AI complete</p>
+                            <p className="text-xs text-muted-foreground">Ready to review</p>
                         </div>
                     </Link>
 
                     <Link
                         href={clinicSettingsEdit.url()}
-                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#111118] px-4 py-3 hover:border-white/20 hover:bg-white/[0.04] transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
                     >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5">
-                            <svg className="h-4 w-4 text-[#9B9B8E]" viewBox="0 0 24 24" fill="none">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
+                            <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none">
                                 <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" strokeWidth="1.5"/>
                                 <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="1.5"/>
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-[#F5F0E8]">Clinic settings</p>
-                            <p className="text-xs text-[#9B9B8E]">Configure your clinic</p>
+                            <p className="text-sm font-medium text-foreground">Clinic settings</p>
+                            <p className="text-xs text-muted-foreground">Configure your clinic</p>
                         </div>
                     </Link>
                 </div>

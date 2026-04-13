@@ -87,9 +87,9 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                 />
 
                 {/* Widget SDK Generator */}
-                <div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-[#F5F0E8]">Embed SDK Widget</h3>
-                    <p className="mb-6 text-sm text-[#9B9B8E]">
+                <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">Embed SDK Widget</h3>
+                    <p className="mb-6 text-sm text-muted-foreground">
                         Configure the settings below to generate your personalized widget code.
                         Paste this code directly into your website's HTML just before the closing <code>&lt;/body&gt;</code> tag.
                     </p>
@@ -97,9 +97,9 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="space-y-5">
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Display Mode</Label>
+                                <Label className="text-foreground">Display Mode</Label>
                                 <Select value={widgetRenderMode} onValueChange={setWidgetRenderMode}>
-                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -112,21 +112,21 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
 
                             {widgetRenderMode !== 'inline' && (
                                 <div className="grid gap-2">
-                                    <Label className="text-[#F5F0E8]">Button Label</Label>
+                                    <Label className="text-foreground">Button Label</Label>
                                     <Input 
                                         type="text" 
                                         value={widgetButtonLabel}
                                         onChange={(e) => setWidgetButtonLabel(e.target.value)}
                                         placeholder="Start Free Evaluation"
-                                        className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50"
+                                        className="bg-background text-foreground border-sidebar-border/50"
                                     />
                                 </div>
                             )}
 
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Theme</Label>
+                                <Label className="text-foreground">Widget Theme</Label>
                                 <Select value={widgetTheme} onValueChange={setWidgetTheme}>
-                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -136,12 +136,18 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                         <SelectItem value="bare">Bare (No CSS)</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Override for this embed only. Your global default is set in{' '}
+                                    <a href="/clinic/settings" className="underline underline-offset-2 hover:text-foreground transition-colors">
+                                        Clinic Settings
+                                    </a>.
+                                </p>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Hide Widget Header?</Label>
+                                <Label className="text-foreground">Hide Widget Header?</Label>
                                 <Select value={widgetHideHeader} onValueChange={setWidgetHideHeader}>
-                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -152,38 +158,38 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Primary Brand Color</Label>
+                                <Label className="text-foreground">Primary Brand Color</Label>
                                 <div className="flex gap-2">
                                     <Input 
                                         type="color" 
                                         value={widgetPrimaryColor}
                                         onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
-                                        className="h-10 w-14 cursor-pointer p-0.5 bg-[#0A0A0F] border-sidebar-border/50"
+                                        className="h-10 w-14 cursor-pointer p-0.5 bg-background border-sidebar-border/50"
                                     />
                                     <Input 
                                         type="text" 
                                         value={widgetPrimaryColor}
                                         onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
-                                        className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50 uppercase font-mono"
+                                        className="bg-background text-foreground border-sidebar-border/50 uppercase font-mono"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Custom Font Family</Label>
+                                <Label className="text-foreground">Custom Font Family</Label>
                                 <Input 
                                     type="text" 
                                     value={widgetFontFamily}
                                     onChange={(e) => setWidgetFontFamily(e.target.value)}
                                     placeholder="e.g. 'Proxima Nova', sans-serif"
-                                    className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50"
+                                    className="bg-background text-foreground border-sidebar-border/50"
                                 />
                             </div>
                             
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Language</Label>
+                                <Label className="text-foreground">Language</Label>
                                 <Select value={widgetLanguage} onValueChange={setWidgetLanguage}>
-                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -194,9 +200,9 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-[#F5F0E8]">Default Procedure (Optional)</Label>
+                                <Label className="text-foreground">Default Procedure (Optional)</Label>
                                 <Select value={widgetProcedure} onValueChange={setWidgetProcedure}>
-                                    <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                         <SelectValue placeholder="Let patient choose" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -210,20 +216,20 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-[#F5F0E8]">Generated Script</Label>
-                            <div className="relative rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs sm:text-sm text-[#D4D4D4] overflow-x-auto whitespace-pre">
+                            <Label className="text-foreground">Generated Script</Label>
+                            <div className="relative rounded-md border border-border bg-background p-4 font-mono text-xs sm:text-sm text-foreground overflow-x-auto whitespace-pre">
                                 <Button
                                     type="button"
                                     size="icon"
                                     variant="ghost"
                                     onClick={() => handleCopy(generatedScript, 'script')}
-                                    className="absolute right-2 top-2 h-8 w-8 text-[#9B9B8E] hover:bg-[#1E1E28] hover:text-[#0E9E8E]"
+                                    className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-[#0E9E8E]"
                                 >
                                     {copiedContent === 'script' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 </Button>
                                 {generatedScript}
                             </div>
-                            <p className="text-xs text-[#9B9B8E] mt-3">
+                            <p className="text-xs text-muted-foreground mt-3">
                                 <strong>Requirement:</strong> Ensure your site sends the 
                                 <code> &lt;meta http-equiv="Permissions-Policy" content="camera=(self 'https://app.aestheticai.com')"&gt; </code> header so the widget can access the camera for photos.
                             </p>
@@ -231,15 +237,15 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     </div>
                 </div>
 
-                <div className="border-t border-[#2A2A3A] w-full mt-8 mb-8"></div>
+                <div className="border-t border-border w-full mt-8 mb-8"></div>
 
                 {/* Outbound Webhook Settings */}
                 <form onSubmit={handleWebhookSave} className="space-y-6">
-                    <div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
+                    <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
                         <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                             <div>
-                                <h3 className="text-lg font-semibold text-[#F5F0E8]">CRM Webhook & Zapier</h3>
-                                <p className="mt-1 text-sm text-[#9B9B8E]">
+                                <h3 className="text-lg font-semibold text-foreground">CRM Webhook & Zapier</h3>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     Automatically trigger workflow actions in HubSpot, PatientNow, or Zapier when an evaluation is complete.
                                 </p>
                             </div>
@@ -255,14 +261,14 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         <div className="grid gap-8 lg:grid-cols-2">
                             <div className="space-y-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="webhook" className="text-[#F5F0E8]">Target Webhook URL</Label>
+                                    <Label htmlFor="webhook" className="text-foreground">Target Webhook URL</Label>
                                     <Input
                                         id="webhook"
                                         type="url"
                                         value={data.webhook_url}
                                         onChange={(e) => setData('webhook_url', e.target.value)}
                                         placeholder="https://hooks.zapier.com/hooks/catch/..."
-                                        className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50"
+                                        className="bg-background text-foreground border-sidebar-border/50"
                                         disabled={processing}
                                     />
                                     <InputError message={errors.webhook_url} />
@@ -271,13 +277,13 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             
                             <div className="space-y-4">
                                 <div className="grid gap-2">
-                                    <Label className="text-[#F5F0E8]">HMAC Signing Secret</Label>
+                                    <Label className="text-foreground">HMAC Signing Secret</Label>
                                     <div className="relative">
                                         <Input
                                             type="text"
                                             readOnly
                                             value={tenant.webhook_secret}
-                                            className="bg-[#0A0A0F] text-[#9B9B8E] pr-20 font-mono text-xs border-sidebar-border/50"
+                                            className="bg-background text-muted-foreground pr-20 font-mono text-xs border-sidebar-border/50"
                                         />
                                         <div className="absolute inset-y-0 right-1 flex items-center gap-1">
                                             <Button
@@ -285,7 +291,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleCopy(tenant.webhook_secret, 'secret')}
-                                                className="h-7 w-7 text-[#9B9B8E] hover:text-[#0E9E8E]"
+                                                className="h-7 w-7 text-muted-foreground hover:text-[#0E9E8E]"
                                                 title="Copy secret"
                                             >
                                                 {copiedContent === 'secret' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -303,7 +309,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                             </Button>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-[#9B9B8E]">
+                                    <p className="text-xs text-muted-foreground">
                                         Use this secret to independently verify inbound <code>X-SymetriHealth-Signature</code> headers. Give it only to trusted developers.
                                     </p>
                                 </div>
@@ -312,19 +318,19 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     </div>
                 </form>
 
-                <div className="border-t border-[#2A2A3A] w-full mt-8 mb-8"></div>
+                <div className="border-t border-border w-full mt-8 mb-8"></div>
 
                 {/* Developer Documentation */}
-                <div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-[#F5F0E8]">Developer Documentation & Payload Specs</h3>
-                    <p className="mb-6 text-sm text-[#9B9B8E]">
+                <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">Developer Documentation & Payload Specs</h3>
+                    <p className="mb-6 text-sm text-muted-foreground">
                         When an evaluation is completed, we will POST a JSON payload to your webhook. Note that the payload intentionally contains no Protected Health Information (PHI) to maintain HIPAA standards in transit. Use the provided <code>evaluation_token</code> to fetch the full patient details securely via our REST API.
                     </p>
 
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="space-y-3">
-                            <Label className="text-[#F5F0E8]">Webhook Payload Example (POST)</Label>
-                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs text-[#D4D4D4] overflow-x-auto whitespace-pre">
+                            <Label className="text-foreground">Webhook Payload Example (POST)</Label>
+                            <div className="rounded-md border border-border bg-background p-4 font-mono text-xs text-foreground overflow-x-auto whitespace-pre">
 {`{
   "event": "evaluation.completed",
   "api_version": "2025-01",
@@ -346,14 +352,14 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-[#F5F0E8]">Fetch Patient API (GET)</Label>
-                            <p className="text-xs text-[#9B9B8E] mb-2 leading-relaxed">
+                            <Label className="text-foreground">Fetch Patient API (GET)</Label>
+                            <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
                                 Call this endpoint using the token from the webhook to retrieve the full patient profile, including name, email, phone, and securely signed photo URLs.
                             </p>
-                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] px-4 py-3 font-mono text-xs text-[#0E9E8E] overflow-x-auto whitespace-pre">
+                            <div className="rounded-md border border-border bg-background px-4 py-3 font-mono text-xs text-[#0E9E8E] overflow-x-auto whitespace-pre">
                                 GET /api/v1/evaluations/{"{"}evaluation_token{"}"}
                             </div>
-                            <div className="rounded-md border border-[#2A2A3A] bg-[#0A0A0F] p-4 font-mono text-xs text-[#D4D4D4] overflow-x-auto whitespace-pre mt-3">
+                            <div className="rounded-md border border-border bg-background p-4 font-mono text-xs text-foreground overflow-x-auto whitespace-pre mt-3">
 {`{
   "data": {
     "id": "eval_01HXYZ...",

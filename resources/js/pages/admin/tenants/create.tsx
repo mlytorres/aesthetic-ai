@@ -84,28 +84,28 @@ export default function CreateTenant({ plans }: Props) {
 
 				<form onSubmit={handleSubmit} className="space-y-6">
 					{/* Clinic Details */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6 space-y-4">
-						<h3 className="text-base font-semibold text-[#F5F0E8]">
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6 space-y-4">
+						<h3 className="text-base font-semibold text-foreground">
 							Clinic Details
 						</h3>
 
 						<div className="grid gap-2">
-							<Label htmlFor="name" className="text-[#F5F0E8]">Clinic Name</Label>
+							<Label htmlFor="name" className="text-foreground">Clinic Name</Label>
 							<Input
 								id="name"
 								value={data.name}
 								onChange={(e) => handleNameChange(e.target.value)}
 								placeholder="Miami Life Cosmetic Center"
-								className="bg-[#0A0A0F] text-[#F5F0E8]"
+								className="bg-background text-foreground"
 								required
 							/>
 							<InputError message={errors.name} />
 						</div>
 
 						<div className="grid gap-2">
-							<Label htmlFor="slug" className="text-[#F5F0E8]">
+							<Label htmlFor="slug" className="text-foreground">
 								Subdomain Slug
-								<span className="ml-2 text-xs font-normal text-[#9B9B8E]">
+								<span className="ml-2 text-xs font-normal text-muted-foreground">
 									Used for {'{slug}'}.aesthetic-ai.com
 								</span>
 							</Label>
@@ -114,19 +114,19 @@ export default function CreateTenant({ plans }: Props) {
 								value={data.slug}
 								onChange={(e) => setData('slug', e.target.value.toLowerCase())}
 								placeholder="miamilife"
-								className="bg-[#0A0A0F] font-mono text-[#F5F0E8]"
+								className="bg-background font-mono text-foreground"
 								required
 							/>
 							<InputError message={errors.slug} />
 						</div>
 
 						<div className="grid gap-2">
-							<Label htmlFor="plan_id" className="text-[#F5F0E8]">Plan</Label>
+							<Label htmlFor="plan_id" className="text-foreground">Plan</Label>
 							<Select
 								value={data.plan_id}
 								onValueChange={(v) => setData('plan_id', v)}
 							>
-								<SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8]">
+								<SelectTrigger className="bg-background text-foreground">
 									<SelectValue placeholder="Select a plan" />
 								</SelectTrigger>
 								<SelectContent>
@@ -141,7 +141,7 @@ export default function CreateTenant({ plans }: Props) {
 						</div>
 
 						<div className="grid gap-2">
-							<Label className="text-[#F5F0E8]">Enabled Procedures</Label>
+							<Label className="text-foreground">Enabled Procedures</Label>
 							<div className="flex flex-wrap gap-2">
 								{PROCEDURES.map((proc) => {
 									const active = data.procedures.includes(proc.value);
@@ -154,7 +154,7 @@ export default function CreateTenant({ plans }: Props) {
 											className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
 												active
 													? 'bg-[#0E9E8E] text-[#0A0A0F]'
-													: 'bg-white/5 text-[#9B9B8E] hover:bg-white/10'
+													: 'bg-muted/50 text-muted-foreground hover:bg-white/10'
 											}`}
 										>
 											{proc.label}
@@ -167,37 +167,37 @@ export default function CreateTenant({ plans }: Props) {
 					</div>
 
 					{/* Owner Account */}
-					<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6 space-y-4">
-						<h3 className="text-base font-semibold text-[#F5F0E8]">
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6 space-y-4">
+						<h3 className="text-base font-semibold text-foreground">
 							Clinic Owner Account
 						</h3>
-						<p className="text-sm text-[#9B9B8E]">
+						<p className="text-sm text-muted-foreground">
 							An account will be created with a temporary password and an invitation
 							email sent to this address.
 						</p>
 
 						<div className="grid gap-2">
-							<Label htmlFor="owner_name" className="text-[#F5F0E8]">Full Name</Label>
+							<Label htmlFor="owner_name" className="text-foreground">Full Name</Label>
 							<Input
 								id="owner_name"
 								value={data.owner_name}
 								onChange={(e) => setData('owner_name', e.target.value)}
 								placeholder="Dr. Ana Rivera"
-								className="bg-[#0A0A0F] text-[#F5F0E8]"
+								className="bg-background text-foreground"
 								required
 							/>
 							<InputError message={errors.owner_name} />
 						</div>
 
 						<div className="grid gap-2">
-							<Label htmlFor="owner_email" className="text-[#F5F0E8]">Email Address</Label>
+							<Label htmlFor="owner_email" className="text-foreground">Email Address</Label>
 							<Input
 								id="owner_email"
 								type="email"
 								value={data.owner_email}
 								onChange={(e) => setData('owner_email', e.target.value)}
 								placeholder="owner@theirclinic.com"
-								className="bg-[#0A0A0F] text-[#F5F0E8]"
+								className="bg-background text-foreground"
 								required
 							/>
 							<InputError message={errors.owner_email} />

@@ -84,7 +84,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
         <div className="py-6">
             {/* Progress within quiz */}
             <div className="mb-6 flex items-center justify-between">
-                <span className="text-xs font-medium text-[#9B9B8E]">
+                <span className="text-xs font-medium text-[var(--intake-muted)]">
                     Question {activeIndex + 1} of {questions.length}
                 </span>
                 <div className="h-1 flex-1 mx-4 rounded-full bg-white/10 overflow-hidden">
@@ -96,7 +96,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
             </div>
 
             {/* Question */}
-            <h2 className="text-xl font-bold text-[#F5F0E8]">{question.label}</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{question.label}</h2>
 
             <div className="mt-6">
                 {question.type === 'single' && question.options && (
@@ -130,7 +130,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
 
                 {question.type === 'text' && (
                     <textarea
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-[#111118] px-4 py-3 text-sm text-[#F5F0E8] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors resize-none"
+                        className="mt-2 w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors resize-none"
                         rows={4}
                         placeholder={question.placeholder ?? 'Your answer…'}
                         value={typeof currentAnswer === 'string' ? currentAnswer : ''}
@@ -162,7 +162,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                             setActiveIndex((i) => i - 1);
                         }
                     }}
-                    className="flex-1 rounded-xl border border-white/10 bg-transparent px-6 py-3.5 text-sm font-medium text-[#9B9B8E] transition-colors hover:border-white/20 hover:text-[#F5F0E8]"
+                    className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] transition-colors hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)]"
                 >
                     ← Back
                 </button>
@@ -174,7 +174,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                     className={[
                         'flex-[2] rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-200',
                         canAdvance
-                            ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                            ? 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]'
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >
@@ -207,7 +207,7 @@ const SingleChoice: FC<SingleChoiceProps> = ({ options, value, onChange }) => (
                         'w-full rounded-xl border px-5 py-3.5 text-left text-sm font-medium transition-all duration-150',
                         isSelected
                             ? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
-                            : 'border-white/10 bg-[#111118] text-[#F5F0E8] hover:border-white/25',
+                            : 'border-[var(--intake-border)] bg-[var(--intake-surface)] text-[var(--intake-fg)] hover:border-[var(--intake-border-hover)]',
                     ].join(' ')}
                 >
                     {opt.label}
@@ -230,7 +230,7 @@ const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
 
     return (
         <div className="space-y-2">
-            <p className="mb-3 text-xs text-[#9B9B8E]">Select all that apply</p>
+            <p className="mb-3 text-xs text-[var(--intake-muted)]">Select all that apply</p>
             {options.map((opt) => {
                 const isSelected = value.includes(opt.value);
 
@@ -243,7 +243,7 @@ const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
                             'flex w-full items-center gap-3 rounded-xl border px-5 py-3.5 text-left text-sm font-medium transition-all duration-150',
                             isSelected
                                 ? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
-                                : 'border-white/10 bg-[#111118] text-[#F5F0E8] hover:border-white/25',
+                                : 'border-[var(--intake-border)] bg-[var(--intake-surface)] text-[var(--intake-fg)] hover:border-[var(--intake-border-hover)]',
                         ].join(' ')}
                     >
                         <span
@@ -253,7 +253,7 @@ const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
                             ].join(' ')}
                         >
                             {isSelected && (
-                                <svg className="h-2.5 w-2.5 text-[#0A0A0F]" viewBox="0 0 10 10" fill="none">
+                                <svg className="h-2.5 w-2.5 text-[var(--intake-icon-on-teal)]" viewBox="0 0 10 10" fill="none">
                                     <path
                                         d="M1.5 5l2.5 2.5 4.5-4.5"
                                         stroke="currentColor"
@@ -292,7 +292,7 @@ const BooleanChoice: FC<BooleanChoiceProps> = ({ value, onChange }) => (
                         'flex-1 rounded-xl border py-4 text-sm font-semibold transition-all duration-150',
                         isSelected
                             ? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
-                            : 'border-white/10 bg-[#111118] text-[#F5F0E8] hover:border-white/25',
+                            : 'border-[var(--intake-border)] bg-[var(--intake-surface)] text-[var(--intake-fg)] hover:border-[var(--intake-border-hover)]',
                     ].join(' ')}
                 >
                     {label}
@@ -324,8 +324,8 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
             </svg>
         </div>
 
-        <h2 className="text-xl font-bold text-[#F5F0E8]">All {total} questions answered</h2>
-        <p className="mt-2 text-sm text-[#9B9B8E]">
+        <h2 className="text-xl font-bold text-[var(--intake-fg)]">All {total} questions answered</h2>
+        <p className="mt-2 text-sm text-[var(--intake-muted)]">
             Ready to continue? We'll now guide you through uploading your photos.
         </p>
 
@@ -339,7 +339,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
             <button
                 type="button"
                 onClick={onBack}
-                className="flex-1 rounded-xl border border-white/10 bg-transparent px-6 py-3.5 text-sm font-medium text-[#9B9B8E] hover:border-white/20 hover:text-[#F5F0E8] transition-colors"
+                className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
             >
                 ← Review
             </button>
@@ -351,7 +351,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
                     'flex-[2] rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-200',
                     loading
                         ? 'cursor-not-allowed bg-white/10 text-white/30'
-                        : 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]',
+                        : 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]',
                 ].join(' ')}
             >
                 {loading ? 'Saving…' : 'Continue to Photos →'}

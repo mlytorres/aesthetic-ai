@@ -118,11 +118,11 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 
 				{/* ── Current plan + usage ────────────────────────────────────── */}
 				<div className="grid gap-6 md:grid-cols-2">
-					<div className="rounded-xl border border-[#2A2A3A] bg-[#13131A] p-6">
-						<p className="mb-1 text-xs font-semibold uppercase tracking-widest text-[#9B9B8E]">
+					<div className="rounded-xl border border-border bg-card p-6">
+						<p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
 							Current Plan
 						</p>
-						<p className="text-2xl font-bold text-[#F5F0E8]">
+						<p className="text-2xl font-bold text-foreground">
 							{currentPlan?.name ?? 'No plan'}
 						</p>
 						{subscription && (
@@ -150,22 +150,22 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 						)}
 					</div>
 
-					<div className="rounded-xl border border-[#2A2A3A] bg-[#13131A] p-6">
-						<p className="mb-4 text-xs font-semibold uppercase tracking-widest text-[#9B9B8E]">
+					<div className="rounded-xl border border-border bg-card p-6">
+						<p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
 							This Month's Usage
 						</p>
 
 						<div className="space-y-4">
 							<div>
 								<div className="mb-1 flex justify-between text-sm">
-									<span className="text-[#F5F0E8]">Evaluations</span>
-									<span className={cn('font-semibold', isNearLimit ? 'text-amber-400' : 'text-[#9B9B8E]')}>
+									<span className="text-foreground">Evaluations</span>
+									<span className={cn('font-semibold', isNearLimit ? 'text-amber-400' : 'text-muted-foreground')}>
 										{usage.evals_this_month}
 										{evalLimit !== null ? ` / ${evalLimit}` : ' (unlimited)'}
 									</span>
 								</div>
 								{evalLimit !== null && (
-									<div className="h-2 rounded-full bg-[#2A2A3A]">
+									<div className="h-2 rounded-full bg-muted/40">
 										<div
 											className={cn(
 												'h-2 rounded-full transition-all',
@@ -178,8 +178,8 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 							</div>
 
 							<div className="flex justify-between text-sm">
-								<span className="text-[#F5F0E8]">Procedures enabled</span>
-								<span className="font-semibold text-[#9B9B8E]">
+								<span className="text-foreground">Procedures enabled</span>
+								<span className="font-semibold text-muted-foreground">
 									{usage.procedures_count}
 									{currentPlan?.max_procedures !== null
 										? ` / ${currentPlan?.max_procedures ?? '∞'}`
@@ -192,7 +192,7 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 
 				{/* ── Plan cards ──────────────────────────────────────────────── */}
 				<div>
-					<h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-[#9B9B8E]">
+					<h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
 						{trial_expired ? 'Choose a plan to restore access' : 'Available Plans'}
 					</h2>
 
@@ -210,13 +210,13 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 										'rounded-xl border p-6 transition-colors',
 										isCurrent
 											? 'border-[#0E9E8E]/50 bg-[#0E9E8E]/5'
-											: 'border-[#2A2A3A] bg-[#13131A]',
+											: 'border-border bg-card',
 									)}
 								>
 									<div className="mb-4 flex items-start justify-between">
 										<div>
-											<p className="text-lg font-bold text-[#F5F0E8]">{plan.name}</p>
-											<p className="text-sm text-[#9B9B8E]">{price}</p>
+											<p className="text-lg font-bold text-foreground">{plan.name}</p>
+											<p className="text-sm text-muted-foreground">{price}</p>
 										</div>
 										{isCurrent && (
 											<Badge className="border-0 bg-[#0E9E8E]/20 text-[#0E9E8E]">
@@ -227,7 +227,7 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 
 									<ul className="mb-6 space-y-2">
 										{highlights.map((h) => (
-											<li key={h} className="flex items-center gap-2 text-sm text-[#9B9B8E]">
+											<li key={h} className="flex items-center gap-2 text-sm text-muted-foreground">
 												<CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0E9E8E]" />
 												{h}
 											</li>
@@ -248,11 +248,11 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 													: `Upgrade to ${plan.name}`}
 										</Button>
 									) : isCurrent ? (
-										<Button variant="outline" disabled className="w-full border-[#2A2A3A] text-[#9B9B8E]">
+										<Button variant="outline" disabled className="w-full border-border text-muted-foreground">
 											Active plan
 										</Button>
 									) : (
-										<Button variant="outline" disabled className="w-full border-[#2A2A3A] text-[#9B9B8E]">
+										<Button variant="outline" disabled className="w-full border-border text-muted-foreground">
 											Contact us
 										</Button>
 									)}

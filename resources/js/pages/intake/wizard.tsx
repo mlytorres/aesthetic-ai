@@ -353,6 +353,7 @@ return;
             <WizardShell
                 clinicName={clinic.name}
                 clinicLogo={clinic.logo}
+                theme={clinic.theme}
                 currentStep={state.step}
                 hideHeader={hideHeader}
             >

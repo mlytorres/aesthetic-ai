@@ -13,7 +13,7 @@ const SuccessPage: FC<Props> = ({ clinic }) => {
         <>
             <Head title={`Thank You — ${clinic.name}`} />
 
-            <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0F] px-6 py-12">
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--intake-bg)] px-6 py-12">
                 {/* Animated gold ring + checkmark */}
                 <div className="relative mb-8">
                     <div className="h-24 w-24 rounded-full bg-[#0E9E8E]/10 ring-1 ring-[#0E9E8E]/30 flex items-center justify-center">
@@ -44,20 +44,20 @@ const SuccessPage: FC<Props> = ({ clinic }) => {
                 </p>
 
                 {/* Headline */}
-                <h1 className="text-3xl font-bold text-[#F5F0E8] text-center leading-tight">
+                <h1 className="text-3xl font-bold text-[var(--intake-fg)] text-center leading-tight">
                     Evaluation submitted!
                 </h1>
 
-                <p className="mt-4 max-w-sm text-center text-sm text-[#9B9B8E] leading-relaxed">
+                <p className="mt-4 max-w-sm text-center text-sm text-[var(--intake-muted)] leading-relaxed">
                     Thank you for completing your AI evaluation. Our team will review your
                     results and reach out within&nbsp;
-                    <span className="text-[#F5F0E8] font-medium">1–2 business days</span> to
+                    <span className="text-[var(--intake-fg)] font-medium">1–2 business days</span> to
                     discuss next steps.
                 </p>
 
                 {/* What happens next */}
-                <div className="mt-10 w-full max-w-sm rounded-2xl border border-white/10 bg-[#111118] overflow-hidden">
-                    <div className="px-5 py-3 border-b border-white/5">
+                <div className="mt-10 w-full max-w-sm rounded-2xl border border-[var(--intake-border)] bg-[var(--intake-surface)] overflow-hidden">
+                    <div className="px-5 py-3 border-b border-[var(--intake-border-xs)]">
                         <p className="text-xs font-semibold uppercase tracking-widest text-[#0E9E8E]">
                             What happens next
                         </p>
@@ -84,10 +84,10 @@ const SuccessPage: FC<Props> = ({ clinic }) => {
                             <li key={item.title} className="flex items-start gap-4 px-5 py-4">
                                 <span className="text-xl shrink-0">{item.icon}</span>
                                 <div>
-                                    <p className="text-sm font-semibold text-[#F5F0E8]">
+                                    <p className="text-sm font-semibold text-[var(--intake-fg)]">
                                         {item.title}
                                     </p>
-                                    <p className="text-xs text-[#9B9B8E] mt-0.5">
+                                    <p className="text-xs text-[var(--intake-muted)] mt-0.5">
                                         {item.description}
                                     </p>
                                 </div>
@@ -97,18 +97,18 @@ const SuccessPage: FC<Props> = ({ clinic }) => {
                 </div>
 
                 {/* Check email note */}
-                <div className="mt-6 flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-3.5">
+                <div className="mt-6 flex items-center gap-2 rounded-xl border border-[var(--intake-border-xs)] bg-white/[0.02] px-5 py-3.5">
                     <svg className="h-4 w-4 text-[#0E9E8E] shrink-0" viewBox="0 0 24 24" fill="none">
                         <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
                         <path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
                     </svg>
-                    <p className="text-xs text-[#9B9B8E]">
+                    <p className="text-xs text-[var(--intake-muted)]">
                         Check your email — we've sent you a confirmation.
                     </p>
                 </div>
 
                 {/* Footer */}
-                <p className="mt-12 text-[11px] text-white/20 text-center">
+                <p className="mt-12 text-[11px] text-[var(--intake-muted-faint)] text-center">
                     {clinic.name} · AI-Powered Aesthetic Evaluation · HIPAA Compliant
                 </p>
             </div>

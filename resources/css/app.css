@@ -161,3 +161,43 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* ── Intake Page Themes ─────────────────────────────────────────────────── */
+/* Applied via data-intake-theme on the WizardShell root div.               */
+/* All intake components consume these vars instead of hardcoded hex values. */
+
+[data-intake-theme="luxury-dark"] {
+    --intake-bg:           #0A0A0F;
+    --intake-surface:      #111118;
+    --intake-fg:           #F5F0E8;
+    --intake-muted:        #9B9B8E;
+    --intake-muted-faint:  rgba(155, 155, 142, 0.50);
+    --intake-border-xs:    rgba(255, 255, 255, 0.05);
+    --intake-border:       rgba(255, 255, 255, 0.10);
+    --intake-border-hover: rgba(255, 255, 255, 0.22);
+    --intake-icon-on-teal: #0A0A0F;
+}
+
+[data-intake-theme="luxury-light"] {
+    --intake-bg:           #FAF8F5;
+    --intake-surface:      #FFFFFF;
+    --intake-fg:           #1A1A24;
+    --intake-muted:        #6B6B60;
+    --intake-muted-faint:  rgba(107, 107, 96, 0.55);
+    --intake-border-xs:    rgba(0, 0, 0, 0.05);
+    --intake-border:       rgba(0, 0, 0, 0.10);
+    --intake-border-hover: rgba(0, 0, 0, 0.22);
+    --intake-icon-on-teal: #FFFFFF;
+}
+
+[data-intake-theme="clinical"] {
+    --intake-bg:           #F5F7FA;
+    --intake-surface:      #FFFFFF;
+    --intake-fg:           #1A202C;
+    --intake-muted:        #64748B;
+    --intake-muted-faint:  rgba(100, 116, 139, 0.55);
+    --intake-border-xs:    rgba(0, 0, 0, 0.06);
+    --intake-border:       rgba(0, 0, 0, 0.12);
+    --intake-border-hover: rgba(0, 0, 0, 0.22);
+    --intake-icon-on-teal: #FFFFFF;
+}

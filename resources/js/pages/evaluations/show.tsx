@@ -105,9 +105,9 @@ return '—';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-xl border border-sidebar-border/50 bg-[#111118]">
+        <div className="rounded-xl border border-sidebar-border/50 bg-card">
             <div className="border-b border-sidebar-border/50 px-5 py-3">
-                <h3 className="text-sm font-semibold text-[#F5F0E8]">{title}</h3>
+                <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             </div>
             <div className="p-5">{children}</div>
         </div>
@@ -118,7 +118,7 @@ function PatientCard({ patient }: { patient: Patient | null }) {
     if (!patient) {
         return (
             <SectionCard title="Patient">
-                <p className="text-sm text-[#9B9B8E] italic">Patient info not yet collected.</p>
+                <p className="text-sm text-muted-foreground italic">Patient info not yet collected.</p>
             </SectionCard>
         );
     }
@@ -132,8 +132,8 @@ function PatientCard({ patient }: { patient: Patient | null }) {
                     { label: 'Phone', value: patient.phone },
                 ].map(({ label, value }) => (
                     <div key={label}>
-                        <dt className="text-xs text-[#9B9B8E] uppercase tracking-wider">{label}</dt>
-                        <dd className="mt-0.5 text-sm text-[#F5F0E8]">{value ?? '—'}</dd>
+                        <dt className="text-xs text-muted-foreground uppercase tracking-wider">{label}</dt>
+                        <dd className="mt-0.5 text-sm text-foreground">{value ?? '—'}</dd>
                     </div>
                 ))}
             </dl>
@@ -147,7 +147,7 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
     if (photos.length === 0) {
         return (
             <SectionCard title="Photos">
-                <p className="text-sm text-[#9B9B8E] italic">No photos uploaded yet.</p>
+                <p className="text-sm text-muted-foreground italic">No photos uploaded yet.</p>
             </SectionCard>
         );
     }
@@ -160,7 +160,7 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
                         key={photo.id}
                         type="button"
                         onClick={() => setLightbox(photo.signed_url)}
-                        className="group relative overflow-hidden rounded-lg border border-sidebar-border/50 bg-[#0A0A0F] aspect-square focus:outline-none focus:ring-2 focus:ring-[#0E9E8E]"
+                        className="group relative overflow-hidden rounded-lg border border-sidebar-border/50 bg-background aspect-square focus:outline-none focus:ring-2 focus:ring-[#0E9E8E]"
                     >
                         <img
                             src={photo.signed_url}
@@ -213,7 +213,7 @@ function QuizAnswersCard({ answers }: { answers: Record<string, unknown> | null 
     if (!answers) {
         return (
             <SectionCard title="Quiz Answers">
-                <p className="text-sm text-[#9B9B8E] italic">No quiz answers recorded.</p>
+                <p className="text-sm text-muted-foreground italic">No quiz answers recorded.</p>
             </SectionCard>
         );
     }
@@ -225,14 +225,14 @@ function QuizAnswersCard({ answers }: { answers: Record<string, unknown> | null 
         <SectionCard title="Quiz Answers">
             <dl className="space-y-2">
                 {displayAnswers.length === 0 ? (
-                    <p className="text-sm text-[#9B9B8E] italic">No answers recorded.</p>
+                    <p className="text-sm text-muted-foreground italic">No answers recorded.</p>
                 ) : (
                     displayAnswers.map(([key, value]) => (
                         <div key={key} className="grid grid-cols-5 gap-2">
-                            <dt className="col-span-2 text-xs text-[#9B9B8E] capitalize">
+                            <dt className="col-span-2 text-xs text-muted-foreground capitalize">
                                 {key.replace(/_/g, ' ')}
                             </dt>
-                            <dd className="col-span-3 text-sm text-[#F5F0E8]">
+                            <dd className="col-span-3 text-sm text-foreground">
                                 {Array.isArray(value)
                                     ? value.join(', ')
                                     : String(value ?? '—')}
@@ -289,29 +289,29 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
     if (entries.length === 0) {
         return (
             <SectionCard title="Activity Log">
-                <p className="text-sm italic text-[#9B9B8E]">No activity recorded yet.</p>
+                <p className="text-sm italic text-muted-foreground">No activity recorded yet.</p>
             </SectionCard>
         );
     }
 
     return (
         <SectionCard title="Activity Log">
-            <ol className="relative border-l border-[#2A2A35]">
+            <ol className="relative border-l border-border">
                 {entries.map((entry) => (
                     <li key={entry.id} className="mb-5 ml-4 last:mb-0">
                         {/* Timeline dot */}
                         <div className="absolute -left-1.5 mt-1.5 size-3 rounded-full border border-[#0A0A0F] bg-[#2A2A35]" />
 
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                            <p className="text-sm font-medium text-[#F5F0E8]">
+                            <p className="text-sm font-medium text-foreground">
                                 {actionLabel(entry.action)}
                             </p>
-                            <time className="shrink-0 text-xs text-[#9B9B8E]" dateTime={entry.created_at}>
+                            <time className="shrink-0 text-xs text-muted-foreground" dateTime={entry.created_at}>
                                 {timeAgo(entry.created_at)}
                             </time>
                         </div>
 
-                        <p className="mt-0.5 text-xs text-[#9B9B8E]">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                             {entry.user_name}
                             {entry.user_role && (
                                 <span className="ml-1 capitalize opacity-60">· {entry.user_role}</span>
@@ -323,7 +323,7 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
 
                         {/* Metadata badge for status changes */}
                         {entry.metadata?.new_status != null && (
-                            <span className="mt-1 inline-block rounded bg-[#1E1E28] px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
+                            <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
                                 → {String(entry.metadata.new_status).replace('_', ' ')}
                             </span>
                         )}
@@ -439,13 +439,13 @@ return;
     return (
         <SectionCard title="AI Simulation">
             {!isAnalysisReady && sim.status === null ? (
-                <p className="text-xs text-[#9B9B8E] italic">
+                <p className="text-xs text-muted-foreground italic">
                     Simulation will be available once AI analysis is complete.
                 </p>
 
             ) : (sim.status === null) ? (
                 <div className="space-y-3">
-                    <p className="text-xs text-[#9B9B8E]">
+                    <p className="text-xs text-muted-foreground">
                         Generate an AI before/after simulation for this patient's procedure.
                         The result is for consultation purposes only and is not a medical guarantee.
                     </p>
@@ -460,7 +460,7 @@ return;
             ) : sim.status === 'pending' || sim.status === 'processing' ? (
                 <div className="flex flex-col items-center gap-3 py-4">
                     <div className="size-8 animate-spin rounded-full border-2 border-[#0E9E8E] border-t-transparent" />
-                    <p className="text-xs text-[#9B9B8E]">
+                    <p className="text-xs text-muted-foreground">
                         {sim.status === 'pending' ? 'Queued…' : 'Generating simulation…'}
                     </p>
                 </div>
@@ -471,7 +471,7 @@ return;
                         onClick={requestSimulation}
                         disabled={requesting}
                         variant="outline"
-                        className="w-full text-sm border-sidebar-border/50 text-[#F5F0E8]"
+                        className="w-full text-sm border-sidebar-border/50 text-foreground"
                     >
                         {requesting ? 'Requesting…' : 'Retry Simulation'}
                     </Button>
@@ -485,16 +485,16 @@ return;
                             className="w-full rounded-lg border border-sidebar-border/50 object-cover"
                         />
                     ) : (
-                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-[#0A0A0F] py-8 px-4">
+                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-background py-8 px-4">
                             <span className="text-2xl">✦</span>
-                            <p className="text-center text-xs text-[#9B9B8E]">
+                            <p className="text-center text-xs text-muted-foreground">
                                 {sim.simulation_data?.placeholder_message as string
                                     ?? 'Simulation complete. Enable AI Vision to view generated images.'}
                             </p>
                         </div>
                     )}
 
-                    <p className="text-[10px] text-[#9B9B8E] italic text-center">
+                    <p className="text-[10px] text-muted-foreground italic text-center">
                         ⚠ AI simulation for consultation purposes only. Results are not a medical guarantee.
                     </p>
 
@@ -512,7 +512,7 @@ return;
                         onClick={requestSimulation}
                         disabled={requesting}
                         variant="outline"
-                        className="w-full text-xs border-sidebar-border/50 text-[#9B9B8E] hover:text-[#F5F0E8]"
+                        className="w-full text-xs border-sidebar-border/50 text-muted-foreground hover:text-foreground"
                     >
                         {requesting ? 'Requesting…' : 'Regenerate'}
                     </Button>
@@ -568,15 +568,15 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
             <SectionCard title="Update Status">
                 <form onSubmit={handleStatusUpdate} className="space-y-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-[#F5F0E8] text-xs">New Status</Label>
+                        <Label className="text-foreground text-xs">New Status</Label>
                         <Select
                             value={statusForm.data.status}
                             onValueChange={(v) => statusForm.setData('status', v)}
                         >
-                            <SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50">
+                            <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#111118] text-[#F5F0E8]">
+                            <SelectContent className="bg-card text-foreground">
                                 {COORDINATOR_STATUSES.map(({ value, label }) => (
                                     <SelectItem key={value} value={value}>{label}</SelectItem>
                                 ))}
@@ -595,14 +595,14 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
 
             {/* Clinical Brief */}
             <SectionCard title="Clinical Brief">
-                <p className="mb-3 text-xs text-[#9B9B8E]">
+                <p className="mb-3 text-xs text-muted-foreground">
                     Download a HIPAA-safe PDF summary of this evaluation for handoff or file storage.
                 </p>
                 <a
                     href={brief.url(evaluation.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-[#F5F0E8] transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-foreground transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0" aria-hidden="true">
                         <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
@@ -621,23 +621,23 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                             onChange={(e) => notesForm.setData('coordinator_notes', e.target.value)}
                             rows={4}
                             placeholder="Add notes about this patient…"
-                            className="w-full rounded-md border border-sidebar-border/50 bg-[#0A0A0F] px-3 py-2 text-sm text-[#F5F0E8] placeholder:text-[#9B9B8E] focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
+                            className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
                         />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-[#F5F0E8] text-xs">Follow-up Date</Label>
+                        <Label className="text-foreground text-xs">Follow-up Date</Label>
                         <Input
                             type="date"
                             value={notesForm.data.follow_up_at}
                             onChange={(e) => notesForm.setData('follow_up_at', e.target.value)}
-                            className="bg-[#0A0A0F] text-[#F5F0E8] border-sidebar-border/50"
+                            className="bg-background text-foreground border-sidebar-border/50"
                         />
                     </div>
                     <Button
                         type="submit"
                         disabled={notesForm.processing}
                         variant="outline"
-                        className="w-full text-sm border-sidebar-border/50 text-[#F5F0E8] hover:border-[#0E9E8E]/50"
+                        className="w-full text-sm border-sidebar-border/50 text-foreground hover:border-[#0E9E8E]/50"
                     >
                         {notesForm.processing ? 'Saving…' : 'Save Notes'}
                     </Button>
@@ -660,14 +660,14 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-xl font-semibold text-[#F5F0E8]">
+                            <h1 className="text-xl font-semibold text-foreground">
                                 {formatProcedure(evaluation.procedure_slug)}
                             </h1>
                             <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${STATUS_COLORS[evaluation.status] ?? ''}`}>
                                 {evaluation.status.replace('_', ' ')}
                             </span>
                         </div>
-                        <p className="mt-0.5 text-sm text-[#9B9B8E]">
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             Submitted {formatDate(evaluation.completed_at ?? evaluation.created_at)}
                         </p>
                     </div>
@@ -675,14 +675,14 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                     {/* Scores + actions */}
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <p className="text-xs text-[#9B9B8E]">Lead Score</p>
+                            <p className="text-xs text-muted-foreground">Lead Score</p>
                             <p className="text-lg font-semibold text-[#0E9E8E]">
                                 {evaluation.lead_score ?? '—'}
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-[#9B9B8E]">Priority</p>
-                            <p className="text-sm font-medium capitalize text-[#F5F0E8]">
+                            <p className="text-xs text-muted-foreground">Priority</p>
+                            <p className="text-sm font-medium capitalize text-foreground">
                                 {evaluation.priority}
                             </p>
                         </div>
@@ -691,7 +691,7 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
                             href={brief.url(evaluation.id)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-[#F5F0E8] transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-3.5 shrink-0" aria-hidden="true">
                                 <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />

@@ -198,6 +198,13 @@ export default function Register() {
                         Log in
                     </TextLink>
                 </div>
+
+                <div className="text-center text-xs text-muted-foreground/60">
+                    Multi-location practice or need custom onboarding?{' '}
+                    <TextLink href="/#request-demo" tabIndex={11} className="text-muted-foreground/60 underline-offset-2">
+                        Request a demo
+                    </TextLink>
+                </div>
             </form>
         </>
     );

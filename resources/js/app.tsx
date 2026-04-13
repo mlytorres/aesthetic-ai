@@ -86,12 +86,12 @@ createInertiaApp({
         }
 
         if (import.meta.env.DEV) {
-            router.on('invalid', (event) => {
-                console.log('Inertia invalid event:', event);
+            router.on('httpException', (event) => {
+                console.log('Inertia httpException event:', event);
                 // event.preventDefault();
             });
-            router.on('exception', (event) => {
-                console.log('Inertia exception event:', event);
+            router.on('networkError', (event) => {
+                console.log('Inertia networkError event:', event);
             });
             router.on('finish', (event) => {
                 console.log('Inertia finish event:', event);

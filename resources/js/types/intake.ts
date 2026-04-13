@@ -63,10 +63,7 @@ export interface UploadedPhoto {
 export interface ClinicConfig {
     name: string;
     logo?: string;
-    theme?: {
-        primary?: string;
-        accent?: string;
-    };
+    theme?: string;
 }
 
 // ─── Wizard state machine ────────────────────────────────────────────────────

@@ -22,7 +22,7 @@ export default function AppSidebarLayout({
     breadcrumbs = [],
 }: AppLayoutProps) {
     const { showWarning, remainingSeconds, extendSession, logout } = useSessionTimeout();
-    const { impersonating, tenantId } = usePage().props as { impersonating: { as: string } | null; tenantId: string | null };
+    const { impersonating, tenantId } = usePage().props as unknown as { impersonating: { as: string } | null; tenantId: string | null };
 
     // ── Real-time evaluation notifications via Reverb ──────────────────────────
     const handleEvaluationReceived = useCallback(
@@ -76,15 +76,15 @@ export default function AppSidebarLayout({
             {/* HIPAA session inactivity warning — no onOpenChange so user cannot dismiss by clicking outside */}
             <Dialog open={showWarning} onOpenChange={() => {}}>
                 <DialogContent
-                    className="border-[#2A2A3A] bg-[#13131A] text-[#F5F0E8] [&>button]:hidden"
+                    className="border-border bg-card text-foreground [&>button]:hidden"
                     onInteractOutside={(e) => e.preventDefault()}
                     onEscapeKeyDown={(e) => e.preventDefault()}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-[#F5F0E8]">
+                        <DialogTitle className="text-foreground">
                             Session Expiring Soon
                         </DialogTitle>
-                        <DialogDescription className="text-[#9B9B8E]">
+                        <DialogDescription className="text-muted-foreground">
                             For HIPAA compliance, your session will automatically end after 30
                             minutes of inactivity. You will be logged out in{' '}
                             <span className="font-semibold text-[#0E9E8E]">
@@ -96,7 +96,7 @@ export default function AppSidebarLayout({
                     <DialogFooter className="gap-2 sm:gap-0">
                         <button
                             onClick={logout}
-                            className="rounded-md border border-[#2A2A3A] bg-transparent px-4 py-2 text-sm text-[#9B9B8E] transition-colors hover:bg-[#1E1E28] hover:text-[#F5F0E8]"
+                            className="rounded-md border border-border bg-transparent px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         >
                             Log Out
                         </button>

@@ -95,7 +95,7 @@ function formatDate(iso: string): string {
 
 function LeadScoreBar({ score }: { score: number | null }) {
     if (score === null) {
-return <span className="text-[#9B9B8E] text-xs">—</span>;
+return <span className="text-muted-foreground text-xs">—</span>;
 }
 
     const pct = Math.min(100, Math.max(0, score));
@@ -130,7 +130,7 @@ const EXPORT_ROLES = new Set(['owner', 'admin', 'coordinator']);
 
 export default function EvaluationsIndex({ evaluations, filters, statusCounts }: Props) {
     const activeTab = filters.status;
-    const { auth } = usePage().props as { auth: { user: { role: string } } };
+    const { auth } = usePage().props as unknown as { auth: { user: { role: string } } };
     const canExport = EXPORT_ROLES.has(auth.user.role);
 
     const navigateTab = (status: string) => {
@@ -146,8 +146,8 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold text-[#F5F0E8]">Evaluations</h1>
-                        <p className="mt-0.5 text-sm text-[#9B9B8E]">
+                        <h1 className="text-xl font-semibold text-foreground">Evaluations</h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
                             Priority queue · {evaluations.meta.total} total
                         </p>
                     </div>
@@ -155,9 +155,9 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                     {canExport && (
                         <a
                             href={exportMethod.url({ query: { status: activeTab } })}
-                            className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#111118] px-4 py-2 text-sm font-medium text-[#F5F0E8] transition-all hover:border-white/20 active:scale-95"
+                            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-border active:scale-95"
                         >
-                            <Download className="h-4 w-4 text-[#9B9B8E]" />
+                            <Download className="h-4 w-4 text-muted-foreground" />
                             Export CSV
                         </a>
                     )}
@@ -173,16 +173,16 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                     ].map(({ label, count, color }) => (
                         <div
                             key={label}
-                            className="rounded-lg border border-sidebar-border/50 bg-[#111118] px-4 py-3"
+                            className="rounded-lg border border-sidebar-border/50 bg-card px-4 py-3"
                         >
-                            <p className="text-xs text-[#9B9B8E]">{label}</p>
+                            <p className="text-xs text-muted-foreground">{label}</p>
                             <p className={`mt-1 text-2xl font-semibold tabular-nums ${color}`}>{count}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* Tab bar */}
-                <div className="flex gap-1 rounded-lg border border-sidebar-border/50 bg-[#111118] p-1 w-fit">
+                <div className="flex gap-1 rounded-lg border border-sidebar-border/50 bg-card p-1 w-fit">
                     {STATUS_TABS.map(({ key, label }) => (
                         <button
                             key={key}
@@ -192,7 +192,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                                 'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
                                 activeTab === key
                                     ? 'bg-[#0E9E8E] text-[#0A0A0F]'
-                                    : 'text-[#9B9B8E] hover:text-[#F5F0E8]',
+                                    : 'text-muted-foreground hover:text-foreground',
                             ].join(' ')}
                         >
                             {label}
@@ -201,22 +201,22 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                 </div>
 
                 {/* Table */}
-                <div className="rounded-xl border border-sidebar-border/50 bg-[#111118] overflow-hidden">
+                <div className="rounded-xl border border-sidebar-border/50 bg-card overflow-hidden">
                     {evaluations.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <p className="text-[#9B9B8E]">No evaluations in this queue.</p>
+                            <p className="text-muted-foreground">No evaluations in this queue.</p>
                         </div>
                     ) : (
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border/50">
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Patient</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Procedure</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Priority</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Score</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Status</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Photos</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">Submitted</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Patient</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Procedure</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Priority</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Score</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Photos</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Submitted</th>
                                     <th className="px-4 py-3" />
                                 </tr>
                             </thead>
@@ -224,22 +224,22 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                                 {evaluations.data.map((ev) => (
                                     <tr
                                         key={ev.id}
-                                        className="group hover:bg-white/[0.03] transition-colors"
+                                        className="group hover:bg-muted/20 transition-colors"
                                     >
                                         {/* Patient */}
                                         <td className="px-4 py-3">
-                                            <p className="font-medium text-[#F5F0E8]">
-                                                {ev.patient?.name ?? <span className="italic text-[#9B9B8E]">Unknown</span>}
+                                            <p className="font-medium text-foreground">
+                                                {ev.patient?.name ?? <span className="italic text-muted-foreground">Unknown</span>}
                                             </p>
                                             {ev.patient?.email && (
-                                                <p className="text-xs text-[#9B9B8E] truncate max-w-[180px]">
+                                                <p className="text-xs text-muted-foreground truncate max-w-[180px]">
                                                     {ev.patient.email}
                                                 </p>
                                             )}
                                         </td>
 
                                         {/* Procedure */}
-                                        <td className="px-4 py-3 text-[#F5F0E8]">
+                                        <td className="px-4 py-3 text-foreground">
                                             {formatProcedure(ev.procedure_slug)}
                                         </td>
 
@@ -263,12 +263,12 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                                         </td>
 
                                         {/* Photos */}
-                                        <td className="px-4 py-3 text-[#9B9B8E] tabular-nums">
+                                        <td className="px-4 py-3 text-muted-foreground tabular-nums">
                                             {ev.photos_count ?? 0}
                                         </td>
 
                                         {/* Date */}
-                                        <td className="px-4 py-3 text-[#9B9B8E] whitespace-nowrap">
+                                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                                             {ev.completed_at
                                                 ? formatDate(ev.completed_at)
                                                 : formatDate(ev.created_at)}
@@ -292,7 +292,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
 
                 {/* Pagination */}
                 {(evaluations.links.prev || evaluations.links.next) && (
-                    <div className="flex items-center justify-between text-sm text-[#9B9B8E]">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>
                             {evaluations.meta.from}–{evaluations.meta.to} of {evaluations.meta.total}
                         </span>
@@ -300,7 +300,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             {evaluations.links.prev && (
                                 <Link
                                     href={evaluations.links.prev}
-                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#0E9E8E]/50 transition-colors"
+                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-foreground hover:border-[#0E9E8E]/50 transition-colors"
                                 >
                                     ← Previous
                                 </Link>
@@ -308,7 +308,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             {evaluations.links.next && (
                                 <Link
                                     href={evaluations.links.next}
-                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-[#F5F0E8] hover:border-[#0E9E8E]/50 transition-colors"
+                                    className="rounded-md border border-sidebar-border/50 px-3 py-1.5 text-foreground hover:border-[#0E9E8E]/50 transition-colors"
                                 >
                                     Next →
                                 </Link>

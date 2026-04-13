@@ -67,10 +67,10 @@ export const WebcamCapture: FC<Props> = ({ type, onCapture, onCancel }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-2xl bg-[#111118] rounded-2xl overflow-hidden border border-white/10 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between p-4 border-b border-white/10">
-                    <h3 className="font-bold text-[#F5F0E8]">Take Photo</h3>
-                    <button onClick={onCancel} className="text-[#9B9B8E] hover:text-white transition-colors text-xl leading-none">
+            <div className="w-full max-w-2xl bg-[var(--intake-surface)] rounded-2xl overflow-hidden border border-[var(--intake-border)] flex flex-col shadow-2xl">
+                <div className="flex items-center justify-between p-4 border-b border-[var(--intake-border)]">
+                    <h3 className="font-bold text-[var(--intake-fg)]">Take Photo</h3>
+                    <button onClick={onCancel} className="text-[var(--intake-muted)] hover:text-white transition-colors text-xl leading-none">
                         &times;
                     </button>
                 </div>
@@ -84,7 +84,7 @@ export const WebcamCapture: FC<Props> = ({ type, onCapture, onCancel }) => {
                     <canvas ref={canvasRef} className="hidden" />
                 </div>
                 
-                <div className="p-6 flex justify-center bg-[#0A0A0F]">
+                <div className="p-6 flex justify-center bg-[var(--intake-bg)]">
                     <button 
                         onClick={capture}
                         disabled={!!error}

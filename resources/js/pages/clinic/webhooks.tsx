@@ -72,7 +72,7 @@ const STATUS_CONFIG = {
     pending: {
         label: 'Pending',
         icon: Clock,
-        className: 'text-[#9B9B8E] bg-[#9B9B8E]/10 border-[#9B9B8E]/20',
+        className: 'text-muted-foreground bg-muted-foreground/10 border-muted-foreground/20',
     },
 };
 
@@ -125,7 +125,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                 {!webhookUrl && (
                     <div className="flex items-start gap-3 rounded-lg border border-amber-400/20 bg-amber-400/5 p-4">
                         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                        <div className="text-sm text-[#F5F0E8]">
+                        <div className="text-sm text-foreground">
                             No webhook URL configured.{' '}
                             <a
                                 href={integrationsIndex.url()}
@@ -147,9 +147,9 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                     ].map(({ label, value, color }) => (
                         <div
                             key={label}
-                            className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-5"
+                            className="rounded-lg border border-sidebar-border/50 bg-card p-5"
                         >
-                            <p className="text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                 {label}
                             </p>
                             <p className={cn('mt-1 text-2xl font-semibold', color)}>{value}</p>
@@ -158,12 +158,12 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                 </div>
 
                 {/* Delivery table */}
-                <div className="rounded-lg border border-sidebar-border/50 bg-[#111118]">
+                <div className="rounded-lg border border-sidebar-border/50 bg-card">
                     {deliveries.data.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 py-16 text-center">
-                            <Webhook className="h-8 w-8 text-[#9B9B8E]/40" />
-                            <p className="text-sm text-[#9B9B8E]">No webhook deliveries yet.</p>
-                            <p className="text-xs text-[#9B9B8E]/60">
+                            <Webhook className="h-8 w-8 text-muted-foreground/40" />
+                            <p className="text-sm text-muted-foreground">No webhook deliveries yet.</p>
+                            <p className="text-xs text-muted-foreground/60">
                                 Events are fired when an evaluation completes AI analysis or a
                                 coordinator updates the status.
                             </p>
@@ -173,22 +173,22 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-sidebar-border/50">
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             Event
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             Status
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             Procedure
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             HTTP
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             Attempts
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-[#9B9B8E]">
+                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                             Time
                                         </th>
                                         <th className="px-4 py-3" />
@@ -198,7 +198,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                     {deliveries.data.map((delivery) => (
                                         <tr
                                             key={delivery.id}
-                                            className="transition-colors hover:bg-[#0A0A0F]/50"
+                                            className="transition-colors hover:bg-background/50"
                                         >
                                             <td className="px-4 py-3 font-mono text-xs text-[#0E9E8E]">
                                                 {formatEvent(delivery.event)}
@@ -206,7 +206,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                             <td className="px-4 py-3">
                                                 <StatusBadge status={delivery.status} />
                                             </td>
-                                            <td className="px-4 py-3 text-[#9B9B8E]">
+                                            <td className="px-4 py-3 text-muted-foreground">
                                                 {delivery.evaluation?.procedure ?? '—'}
                                             </td>
                                             <td className="px-4 py-3 text-right">
@@ -221,18 +221,18 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                                         )}
                                                     >
                                                         {delivery.last_response.status_code}
-                                                        <span className="ml-1 text-[#9B9B8E]">
+                                                        <span className="ml-1 text-muted-foreground">
                                                             ({delivery.last_response.latency_ms}ms)
                                                         </span>
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[#9B9B8E]/40">—</span>
+                                                    <span className="text-muted-foreground/40">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-right text-[#9B9B8E]">
+                                            <td className="px-4 py-3 text-right text-muted-foreground">
                                                 {delivery.attempt_count}
                                             </td>
-                                            <td className="px-4 py-3 text-right text-xs text-[#9B9B8E]">
+                                            <td className="px-4 py-3 text-right text-xs text-muted-foreground">
                                                 {formatTime(delivery.created_at)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
@@ -241,7 +241,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                                         size="sm"
                                                         variant="outline"
                                                         onClick={() => handleRetry(delivery)}
-                                                        className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-[#F5F0E8] hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
+                                                        className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-foreground hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                                                     >
                                                         <RefreshCw className="h-3 w-3" />
                                                         Retry
@@ -258,7 +258,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                     {/* Pagination */}
                     {deliveries.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-sidebar-border/50 px-4 py-3">
-                            <p className="text-xs text-[#9B9B8E]">
+                            <p className="text-xs text-muted-foreground">
                                 Page {deliveries.current_page} of {deliveries.last_page} &middot;{' '}
                                 {deliveries.total} total
                             </p>

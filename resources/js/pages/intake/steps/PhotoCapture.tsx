@@ -51,8 +51,8 @@ const PhotoCapture: FC<Props> = ({
 
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[#F5F0E8]">Upload your photos</h2>
-            <p className="mt-2 text-sm text-[#9B9B8E]">
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">Upload your photos</h2>
+            <p className="mt-2 text-sm text-[var(--intake-muted)]">
                 {instructions ??
                     'Clear, well-lit photos help our AI provide an accurate evaluation. No makeup or filters.'}
             </p>
@@ -67,7 +67,7 @@ const PhotoCapture: FC<Props> = ({
                         'Remove glasses and pull hair back',
                         'Neutral expression, mouth closed',
                     ].map((tip) => (
-                        <li key={tip} className="text-xs text-[#9B9B8E]">
+                        <li key={tip} className="text-xs text-[var(--intake-muted)]">
                             · {tip}
                         </li>
                     ))}
@@ -120,7 +120,7 @@ const PhotoCapture: FC<Props> = ({
                 <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 rounded-xl border border-white/10 bg-transparent px-6 py-3.5 text-sm font-medium text-[#9B9B8E] hover:border-white/20 hover:text-[#F5F0E8] transition-colors"
+                    className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
                 >
                     ← Back
                 </button>
@@ -131,7 +131,7 @@ const PhotoCapture: FC<Props> = ({
                     className={[
                         'flex-[2] rounded-xl px-6 py-3.5 text-sm font-semibold transition-all duration-200',
                         allRequired
-                            ? 'bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#a8883e] active:scale-[0.98]'
+                            ? 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]'
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >
@@ -180,7 +180,7 @@ return;
                     ? 'border-red-500/30 bg-red-500/5'
                     : uploaded && !uploaded.uploading
                     ? 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5'
-                    : 'border-white/10 bg-[#111118]',
+                    : 'border-[var(--intake-border)] bg-[var(--intake-surface)]',
             ].join(' ')}
         >
             {/* Preview / icon */}
@@ -223,7 +223,7 @@ return;
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#F5F0E8]">
+                <p className="text-sm font-medium text-[var(--intake-fg)]">
                     {TYPE_LABELS[type]}
                     {required && !uploaded && (
                         <span className="ml-1 text-[#0E9E8E]">*</span>
@@ -234,7 +234,7 @@ return;
                 ) : uploaded && !uploaded.uploading ? (
                     <p className="text-xs text-[#0E9E8E] mt-0.5">Uploaded ✓</p>
                 ) : (
-                    <p className="text-xs text-[#9B9B8E] mt-0.5 line-clamp-2">
+                    <p className="text-xs text-[var(--intake-muted)] mt-0.5 line-clamp-2">
                         {TYPE_TIPS[type]}
                     </p>
                 )}
@@ -246,7 +246,7 @@ return;
                     <button
                         type="button"
                         onClick={handleRemove}
-                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-[#9B9B8E] hover:border-red-500/40 hover:text-red-400 transition-colors"
+                        className="rounded-lg border border-[var(--intake-border)] px-3 py-1.5 text-xs font-medium text-[var(--intake-muted)] hover:border-red-500/40 hover:text-red-400 transition-colors"
                     >
                         Remove
                     </button>
@@ -265,7 +265,7 @@ return;
                             type="button"
                             onClick={() => inputRef.current?.click()}
                             disabled={uploaded?.uploading}
-                            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-[#F5F0E8] hover:border-white/40 transition-colors disabled:opacity-40"
+                            className="rounded-lg border border-[var(--intake-border-hover)] px-3 py-1.5 text-xs font-medium text-[var(--intake-fg)] hover:border-[var(--intake-border-hover)] transition-colors disabled:opacity-40"
                         >
                             {uploaded?.uploading ? 'Uploading…' : 'Upload'}
                         </button>

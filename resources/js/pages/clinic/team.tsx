@@ -45,7 +45,7 @@ const roleColorMap: Record<string, { text: string; bg: string }> = {
 	admin: { text: 'text-blue-400', bg: 'bg-blue-400/10' },
 	coordinator: { text: 'text-emerald-400', bg: 'bg-emerald-400/10' },
 	surgeon: { text: 'text-purple-400', bg: 'bg-purple-400/10' },
-	viewer: { text: 'text-[#9B9B8E]', bg: 'bg-white/5' },
+	viewer: { text: 'text-muted-foreground', bg: 'bg-muted/50' },
 };
 
 export default function Team({ members, availableRoles }: Props) {
@@ -104,14 +104,14 @@ export default function Team({ members, availableRoles }: Props) {
 				/>
 
 				{/* Invite Member Card */}
-				<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-					<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
+				<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+					<h3 className="mb-6 text-base font-semibold text-foreground">
 						Invite Member
 					</h3>
 
 					<form onSubmit={handleSubmit} className="space-y-4">
 						<div className="grid gap-2">
-							<Label htmlFor="name" className="text-[#F5F0E8]">
+							<Label htmlFor="name" className="text-foreground">
 								Name
 							</Label>
 							<Input
@@ -121,14 +121,14 @@ export default function Team({ members, availableRoles }: Props) {
 									setData('name', e.target.value)
 								}
 								placeholder="Full name"
-								className="bg-[#0A0A0F] text-[#F5F0E8]"
+								className="bg-background text-foreground"
 								required
 							/>
 							<InputError message={errors.name} />
 						</div>
 
 						<div className="grid gap-2">
-							<Label htmlFor="email" className="text-[#F5F0E8]">
+							<Label htmlFor="email" className="text-foreground">
 								Email
 							</Label>
 							<Input
@@ -139,14 +139,14 @@ export default function Team({ members, availableRoles }: Props) {
 									setData('email', e.target.value)
 								}
 								placeholder="email@example.com"
-								className="bg-[#0A0A0F] text-[#F5F0E8]"
+								className="bg-background text-foreground"
 								required
 							/>
 							<InputError message={errors.email} />
 						</div>
 
 						<div className="grid gap-2">
-							<Label htmlFor="role" className="text-[#F5F0E8]">
+							<Label htmlFor="role" className="text-foreground">
 								Role
 							</Label>
 							<Select
@@ -156,7 +156,7 @@ export default function Team({ members, availableRoles }: Props) {
 									setData('role', value);
 								}}
 							>
-								<SelectTrigger className="bg-[#0A0A0F] text-[#F5F0E8]">
+								<SelectTrigger className="bg-background text-foreground">
 									<SelectValue placeholder="Select a role" />
 								</SelectTrigger>
 								<SelectContent>
@@ -184,13 +184,13 @@ export default function Team({ members, availableRoles }: Props) {
 				</div>
 
 				{/* Team Members Table */}
-				<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
-					<h3 className="mb-6 text-base font-semibold text-[#F5F0E8]">
+				<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+					<h3 className="mb-6 text-base font-semibold text-foreground">
 						Team Members
 					</h3>
 
 					{members.length === 0 ? (
-						<p className="text-center text-[#9B9B8E] py-8">
+						<p className="text-center text-muted-foreground py-8">
 							No team members yet. Invite someone to get started.
 						</p>
 					) : (
@@ -198,16 +198,16 @@ export default function Team({ members, availableRoles }: Props) {
 							<table className="w-full">
 								<thead>
 									<tr className="border-b border-sidebar-border/50">
-										<th className="px-4 py-3 text-left text-sm font-semibold text-[#F5F0E8]">
+										<th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
 											Name
 										</th>
-										<th className="px-4 py-3 text-left text-sm font-semibold text-[#F5F0E8]">
+										<th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
 											Role
 										</th>
-										<th className="px-4 py-3 text-left text-sm font-semibold text-[#F5F0E8]">
+										<th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
 											Joined
 										</th>
-										<th className="px-4 py-3 text-right text-sm font-semibold text-[#F5F0E8]">
+										<th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
 											Action
 										</th>
 									</tr>
@@ -222,14 +222,14 @@ export default function Team({ members, availableRoles }: Props) {
 										return (
 											<tr
 												key={member.id}
-												className="border-b border-sidebar-border/30 hover:bg-[#0A0A0F]/50 transition-colors"
+												className="border-b border-sidebar-border/30 hover:bg-background/50 transition-colors"
 											>
 												<td className="px-4 py-3 text-sm">
 													<div>
-														<p className="text-[#F5F0E8] font-medium">
+														<p className="text-foreground font-medium">
 															{member.name}
 														</p>
-														<p className="text-[#9B9B8E] text-xs">
+														<p className="text-muted-foreground text-xs">
 															{member.email}
 														</p>
 													</div>
@@ -246,7 +246,7 @@ export default function Team({ members, availableRoles }: Props) {
 														{member.role}
 													</Badge>
 												</td>
-												<td className="px-4 py-3 text-sm text-[#9B9B8E]">
+												<td className="px-4 py-3 text-sm text-muted-foreground">
 													{formatDate(
 														member.created_at
 													)}

@@ -23,7 +23,10 @@ class ClinicController extends Controller
             'clinic' => [
                 'name' => $tenant->name,
                 'slug' => $tenant->slug,
-                'theme' => $tenant->settings['theme'] ?? 'luxury-dark',
+                'theme' => match ($tenant->settings['theme'] ?? 'luxury-dark') {
+                    'clean-light' => 'luxury-light',
+                    default => $tenant->settings['theme'] ?? 'luxury-dark',
+                },
                 'logo_url' => $tenant->settings['logo_url'] ?? null,
                 'procedures_enabled' => $tenant->settings['procedures_enabled'] ?? ['rhinoplasty'],
                 'coordinator_emails' => $tenant->settings['coordinator_emails'] ?? [],
@@ -41,7 +44,7 @@ class ClinicController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'theme' => ['required', Rule::in(['luxury-dark', 'clean-light'])],
+            'theme' => ['required', Rule::in(['luxury-dark', 'luxury-light', 'clinical'])],
             'procedures_enabled' => ['required', 'array', 'min:1'],
             'procedures_enabled.*' => ['string', 'exists:procedures,slug'],
             'coordinator_emails' => ['nullable', 'array'],

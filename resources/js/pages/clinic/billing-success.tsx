@@ -12,12 +12,12 @@ export default function BillingSuccess({ plan_name }: Props) {
 
 			<div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
 				<CheckCircle className="mb-4 h-16 w-16 text-[#0E9E8E]" />
-				<h1 className="mb-2 text-2xl font-bold text-[#F5F0E8]">
+				<h1 className="mb-2 text-2xl font-bold text-foreground">
 					You're all set!
 				</h1>
-				<p className="mb-6 text-[#9B9B8E]">
+				<p className="mb-6 text-muted-foreground">
 					{plan_name
-						? <>Your <strong className="text-[#F5F0E8]">{plan_name}</strong> subscription is now active.</>
+						? <>Your <strong className="text-foreground">{plan_name}</strong> subscription is now active.</>
 						: 'Your subscription is now active.'
 					}
 				</p>

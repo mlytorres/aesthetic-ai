@@ -47,12 +47,12 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                     isDone
                                         ? 'border-[#0E9E8E] bg-[#0E9E8E]'
                                         : isCurrent
-                                        ? 'border-[#0E9E8E] bg-[#111118]'
-                                        : 'border-white/20 bg-[#111118]',
+                                        ? 'border-[#0E9E8E] bg-[var(--intake-surface)]'
+                                        : 'border-[var(--intake-border-hover)] bg-[var(--intake-surface)]',
                                 ].join(' ')}
                             >
                                 {isDone ? (
-                                    <svg className="h-3.5 w-3.5 text-[#0A0A0F]" viewBox="0 0 12 12" fill="none">
+                                    <svg className="h-3.5 w-3.5 text-[var(--intake-icon-on-teal)]" viewBox="0 0 12 12" fill="none">
                                         <path
                                             d="M2 6l3 3 5-5"
                                             stroke="currentColor"
@@ -78,7 +78,7 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                 className={[
                                     'absolute top-9 text-[10px] font-medium whitespace-nowrap transition-colors duration-300',
                                     isCurrent
-                                        ? 'text-[#F5F0E8]'
+                                        ? 'text-[var(--intake-fg)]'
                                         : isDone
                                         ? 'text-[#0E9E8E]'
                                         : 'text-white/30',

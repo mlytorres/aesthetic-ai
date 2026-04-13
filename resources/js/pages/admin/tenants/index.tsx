@@ -55,7 +55,7 @@ return;
 						{
 							label: 'Total Clinics',
 							value: tenants.length,
-							color: 'text-[#F5F0E8]',
+							color: 'text-foreground',
 						},
 						{
 							label: 'Active',
@@ -70,9 +70,9 @@ return;
 					].map((stat) => (
 						<div
 							key={stat.label}
-							className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-4"
+							className="rounded-lg border border-sidebar-border/50 bg-card p-4"
 						>
-							<p className="text-sm text-[#9B9B8E]">{stat.label}</p>
+							<p className="text-sm text-muted-foreground">{stat.label}</p>
 							<p className={`mt-1 text-3xl font-bold ${stat.color}`}>
 								{stat.value}
 							</p>
@@ -81,11 +81,11 @@ return;
 				</div>
 
 				{/* Tenants table */}
-				<div className="rounded-lg border border-sidebar-border/50 bg-[#111118] p-6">
+				<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
 					{tenants.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-16 text-center">
-							<Building2 className="mb-4 h-12 w-12 text-[#9B9B8E]/40" />
-							<p className="text-[#9B9B8E]">No clinics yet.</p>
+							<Building2 className="mb-4 h-12 w-12 text-muted-foreground/40" />
+							<p className="text-muted-foreground">No clinics yet.</p>
 							<Link href="/admin/tenants/create" className="mt-4">
 								<Button
 									variant="outline"
@@ -104,7 +104,7 @@ return;
 											(h) => (
 												<th
 													key={h}
-													className="px-4 py-3 text-left text-sm font-semibold text-[#F5F0E8] last:text-right"
+													className="px-4 py-3 text-left text-sm font-semibold text-foreground last:text-right"
 												>
 													{h}
 												</th>
@@ -116,26 +116,26 @@ return;
 									{tenants.map((tenant) => (
 										<tr
 											key={tenant.id}
-											className="border-b border-sidebar-border/30 hover:bg-[#0A0A0F]/50 transition-colors"
+											className="border-b border-sidebar-border/30 hover:bg-background/50 transition-colors"
 										>
 											<td className="px-4 py-3">
 												<Link
 													href={`/admin/tenants/${tenant.id}`}
-													className="font-medium text-[#F5F0E8] hover:text-[#0E9E8E] transition-colors"
+													className="font-medium text-foreground hover:text-[#0E9E8E] transition-colors"
 												>
 													{tenant.name}
 												</Link>
 											</td>
-											<td className="px-4 py-3 font-mono text-sm text-[#9B9B8E]">
+											<td className="px-4 py-3 font-mono text-sm text-muted-foreground">
 												{tenant.slug}
 											</td>
-											<td className="px-4 py-3 text-sm text-[#9B9B8E]">
+											<td className="px-4 py-3 text-sm text-muted-foreground">
 												{tenant.plan ?? '—'}
 											</td>
-											<td className="px-4 py-3 text-sm text-[#9B9B8E]">
+											<td className="px-4 py-3 text-sm text-muted-foreground">
 												{tenant.users_count}
 											</td>
-											<td className="px-4 py-3 text-sm text-[#9B9B8E]">
+											<td className="px-4 py-3 text-sm text-muted-foreground">
 												{tenant.created_at}
 											</td>
 											<td className="px-4 py-3">
