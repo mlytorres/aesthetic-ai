@@ -1,7 +1,7 @@
-import { Head, useForm } from '@inertiajs/react';
-import { RefreshCcw, Copy, Check, Send } from 'lucide-react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { RefreshCcw, Copy, Check, Send, Key, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
-import { updateWebhook, rotateSecret, sendTest } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
+import { updateWebhook, rotateSecret, sendTest, createToken, revokeToken } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+interface ApiTokenData {
+    id: string;
+    name: string;
+    scopes: string[];
+    last_used_at: string | null;
+    created_at: string;
+}
+
 interface Props {
     tenant: {
         id: string;
@@ -24,16 +32,17 @@ interface Props {
     tenantDomain: string;
     widgetUrl: string;
     availableProcedures: { slug: string; label: string }[];
+    apiTokens: ApiTokenData[];
 }
 
-export default function Integrations({ tenant, tenantDomain, widgetUrl, availableProcedures }: Props) {
+export default function Integrations({ tenant, tenantDomain, widgetUrl, availableProcedures, apiTokens }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
         webhook_url: tenant.webhook_url || '',
     });
 
     const { post: rotatePost, processing: rotating } = useForm();
 
-    const [copiedContent, setCopiedContent] = useState<'script' | 'secret' | null>(null);
+    const [copiedContent, setCopiedContent] = useState<'script' | 'secret' | 'clinic-id' | string | null>(null);
 
     const [testResult, setTestResult] = useState<{
         ok: boolean;
@@ -42,6 +51,14 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
         body: string;
     } | null>(null);
     const [testSending, setTestSending] = useState(false);
+
+    // ─── API Token state ───────────────────────────────────────────────────────
+    const [newTokenName, setNewTokenName] = useState('');
+    const [creatingToken, setCreatingToken] = useState(false);
+    const [newTokenNameError, setNewTokenNameError] = useState('');
+    const [revealedToken, setRevealedToken] = useState<{ id: string; name: string; raw: string } | null>(null);
+    const [tokenVisible, setTokenVisible] = useState(false);
+    const [showNewTokenForm, setShowNewTokenForm] = useState(false);
 
     const handleSendTest = async () => {
         setTestResult(null);
@@ -67,9 +84,9 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     const [widgetPrimaryColor, setWidgetPrimaryColor] = useState('#0E9E8E');
     const [widgetFontFamily, setWidgetFontFamily] = useState('system-ui, sans-serif');
 
-    const handleCopy = (text: string, type: 'script' | 'secret') => {
+    const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
-        setCopiedContent(type);
+        setCopiedContent(key);
         setTimeout(() => setCopiedContent(null), 2000);
     };
 
@@ -82,6 +99,46 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
         if (confirm('Are you certain? This will immediately invalidate existing integrations using the current secret.')) {
             rotatePost(rotateSecret.url());
         }
+    };
+
+    const handleCreateToken = async () => {
+        if (!newTokenName.trim()) {
+            setNewTokenNameError('Token name is required.');
+            return;
+        }
+        setNewTokenNameError('');
+        setCreatingToken(true);
+        try {
+            const res = await fetch(createToken.url(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ name: newTokenName.trim() }),
+            });
+            const json = await res.json();
+            if (res.ok) {
+                setRevealedToken({ id: json.data.id, name: json.data.name, raw: json.data.raw_token });
+                setTokenVisible(true);
+                setNewTokenName('');
+                setShowNewTokenForm(false);
+                // Reload page data so token list updates
+                router.reload({ only: ['apiTokens'] });
+            } else {
+                setNewTokenNameError(json.errors?.name?.[0] ?? json.message ?? 'Failed to create token.');
+            }
+        } finally {
+            setCreatingToken(false);
+        }
+    };
+
+    const handleRevokeToken = (token: ApiTokenData) => {
+        if (!confirm(`Revoke "${token.name}"? Any integrations using this token will stop working immediately.`)) {
+            return;
+        }
+        router.delete(revokeToken.url({ apiToken: token.id }), { preserveScroll: true });
     };
 
     const generatedScript = `<!-- SymetriHealth Widget -->
@@ -135,8 +192,8 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             {widgetRenderMode !== 'inline' && (
                                 <div className="grid gap-2">
                                     <Label className="text-foreground">Button Label</Label>
-                                    <Input 
-                                        type="text" 
+                                    <Input
+                                        type="text"
                                         value={widgetButtonLabel}
                                         onChange={(e) => setWidgetButtonLabel(e.target.value)}
                                         placeholder="Start Free Evaluation"
@@ -182,14 +239,14 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             <div className="grid gap-2">
                                 <Label className="text-foreground">Primary Brand Color</Label>
                                 <div className="flex gap-2">
-                                    <Input 
-                                        type="color" 
+                                    <Input
+                                        type="color"
                                         value={widgetPrimaryColor}
                                         onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
                                         className="h-10 w-14 cursor-pointer p-0.5 bg-background border-sidebar-border/50"
                                     />
-                                    <Input 
-                                        type="text" 
+                                    <Input
+                                        type="text"
                                         value={widgetPrimaryColor}
                                         onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
                                         className="bg-background text-foreground border-sidebar-border/50 uppercase font-mono"
@@ -199,15 +256,15 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
 
                             <div className="grid gap-2">
                                 <Label className="text-foreground">Custom Font Family</Label>
-                                <Input 
-                                    type="text" 
+                                <Input
+                                    type="text"
                                     value={widgetFontFamily}
                                     onChange={(e) => setWidgetFontFamily(e.target.value)}
                                     placeholder="e.g. 'Proxima Nova', sans-serif"
                                     className="bg-background text-foreground border-sidebar-border/50"
                                 />
                             </div>
-                            
+
                             <div className="grid gap-2">
                                 <Label className="text-foreground">Language</Label>
                                 <Select value={widgetLanguage} onValueChange={setWidgetLanguage}>
@@ -252,7 +309,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                 {generatedScript}
                             </div>
                             <p className="text-xs text-muted-foreground mt-3">
-                                <strong>Requirement:</strong> Ensure your site sends the 
+                                <strong>Requirement:</strong> Ensure your site sends the
                                 <code> &lt;meta http-equiv="Permissions-Policy" content="camera=(self 'https://app.aestheticai.com')"&gt; </code> header so the widget can access the camera for photos.
                             </p>
                         </div>
@@ -296,7 +353,7 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                     <InputError message={errors.webhook_url} />
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-4">
                                 <div className="grid gap-2">
                                     <Label className="text-foreground">HMAC Signing Secret</Label>
@@ -382,6 +439,186 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         )}
                     </div>
                 )}
+
+                <div className="border-t border-border w-full mt-8 mb-8"></div>
+
+                {/* REST API Access */}
+                <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                    <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                            <Key className="mt-0.5 h-5 w-5 shrink-0 text-[#0E9E8E]" />
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">REST API Access</h3>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Use these credentials when configuring a Zapier step or any external system that needs to call{' '}
+                                    <code>GET /api/v1/evaluations/{'{'}token{'}'}</code> to fetch patient details.
+                                </p>
+                            </div>
+                        </div>
+                        {!showNewTokenForm && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => setShowNewTokenForm(true)}
+                                className="shrink-0 gap-1.5 bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
+                            >
+                                <Plus className="h-3.5 w-3.5" />
+                                Generate Token
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Clinic ID row */}
+                    <div className="mb-6 grid gap-2">
+                        <Label className="text-foreground">
+                            Clinic ID <span className="ml-1 text-xs font-normal text-muted-foreground">(X-Clinic-ID header)</span>
+                        </Label>
+                        <div className="relative">
+                            <Input
+                                type="text"
+                                readOnly
+                                value={tenant.id}
+                                className="bg-background text-muted-foreground pr-10 font-mono text-xs border-sidebar-border/50"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleCopy(tenant.id, 'clinic-id')}
+                                className="absolute inset-y-0 right-1 h-auto w-8 text-muted-foreground hover:text-[#0E9E8E]"
+                                title="Copy Clinic ID"
+                            >
+                                {copiedContent === 'clinic-id' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Send this as the <code>X-Clinic-ID</code> header on every API request alongside your Bearer token.
+                        </p>
+                    </div>
+
+                    {/* New token revealed banner */}
+                    {revealedToken && (
+                        <div className="mb-6 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-4">
+                            <p className="mb-2 text-sm font-semibold text-emerald-400">
+                                ✓ Token "{revealedToken.name}" created — copy it now, it won't be shown again.
+                            </p>
+                            <div className="relative">
+                                <Input
+                                    type={tokenVisible ? 'text' : 'password'}
+                                    readOnly
+                                    value={revealedToken.raw}
+                                    className="bg-background pr-20 font-mono text-xs border-emerald-500/30 text-foreground"
+                                />
+                                <div className="absolute inset-y-0 right-1 flex items-center gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setTokenVisible((v) => !v)}
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                        title={tokenVisible ? 'Hide token' : 'Show token'}
+                                    >
+                                        {tokenVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleCopy(revealedToken.raw, `token-${revealedToken.id}`)}
+                                        className="h-7 w-7 text-muted-foreground hover:text-[#0E9E8E]"
+                                        title="Copy token"
+                                    >
+                                        {copiedContent === `token-${revealedToken.id}` ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                    </Button>
+                                </div>
+                            </div>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Use as: <code>Authorization: Bearer {revealedToken.raw.slice(0, 16)}…</code>
+                            </p>
+                        </div>
+                    )}
+
+                    {/* New token form */}
+                    {showNewTokenForm && (
+                        <div className="mb-6 rounded-md border border-sidebar-border/50 bg-background p-4">
+                            <p className="mb-3 text-sm font-medium text-foreground">Name this token</p>
+                            <p className="mb-3 text-xs text-muted-foreground">
+                                Give it a descriptive name so you know which integration uses it (e.g. "Zapier Production").
+                            </p>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <Input
+                                        type="text"
+                                        value={newTokenName}
+                                        onChange={(e) => { setNewTokenName(e.target.value); setNewTokenNameError(''); }}
+                                        placeholder="e.g. Zapier Production"
+                                        className="bg-background text-foreground border-sidebar-border/50"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleCreateToken()}
+                                        autoFocus
+                                    />
+                                    {newTokenNameError && (
+                                        <p className="mt-1 text-xs text-red-400">{newTokenNameError}</p>
+                                    )}
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={handleCreateToken}
+                                    disabled={creatingToken}
+                                    className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
+                                >
+                                    {creatingToken ? 'Creating…' : 'Create'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => { setShowNewTokenForm(false); setNewTokenName(''); setNewTokenNameError(''); }}
+                                    className="text-muted-foreground"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active tokens list */}
+                    {apiTokens.length > 0 ? (
+                        <div className="space-y-2">
+                            <Label className="text-foreground">Active Tokens</Label>
+                            <div className="rounded-md border border-sidebar-border/50 divide-y divide-sidebar-border/30">
+                                {apiTokens.map((token) => (
+                                    <div key={token.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-foreground truncate">{token.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Created {new Date(token.created_at).toLocaleDateString()}
+                                                {token.last_used_at && (
+                                                    <> · Last used {new Date(token.last_used_at).toLocaleDateString()}</>
+                                                )}
+                                                {!token.last_used_at && ' · Never used'}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleRevokeToken(token)}
+                                            className="shrink-0 gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                            Revoke
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        !showNewTokenForm && !revealedToken && (
+                            <p className="text-sm text-muted-foreground">
+                                No active API tokens. Generate one above to connect Zapier or another external service.
+                            </p>
+                        )
+                    )}
+                </div>
 
                 <div className="border-t border-border w-full mt-8 mb-8"></div>
 

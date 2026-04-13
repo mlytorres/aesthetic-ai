@@ -111,9 +111,25 @@ class GenerateBasicRecommendationsJob implements ShouldQueue
             SendPatientReportJob::dispatch($this->evaluationId)->onQueue('notifications');
         }
 
-        // ── Fire webhook ──────────────────────────────────────────────────────
+        // ── Fire webhooks ─────────────────────────────────────────────────────
+        // evaluation.analysis_complete — legacy event name kept for backwards compat
         $webhooks->dispatch($evaluation, 'evaluation.analysis_complete', [
             'ai_summary' => $recommendations['primary_finding'] ?? null,
+        ]);
+
+        // evaluation.completed — Zapier/CRM trigger fired once AI scoring is done.
+        // Carries quiz-derived CRM fields so the receiver can route the lead
+        // without needing to call back the API for basic data.
+        $quizAnswers = $evaluation->quiz_answers ?? [];
+        $webhooks->dispatch($evaluation, 'evaluation.completed', [
+            'procedure_interest' => $evaluation->procedure_slug,
+            'lead_score' => $evaluation->lead_score,
+            'priority' => $evaluation->priority,
+            'ready_for_call' => $evaluation->isReadyForCall(),
+            'timeline' => $quizAnswers['timeline'] ?? null,
+            'budget_range' => $quizAnswers['budget_range'] ?? null,
+            'photos_available' => $evaluation->photos()->exists(),
+            'ai_analysis_complete' => true,
         ]);
     }
 

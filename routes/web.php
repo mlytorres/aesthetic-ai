@@ -138,6 +138,10 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
             Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
             Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
             Route::post('/integrations/webhook/test', [IntegrationController::class, 'sendTest'])->name('integrations.webhook.test');
+
+            Route::get('/integrations/api-tokens', [IntegrationController::class, 'listTokens'])->name('integrations.api-tokens.index');
+            Route::post('/integrations/api-tokens', [IntegrationController::class, 'createToken'])->name('integrations.api-tokens.store');
+            Route::delete('/integrations/api-tokens/{apiToken}', [IntegrationController::class, 'revokeToken'])->name('integrations.api-tokens.destroy');
         });
 
     // ── Webhook delivery log — owner, admin, coordinator (read + retry) ───

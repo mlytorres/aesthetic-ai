@@ -62,12 +62,14 @@
 Each clinic (tenant) shares the same PostgreSQL database but data is isolated at multiple levels:
 
 **Level 1 — Application Layer (Eloquent Global Scope)**
+
 ```php
 // Automatically applied to every query via HasTenantScope trait
 WHERE table.tenant_id = 'resolved-tenant-uuid'
 ```
 
 **Level 2 — Database Layer (PostgreSQL Row-Level Security)**
+
 ```sql
 -- Set once per connection from application
 SET LOCAL app.current_tenant_id = 'resolved-tenant-uuid';
@@ -78,15 +80,17 @@ CREATE POLICY tenant_isolation ON patients
 ```
 
 **Level 3 — Network Layer (Subdomain Routing)**
+
 ```
 clinic-a.aestheticai.com → TenantResolver → tenant_id: uuid-a
 clinic-b.aestheticai.com → TenantResolver → tenant_id: uuid-b
 ```
 
 **Tenant Resolution Order (`TenantMiddleware`):**
-1. Subdomain: `{slug}.symetrihealth.com` (production) / `{slug}.aesthetic-ai.test` (local) — resolved from `APP_URL`
-2. `X-Clinic-ID` header: REST API routes with Bearer token
-3. Authenticated user: Staff on main domain — resolved from `user.tenant_id`
+
+1.  Subdomain: `{slug}.symetrihealth.com` (production) / `{slug}.aesthetic-ai.test` (local) — resolved from `APP_URL`
+2.  `X-Clinic-ID` header: REST API routes with Bearer token
+3.  Authenticated user: Staff on main domain — resolved from `user.tenant_id`
 
 > **Important for production:** `APP_URL` must be set to the root domain (e.g. `https://symetrihealth.com`) so subdomain resolution works correctly for unauthenticated requests (patient intake).
 
@@ -220,14 +224,33 @@ audit_log_entries           -- Append-only, never deleted
 
 ### Encryption
 
-| Data Type | Encryption Method |
-|-----------|------------------|
-| PHI columns (name, email, phone) | AES-256-GCM at application layer |
-| Patient photos in S3 | AES-256 with AWS KMS managed keys |
-| Database at rest | AWS RDS encryption (AES-256) |
-| Data in transit | TLS 1.3 minimum |
-| Magic link tokens | SHA-256 hashed before storage |
-| Webhook payloads | HMAC-SHA256 signature |
+Data Type
+
+Encryption Method
+
+PHI columns (name, email, phone)
+
+AES-256-GCM at application layer
+
+Patient photos in S3
+
+AES-256 with AWS KMS managed keys
+
+Database at rest
+
+AWS RDS encryption (AES-256)
+
+Data in transit
+
+TLS 1.3 minimum
+
+Magic link tokens
+
+SHA-256 hashed before storage
+
+Webhook payloads
+
+HMAC-SHA256 signature
 
 ### Authentication & Authorization
 
@@ -244,6 +267,7 @@ audit_log_entries           -- Append-only, never deleted
 ```
 
 **Authorization Roles per Tenant:**
+
 ```
 owner        → Full access, billing, settings, all patient data
 admin        → All clinical data, user management
@@ -288,14 +312,16 @@ ECS Fargate (Laravel + Octane)
 **Decision:** Use a single PostgreSQL database with Row-Level Security + application-layer scoping.
 
 **Rationale:**
-- Simpler operations (no per-tenant migrations, backups)
-- RLS provides database-enforced isolation as a safety net
-- Expected tenant count (hundreds, not thousands) makes shared DB appropriate
-- Easier cross-tenant analytics for internal reporting
+
+-   Simpler operations (no per-tenant migrations, backups)
+-   RLS provides database-enforced isolation as a safety net
+-   Expected tenant count (hundreds, not thousands) makes shared DB appropriate
+-   Easier cross-tenant analytics for internal reporting
 
 **Trade-offs:**
-- Noisy neighbor risk (mitigated by query optimization and connection pooling)
-- A bug that removes tenant scoping could expose cross-tenant data (mitigated by RLS as safety net)
+
+-   Noisy neighbor risk (mitigated by query optimization and connection pooling)
+-   A bug that removes tenant scoping could expose cross-tenant data (mitigated by RLS as safety net)
 
 ---
 
@@ -304,10 +330,11 @@ ECS Fargate (Laravel + Octane)
 **Decision:** All AI vision processing runs in background queues. User never waits for AI.
 
 **Rationale:**
-- Photo analysis can take 3–15 seconds — unacceptable for synchronous UX
-- Queue allows retry on failure without user impact
-- Decouples frontend availability from AI service availability
-- Enables processing optimization (batching, priority queues)
+
+-   Photo analysis can take 3–15 seconds — unacceptable for synchronous UX
+-   Queue allows retry on failure without user impact
+-   Decouples frontend availability from AI service availability
+-   Enables processing optimization (batching, priority queues)
 
 ---
 
@@ -316,10 +343,11 @@ ECS Fargate (Laravel + Octane)
 **Decision:** Webhooks to clinic CRMs contain only reference tokens, not patient data.
 
 **Rationale:**
-- Clinic CRM webhooks may not be HIPAA-compliant endpoints
-- Reference token allows clinic to fetch PHI from our HIPAA-compliant API
-- BAA only covers our platform — we cannot control CRM's handling of received data
-- Minimizes liability if webhook payload is intercepted or logged
+
+-   Clinic CRM webhooks may not be HIPAA-compliant endpoints
+-   Reference token allows clinic to fetch PHI from our HIPAA-compliant API
+-   BAA only covers our platform — we cannot control CRM's handling of received data
+-   Minimizes liability if webhook payload is intercepted or logged
 
 ---
 
@@ -328,14 +356,16 @@ ECS Fargate (Laravel + Octane)
 **Decision:** Validate photo quality (blur, angle, lighting) on the device before upload.
 
 **Rationale:**
-- Saves bandwidth — bad photos never hit S3
-- Faster feedback loop for patient (instant, not after upload)
-- Reduces AI processing failures from poor quality inputs
-- Implementation: MediaPipe Face Detection + custom quality heuristics in WebAssembly
+
+-   Saves bandwidth — bad photos never hit S3
+-   Faster feedback loop for patient (instant, not after upload)
+-   Reduces AI processing failures from poor quality inputs
+-   Implementation: MediaPipe Face Detection + custom quality heuristics in WebAssembly
 
 **Trade-offs:**
-- Adds ~2 MB to initial widget bundle (WASM model) — acceptable for the UX gain
-- Mobile WebAssembly support is near-universal as of 2024
+
+-   Adds ~2 MB to initial widget bundle (WASM model) — acceptable for the UX gain
+-   Mobile WebAssembly support is near-universal as of 2024
 
 ---
 
@@ -344,39 +374,44 @@ ECS Fargate (Laravel + Octane)
 **Decision:** Use Google MediaPipe Face Detection (WASM) for the in-browser photo quality and angle validation step.
 
 **Rationale:**
-- Runs entirely in the browser — no photos leave the device during validation
-- Provides face bounding box and keypoints sufficient for angle guidance overlay
-- Apache 2.0 license, actively maintained
-- ~1.8 MB WASM bundle (acceptable for a full-screen intake flow)
-- Avoids sending potentially blurry/unusable photos to S3 and AWS Rekognition
+
+-   Runs entirely in the browser — no photos leave the device during validation
+-   Provides face bounding box and keypoints sufficient for angle guidance overlay
+-   Apache 2.0 license, actively maintained
+-   ~1.8 MB WASM bundle (acceptable for a full-screen intake flow)
+-   Avoids sending potentially blurry/unusable photos to S3 and AWS Rekognition
 
 **Trade-offs:**
-- Requires a browser that supports WebAssembly (covers >97% of mobile browsers)
-- First-time load includes model download — mitigated by CDN caching
-- MediaPipe is a runtime dependency, not a build-time one — version pinned via CDN URL
+
+-   Requires a browser that supports WebAssembly (covers >97% of mobile browsers)
+-   First-time load includes model download — mitigated by CDN caching
+-   MediaPipe is a runtime dependency, not a build-time one — version pinned via CDN URL
 
 **Alternatives considered:**
-- TensorFlow.js face-api: heavier bundle, slower inference on low-end phones
-- Server-side pre-validation: adds a round-trip and exposes a pre-upload endpoint to abuse
-- No client validation: too many poor-quality photos would degrade AI pipeline results
+
+-   TensorFlow.js face-api: heavier bundle, slower inference on low-end phones
+-   Server-side pre-validation: adds a round-trip and exposes a pre-upload endpoint to abuse
+-   No client validation: too many poor-quality photos would degrade AI pipeline results
 
 ---
 
 ### ADR-006: ProcedureRegistry as Single Source of Truth
 
-**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `App\Services\ProcedureRegistry` as `public const` arrays.
+**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `AppServicesProcedureRegistry` as `public const` arrays.
 
 **Rationale:**
-- Adding a new procedure previously required changes in 5+ places (controller, simulation job, recommendations job, lead scoring, seeder). Now it requires adding the slug to one const array.
-- `isBodyProcedure()` / `isFaceProcedure()` drive which AI job chain fires (`ExtractBodyLandmarksJob` vs `ExtractFacialLandmarksJob`).
-- `isHighRevenue()` drives minimum priority tier in `LeadScoringService` (Mommy Makeover, Tummy Tuck, Facelift, Face & Neck Lift, Breast Augmentation always get at least High priority).
-- 26 procedures currently registered (19 body, 7 face).
+
+-   Adding a new procedure previously required changes in 5+ places (controller, simulation job, recommendations job, lead scoring, seeder). Now it requires adding the slug to one const array.
+-   `isBodyProcedure()` / `isFaceProcedure()` drive which AI job chain fires (`ExtractBodyLandmarksJob` vs `ExtractFacialLandmarksJob`).
+-   `isHighRevenue()` drives minimum priority tier in `LeadScoringService` (Mommy Makeover, Tummy Tuck, Facelift, Face & Neck Lift, Breast Augmentation always get at least High priority).
+-   26 procedures currently registered (19 body, 7 face).
 
 **Adding a new procedure:**
-1. Add slug to `BODY_PROCEDURES` or `FACE_PROCEDURES` in `ProcedureRegistry`.
-2. Add a prompt method in `GenerateSimulationJob::buildPrompt()`.
-3. Add a recommendations method in `GenerateBasicRecommendationsJob`.
-4. Add the procedure row in `ProcedureSeeder`.
+
+1.  Add slug to `BODY_PROCEDURES` or `FACE_PROCEDURES` in `ProcedureRegistry`.
+2.  Add a prompt method in `GenerateSimulationJob::buildPrompt()`.
+3.  Add a recommendations method in `GenerateBasicRecommendationsJob`.
+4.  Add the procedure row in `ProcedureSeeder`.
 
 ---
 
@@ -384,13 +419,53 @@ ECS Fargate (Laravel + Octane)
 
 Redis (ElastiCache) serves two roles: queue backend and response cache. Cache TTLs are chosen conservatively for PHI sensitivity.
 
-| Cache Key | TTL | Invalidated By | Notes |
-|-----------|-----|---------------|-------|
-| `tenant:{slug}` | 15 min | Tenant settings update | Tenant resolution on every request |
-| `procedures:{tenant_id}` | 60 min | Procedure config change | Procedure list for quiz engine |
-| `quiz_definition:{procedure_slug}` | 60 min | Quiz config update | Quiz branching definition |
-| `lead_score:{eval_id}` | Until analysis complete | Score recalculation job | Avoid re-computing during dashboard load |
-| `evaluation_list:{tenant_id}` | 30 sec | Any evaluation status change | Dashboard list — short TTL for coordinator UX |
+Cache Key
+
+TTL
+
+Invalidated By
+
+Notes
+
+`tenant:{slug}`
+
+15 min
+
+Tenant settings update
+
+Tenant resolution on every request
+
+`procedures:{tenant_id}`
+
+60 min
+
+Procedure config change
+
+Procedure list for quiz engine
+
+`quiz_definition:{procedure_slug}`
+
+60 min
+
+Quiz config update
+
+Quiz branching definition
+
+`lead_score:{eval_id}`
+
+Until analysis complete
+
+Score recalculation job
+
+Avoid re-computing during dashboard load
+
+`evaluation_list:{tenant_id}`
+
+30 sec
+
+Any evaluation status change
+
+Dashboard list — short TTL for coordinator UX
 
 **PHI is never cached.** Patient names, emails, phone numbers, and photos are never written to Redis. The evaluation list cache contains only IDs, scores, priorities, and statuses.
 

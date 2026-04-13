@@ -152,7 +152,7 @@ function verifyWebhookSignature(string $payload, string $signature, string $secr
 }
 
 // Usage in your webhook handler:
-$signature = $_SERVER['HTTP_X_AESTHETICAI_SIGNATURE'];
+$signature = $_SERVER['HTTP_X_SYMETRIHEALTH_SIGNATURE'];
 $payload = file_get_contents('php://input');
 
 if (!verifyWebhookSignature($payload, $signature, $yourWebhookSecret)) {
@@ -179,8 +179,8 @@ function verifySignature(payload, signature, secret) {
 }
 
 // Express.js route
-app.post('/webhook/aestheticai', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['x-aestheticai-signature'];
+app.post('/webhook/symetrihealth', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-symetrihealth-signature'];
   if (!verifySignature(req.body, signature, process.env.WEBHOOK_SECRET)) {
     return res.status(401).send('Invalid signature');
   }
@@ -224,7 +224,7 @@ If your webhook secret is ever compromised, rotate it immediately:
 3. Update your webhook handler with the new secret before the grace period expires.
 4. Confirm rotation by clicking **Verify New Secret** — this fires a test `ping` event signed with the new secret.
 
-During the rotation grace period, AestheticAI signs payloads with **both** secrets and includes both in the `X-AestheticAI-Signature` header as comma-separated values. Accept either:
+During the rotation grace period, AestheticAI signs payloads with **both** secrets and includes both in the `X-SymetriHealth-Signature` header as comma-separated values. Accept either:
 
 ```php
 function verifyWithRotation(string $payload, string $header, string $oldSecret, string $newSecret): bool
@@ -360,8 +360,31 @@ GET /api/v1/evaluations?priority=high&status=complete&page=1&per_page=20
 Any CRM can be connected via our webhook + Zapier:
 
 1. Create a Zapier Zap: **Webhook (Catch Hook)** → **Your CRM (Create Contact)**
-2. Use your Zapier webhook URL as the AestheticAI webhook endpoint
-3. Use our API to fetch full patient details when Zapier receives the event
+2. In **Dashboard → Settings → Integrations → Webhook**, enter your Zapier Catch Hook URL and save
+3. The `evaluation.completed` event fires automatically once AI scoring finishes — all lead fields (`lead_score`, `priority`, `ready_for_call`, `timeline`, `budget_range`) are included in the payload
+4. Add a second Zapier step — **Code (Run JavaScript)** or **Webhooks (GET request)** — to call our API and fetch the full patient profile using the `evaluation_token` from the webhook payload:
+
+```http
+GET https://app.aestheticai.com/api/v1/evaluations/{evaluation_token}
+Authorization: Bearer {your_api_token}
+X-Clinic-ID: {your_clinic_id}
+```
+
+The response includes the patient's name, email, phone, quiz answers, and signed photo URLs — everything you need to create a contact in your CRM.
+
+**Zapier Zap structure (recommended):**
+
+```
+Trigger  →  Webhooks by Zapier (Catch Hook)
+Step 2   →  Webhooks by Zapier (GET)
+              URL: https://app.aestheticai.com/api/v1/evaluations/{{evaluation_token}}
+              Headers: Authorization: Bearer aai_live_xxx
+                       X-Clinic-ID: your-clinic-uuid
+Step 3   →  Your CRM (e.g. HubSpot → Create/Update Contact)
+              Name:  {{data.patient.name}}
+              Email: {{data.patient.email}}
+              Phone: {{data.patient.phone}}
+```
 
 ---
 

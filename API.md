@@ -592,14 +592,14 @@ Returns conversion funnel metrics for the clinic dashboard.
 
 ## External REST API v1
 
-Used by clinic backend servers, Zapier, and native CRM integrations. All requests require a Bearer token and `X-Clinic-ID` header.
+Used by clinic backend servers, Zapier, and native CRM integrations. All requests require session authentication or a Bearer token and the `X-Clinic-ID` header.
 
 ```http
 Authorization: Bearer {api_token}
 X-Clinic-ID: {clinic_uuid}
 ```
 
-> The `X-Clinic-ID` header is needed because API calls come from backend servers that don't use clinic subdomains. The token is validated against the clinic ID — a token cannot access a different clinic's data.
+> The `X-Clinic-ID` header is required for tenant resolution when calls come from backend servers that don't use clinic subdomains. The token must belong to the specified clinic — cross-clinic access is blocked.
 
 ---
 
@@ -621,7 +621,68 @@ Same filters and response shape as the dashboard endpoint above. PHI (name, emai
 GET /api/v1/evaluations/{evaluation_token}
 ```
 
-Full evaluation detail. See dashboard endpoint for response shape.
+Fetch a single evaluation by its secure token. Called by Zapier and CRM integrations after receiving an `evaluation.completed` webhook. Returns full patient PHI plus AI analysis.
+
+**Auth:** Bearer token + `X-Clinic-ID` header
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "id": "eval_01HXYZ9ABC123",
+    "evaluation_token": "a3f8c2d1e9b7...",
+    "procedure_interest": "rhinoplasty",
+    "status": "complete",
+    "lead_score": 87,
+    "priority": "high",
+    "ready_for_call": true,
+    "ai_analysis_complete": true,
+    "created_at": "2025-06-15T14:00:00Z",
+    "completed_at": "2025-06-15T14:32:00Z",
+    "patient": {
+      "id": "pat_01XYZABC",
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+13055550123"
+    },
+    "quiz_summary": {
+      "concerns": ["tip", "bridge"],
+      "prior_surgery": false,
+      "breathing_issues": true,
+      "skin_thickness": "medium",
+      "timeline": "within_3_months",
+      "budget_range": "15000_25000"
+    },
+    "ai_analysis": {
+      "proportions": { "overall_harmony": 82, "nasal_symmetry": { "symmetry_score": 88 } },
+      "recommendations": [
+        { "category": "tip_refinement", "confidence": "high" }
+      ]
+    },
+    "photos": {
+      "front": {
+        "url": "https://s3.us-east-1.amazonaws.com/...",
+        "expires_at": "2025-06-15T14:47:00Z",
+        "quality_score": 91
+      },
+      "left_profile": {
+        "url": "https://s3.us-east-1.amazonaws.com/...",
+        "expires_at": "2025-06-15T14:47:00Z",
+        "quality_score": 88
+      }
+    }
+  }
+}
+```
+
+**Notes:**
+- `ai_analysis` and `photos` are `null` until the AI pipeline completes
+- `ready_for_call` is `true` when priority is `urgent` or `high` and AI is complete
+- Photo URLs are pre-signed S3 links that expire in **15 minutes** — fetch or store them promptly
+- `patient` PHI is always returned for authenticated external API callers
+
+**Errors:**
+- `404 NOT_FOUND` — Token does not exist or belongs to a different clinic
 
 ---
 
