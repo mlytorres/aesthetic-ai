@@ -18,14 +18,38 @@ class DatabaseSeeder extends Seeder
         // 1. Global lookup data
         $this->call(ProcedureSeeder::class);
 
-        // 2. Seed a starter plan
+        // 2. Seed all billing plans
+        // stripe_price_id is filled from the Stripe dashboard once products are created.
         $starterPlan = Plan::updateOrCreate(
             ['slug' => 'starter'],
             [
-                'name'               => 'Starter',
-                'max_procedures'     => 1,
+                'name' => 'Starter',
+                'max_procedures' => 1,
                 'max_evaluations_mo' => 50,
-                'features'           => ['widget', 'dashboard', 'basic_ai'],
+                'stripe_price_id' => env('STRIPE_PRICE_STARTER'),
+                'features' => ['widget', 'dashboard', 'basic_ai'],
+            ]
+        );
+
+        Plan::updateOrCreate(
+            ['slug' => 'growth'],
+            [
+                'name' => 'Growth',
+                'max_procedures' => 5,
+                'max_evaluations_mo' => 200,
+                'stripe_price_id' => env('STRIPE_PRICE_GROWTH'),
+                'features' => ['widget', 'dashboard', 'advanced_ai', 'analytics', 'webhooks'],
+            ]
+        );
+
+        Plan::updateOrCreate(
+            ['slug' => 'pro'],
+            [
+                'name' => 'Pro',
+                'max_procedures' => null,   // unlimited
+                'max_evaluations_mo' => null,   // unlimited
+                'stripe_price_id' => env('STRIPE_PRICE_PRO'),
+                'features' => ['widget', 'dashboard', 'advanced_ai', 'analytics', 'webhooks', 'api_access', 'white_label'],
             ]
         );
 
@@ -33,12 +57,12 @@ class DatabaseSeeder extends Seeder
         $tenant = Tenant::updateOrCreate(
             ['slug' => 'miamilife'],
             [
-                'name'    => 'Miami Life Cosmetic Center',
+                'name' => 'Miami Life Cosmetic Center',
                 'plan_id' => $starterPlan->id,
                 'settings' => [
-                    'theme'               => 'luxury-dark',
-                    'procedures_enabled'  => ['rhinoplasty', 'bbl', 'lipo_360', 'breast_augmentation', 'facelift'],
-                    'coordinator_emails'  => ['coordinator@miamilife.test'],
+                    'theme' => 'luxury-dark',
+                    'procedures_enabled' => ['rhinoplasty', 'bbl', 'lipo_360', 'breast_augmentation', 'facelift'],
+                    'coordinator_emails' => ['coordinator@miamilife.test'],
                 ],
             ]
         );
@@ -51,9 +75,9 @@ class DatabaseSeeder extends Seeder
             ['email' => 'coordinator@aesthetic-ai.test'],
             [
                 'tenant_id' => $tenant->id,
-                'name'      => 'Sarah M.',
-                'password'  => Hash::make('password'),
-                'role'      => User::ROLE_COORDINATOR,
+                'name' => 'Sarah M.',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_COORDINATOR,
             ]
         );
 
@@ -62,9 +86,9 @@ class DatabaseSeeder extends Seeder
             ['email' => 'owner@aesthetic-ai.test'],
             [
                 'tenant_id' => $tenant->id,
-                'name'      => 'Dr. Rivera',
-                'password'  => Hash::make('password'),
-                'role'      => User::ROLE_OWNER,
+                'name' => 'Dr. Rivera',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_OWNER,
             ]
         );
 
@@ -73,16 +97,16 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@aesthetic-ai.test'],
             [
                 'tenant_id' => null,
-                'name'      => 'Platform Admin',
-                'password'  => Hash::make('password'),
-                'role'      => User::ROLE_OWNER,
+                'name' => 'Platform Admin',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_OWNER,
             ]
         );
 
         $this->command->info('✅ Database seeded.');
-        $this->command->info("   Clinic URL:   http://miamilife.aesthetic-ai.test");
-        $this->command->info("   Coordinator:  coordinator@aesthetic-ai.test / password");
-        $this->command->info("   Owner:        owner@aesthetic-ai.test / password");
-        $this->command->info("   Super-admin:  admin@aesthetic-ai.test / password  → /admin");
+        $this->command->info('   Clinic URL:   http://miamilife.aesthetic-ai.test');
+        $this->command->info('   Coordinator:  coordinator@aesthetic-ai.test / password');
+        $this->command->info('   Owner:        owner@aesthetic-ai.test / password');
+        $this->command->info('   Super-admin:  admin@aesthetic-ai.test / password  → /admin');
     }
 }

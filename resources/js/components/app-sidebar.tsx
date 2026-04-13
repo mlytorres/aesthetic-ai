@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, Building2, ClipboardList, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
+import { BarChart3, BookOpen, Building2, ClipboardList, CreditCard, FolderGit2, LayoutGrid, Settings, ShieldCheck, Users, Webhook } from 'lucide-react';
+import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import AppLogo from '@/components/app-logo';
@@ -62,6 +63,11 @@ const clinicNavItems: NavItem[] = [
         title: 'Webhooks Hub',
         href: webhooksIndex.url(),
         icon: Webhook,
+    },
+    {
+        title: 'Billing',
+        href: billingIndex.url(),
+        icon: CreditCard,
     },
 ];
 

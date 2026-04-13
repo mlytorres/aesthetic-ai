@@ -8,6 +8,7 @@ use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProcedureResource;
 use App\Models\Procedure;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +22,7 @@ class IntakeController extends Controller
      * Render the intake wizard with all config the frontend needs.
      * The wizard state lives entirely in React after this initial load.
      */
-    public function show(\Illuminate\Http\Request $request): Response
+    public function show(Request $request): Response
     {
         $tenant = TenantContext::get();
         $enabledSlugs = $tenant->enabledProcedures();
@@ -34,9 +35,9 @@ class IntakeController extends Controller
 
         return Inertia::render('intake/wizard', [
             'clinic' => [
-                'name'  => $tenant->name,
+                'name' => $tenant->name,
                 'theme' => $tenant->settings['theme'] ?? 'luxury-dark',
-                'logo'  => $tenant->settings['logo_url'] ?? null,
+                'logo' => $tenant->settings['logo_url'] ?? null,
             ],
             'hideHeader' => $request->query('hide_header') === 'true',
             'turnstileSiteKey' => config('services.turnstile.site_key'),
@@ -56,6 +57,21 @@ class IntakeController extends Controller
             'clinic' => [
                 'name' => TenantContext::get()->name,
             ],
+        ]);
+    }
+
+    /**
+     * Shown to patients when the clinic has exceeded their plan limits.
+     * Patients shouldn't see a raw 402 — give them a friendly message instead.
+     */
+    public function blocked(Request $request): Response
+    {
+        return Inertia::render('intake/blocked', [
+            'clinic' => ['name' => TenantContext::get()->name],
+            'message' => $request->session()->get(
+                'blocked_message',
+                'This clinic is temporarily unable to accept new evaluations. Please contact them directly.',
+            ),
         ]);
     }
 }

@@ -193,7 +193,7 @@ test('cannot create evaluation for a procedure not enabled by tenant', function 
 
     $this->withHeaders(tenantHeaders($tenant))
         ->postJson(route('intake.evaluations.store'), ['procedure_slug' => 'bbl'])
-        ->assertUnprocessable();
+        ->assertStatus(402); // plan enforcement: procedure not in tenant's enabled list
 });
 
 test('quiz answers can be saved for a bbl evaluation', function (): void {

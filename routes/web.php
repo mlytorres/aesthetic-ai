@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\Clinic\BillingController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\IntegrationController;
 use App\Http\Controllers\Clinic\TeamController;
@@ -48,8 +49,8 @@ Route::middleware(['tenant'])->group(function (): void {
 //
 // Role access summary:
 //   All roles          → dashboard, evaluations (view only)
-//   Owner/Admin/Coord  → evaluation actions (status, notes), simulation, analytics
-//   Owner/Admin        → clinic settings, team, integrations, webhooks
+//   Owner/Admin/Coord  → evaluation actions (status, notes), simulation, analytics, webhooks
+//   Owner/Admin        → clinic settings, team, integrations, billing
 //   Owner/Admin/Coord/Surgeon → clinical brief download
 
 Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
@@ -112,6 +113,17 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
             Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
             Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
 
+            // ── Billing ───────────────────────────────────────────────────────
+            Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+            Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+            Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+            Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+        });
+
+    // ── Webhook delivery log — owner, admin, coordinator (read + retry) ───
+    Route::prefix('clinic')->name('clinic.')
+        ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+        ->group(function (): void {
             Route::get('/webhooks', [WebhookDeliveryController::class, 'index'])->name('webhooks.index');
             Route::post('/webhooks/{webhookDelivery}/retry', [WebhookDeliveryController::class, 'retry'])->name('webhooks.retry');
         });
@@ -130,15 +142,18 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
     // Evaluation lifecycle (JSON responses — not Inertia redirects)
     Route::post('/evaluations', [EvaluationController::class, 'store'])
-        ->middleware('throttle:5,1')
+        ->middleware(['throttle:5,1', 'plan.limits'])
         ->name('evaluations.store');
 
     Route::post('/evaluations/{token}/quiz', [EvaluationController::class, 'quiz'])
         ->name('evaluations.quiz');
 
     Route::post('/evaluations/{token}/submit', [EvaluationController::class, 'submit'])
-        ->middleware('throttle:5,1')
+        ->middleware(['throttle:5,1', 'plan.limits'])
         ->name('evaluations.submit');
+
+    // Plan limit exceeded — shown when a clinic's eval cap or subscription has lapsed.
+    Route::get('/blocked', [IntakeController::class, 'blocked'])->name('blocked');
 
     // Photo upload
     Route::post('/evaluations/{token}/photos', [PhotoController::class, 'store'])

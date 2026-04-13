@@ -9,7 +9,6 @@ use App\Models\Evaluation;
 use App\Models\Photo;
 use App\Services\AuditLog;
 use App\Services\SecureFileService;
-use Aws\Rekognition\RekognitionClient;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,9 +35,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ValidatePhotoQualityJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ResolvesJobTenant;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, ResolvesJobTenant, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $timeout = 120;
 
     public function __construct(
@@ -56,18 +56,30 @@ class ValidatePhotoQualityJob implements ShouldQueue
 
         /** @var Evaluation $evaluation */
         $evaluation = Evaluation::findOrFail($this->evaluationId);
-        $photos     = Photo::where('evaluation_id', $this->evaluationId)->get();
+        $photos = Photo::where('evaluation_id', $this->evaluationId)->get();
 
         if ($photos->isEmpty()) {
             Log::warning('ValidatePhotoQualityJob: no photos found', ['evaluation_id' => $this->evaluationId]);
             $this->markEvaluationFailed($evaluation, 'no_photos');
+
             return;
         }
 
         $passCount = 0;
+        $isSimulation = ! config('features.ai_vision', false);
 
         foreach ($photos as $photo) {
-            $passed = $photo->quality_score >= 50;
+            if ($isSimulation) {
+                // Simulation mode: assign realistic mock scores without calling Rekognition.
+                $score = fake()->numberBetween(72, 97);
+                $photo->update([
+                    'quality_score' => $score,
+                    'analysis_status' => Photo::ANALYSIS_COMPLETE,
+                ]);
+                $passed = $score >= 50;
+            } else {
+                $passed = $photo->quality_score >= 50;
+            }
 
             if ($passed) {
                 $passCount++;
@@ -75,34 +87,33 @@ class ValidatePhotoQualityJob implements ShouldQueue
         }
 
         $requiredPhotoCount = $photos->where('type', '!=', Photo::TYPE_ADDITIONAL)->count();
-        $minimumPass        = (int) ceil($requiredPhotoCount * 0.67); // at least 2/3 required photos must pass
+        $minimumPass = (int) ceil($requiredPhotoCount * 0.67); // at least 2/3 required photos must pass
 
         if ($passCount < $minimumPass) {
             Log::warning('ValidatePhotoQualityJob: insufficient passing photos', [
                 'evaluation_id' => $this->evaluationId,
-                'pass_count'    => $passCount,
-                'required'      => $minimumPass,
+                'pass_count' => $passCount,
+                'required' => $minimumPass,
             ]);
             $this->markEvaluationFailed($evaluation, 'photo_quality_insufficient');
             $this->batch()?->cancel();
+
             return;
         }
 
         $auditLog->recordSystem('ai.photo_quality.validated', $evaluation, [
-            'photos_total'  => $photos->count(),
+            'photos_total' => $photos->count(),
             'photos_passed' => $passCount,
         ]);
     }
 
-
-
     private function markEvaluationFailed(Evaluation $evaluation, string $reason): void
     {
         $evaluation->update([
-            'status'       => Evaluation::STATUS_FAILED,
+            'status' => Evaluation::STATUS_FAILED,
             'analysis_data' => array_merge($evaluation->analysis_data ?? [], [
                 'failure_reason' => $reason,
-                'failed_at'      => now()->toIso8601String(),
+                'failed_at' => now()->toIso8601String(),
             ]),
         ]);
     }
@@ -111,7 +122,7 @@ class ValidatePhotoQualityJob implements ShouldQueue
     {
         Log::error('ValidatePhotoQualityJob failed', [
             'evaluation_id' => $this->evaluationId,
-            'error'         => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
 
         // Use withoutGlobalScopes() in failed() — TenantContext may not be set

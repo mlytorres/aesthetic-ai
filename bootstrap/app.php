@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforcePlanLimits;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => TenantMiddleware::class,
             'super-admin' => EnsureSuperAdmin::class,
             'role' => RequireRole::class,
+            'plan.limits' => EnforcePlanLimits::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

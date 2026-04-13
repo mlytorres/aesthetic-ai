@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Listeners\HandleStripeSubscriptionUpdated;
+use App\Models\Tenant;
 use App\Services\AuditLog;
 use App\Services\SecureFileService;
 use App\Services\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Cashier\Cashier;
+use Laravel\Cashier\Events\WebhookReceived;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,9 +33,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(SecureFileService::class);
     }
 
-
     public function boot(): void
     {
+        // Tenant is the Stripe customer — each clinic has its own subscription.
+        Cashier::useCustomerModel(Tenant::class);
+
+        // Sync plan_id whenever Stripe fires a subscription webhook.
+        Event::listen(WebhookReceived::class, HandleStripeSubscriptionUpdated::class);
+
         $this->configureDefaults();
     }
 

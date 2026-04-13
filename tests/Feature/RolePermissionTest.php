@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Http\Resources\EvaluationResource;
+use App\Jobs\AI\GenerateSimulationJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -186,6 +188,8 @@ test('viewer cannot request simulation', function (): void {
 });
 
 test('surgeon can request simulation', function (): void {
+    Queue::fake();
+
     $tenant = Tenant::factory()->create();
     $surgeon = roleUser($tenant, User::ROLE_SURGEON);
     $evaluation = roleEvaluation($tenant);
@@ -194,6 +198,8 @@ test('surgeon can request simulation', function (): void {
     $this->actingAs($surgeon)
         ->post("/evaluations/{$evaluation->id}/simulation")
         ->assertStatus(202);
+
+    Queue::assertPushed(GenerateSimulationJob::class);
 });
 
 // ─── Team management — owner-only for owner role assignment ──────────────────
