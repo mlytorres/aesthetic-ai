@@ -10,16 +10,40 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useEvaluationNotifications } from '@/hooks/use-echo';
 import { useSessionTimeout } from '@/hooks/use-session-timeout';
 import type { AppLayoutProps } from '@/types';
 import { router, usePage } from '@inertiajs/react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
 
 export default function AppSidebarLayout({
     children,
     breadcrumbs = [],
 }: AppLayoutProps) {
     const { showWarning, remainingSeconds, extendSession, logout } = useSessionTimeout();
-    const { impersonating } = usePage().props;
+    const { impersonating, tenantId } = usePage().props as { impersonating: { as: string } | null; tenantId: string | null };
+
+    // ── Real-time evaluation notifications via Reverb ──────────────────────────
+    const handleEvaluationReceived = useCallback(
+        (payload: { evaluation_id: string; procedure_slug: string; created_at: string }) => {
+            const label = payload.procedure_slug
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+
+            toast('New evaluation received', {
+                description: label,
+                action: {
+                    label: 'View',
+                    onClick: () => router.visit('/evaluations'),
+                },
+                duration: 8000,
+            });
+        },
+        [],
+    );
+
+    useEvaluationNotifications(tenantId, handleEvaluationReceived);
 
     const stopImpersonating = () => {
         router.delete('/impersonate');

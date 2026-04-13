@@ -46,6 +46,9 @@ class HandleInertiaRequests extends Middleware
             'impersonating' => session()->has('impersonating_id')
                 ? ['as' => $request->user()?->name]
                 : null,
+            // Tenant ID for the Reverb private channel subscription.
+            // Null for super-admins who are not scoped to a tenant.
+            'tenantId' => $request->user()?->tenant_id,
         ];
     }
 }

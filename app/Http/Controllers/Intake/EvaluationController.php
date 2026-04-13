@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Intake;
 
+use App\Events\EvaluationReceived;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Intake\CreateEvaluationRequest;
 use App\Http\Requests\Intake\SaveQuizRequest;
@@ -138,6 +139,9 @@ class EvaluationController extends Controller
         ]);
 
         $this->auditLog->record('evaluation.submitted', $evaluation);
+
+        // Notify clinic staff in real time via Reverb WebSocket.
+        EvaluationReceived::dispatch($evaluation);
 
         // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
         $evaluationId = $evaluation->id;
