@@ -15,6 +15,7 @@ use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
+use App\Http\Controllers\Dashboard\EvaluationExportController;
 use App\Http\Controllers\Dashboard\OnboardingController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Dashboard\SimulationController;
@@ -85,6 +86,13 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
     Route::prefix('evaluations')->name('evaluations.')->group(function (): void {
         // View — all roles
         Route::get('/', [DashboardEvaluationController::class, 'index'])->name('index');
+
+        // CSV export — must be before /{evaluation} wildcard to avoid being swallowed.
+        // Owner, admin, coordinator only (PHI access).
+        Route::get('/export', EvaluationExportController::class)
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+            ->name('export');
+
         Route::get('/{evaluation}', [DashboardEvaluationController::class, 'show'])->name('show');
 
         // Mutating actions — clinical actors only (owner, admin, coordinator)

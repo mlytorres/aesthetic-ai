@@ -1,8 +1,9 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { index, show } from '@/routes/evaluations';
+import { exportMethod, index, show } from '@/routes/evaluations';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -125,8 +126,12 @@ const STATUS_TABS = [
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+const EXPORT_ROLES = new Set(['owner', 'admin', 'coordinator']);
+
 export default function EvaluationsIndex({ evaluations, filters, statusCounts }: Props) {
     const activeTab = filters.status;
+    const { auth } = usePage().props as { auth: { user: { role: string } } };
+    const canExport = EXPORT_ROLES.has(auth.user.role);
 
     const navigateTab = (status: string) => {
         router.get(index.url({ query: { status } }), {}, { preserveState: true, replace: true });
@@ -146,6 +151,16 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                             Priority queue · {evaluations.meta.total} total
                         </p>
                     </div>
+
+                    {canExport && (
+                        <a
+                            href={exportMethod.url({ query: { status: activeTab } })}
+                            className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#111118] px-4 py-2 text-sm font-medium text-[#F5F0E8] transition-all hover:border-white/20 active:scale-95"
+                        >
+                            <Download className="h-4 w-4 text-[#9B9B8E]" />
+                            Export CSV
+                        </a>
+                    )}
                 </div>
 
                 {/* Stat pills */}
