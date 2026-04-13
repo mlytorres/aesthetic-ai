@@ -58,22 +58,22 @@
             margin-bottom: 16px;
         }
         .metric-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0;
+            padding: 14px 0;
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
         .metric-row:last-child {
             border-bottom: none;
         }
         .metric-label {
-            font-size: 12px;
+            display: block;
+            font-size: 11px;
             color: #9B9B8E;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
         }
         .metric-value {
+            display: block;
             font-size: 14px;
             font-weight: 600;
             color: #F5F0E8;

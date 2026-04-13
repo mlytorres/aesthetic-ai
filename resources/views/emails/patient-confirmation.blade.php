@@ -19,7 +19,7 @@
         .steps { margin: 0 0 20px; padding: 0; list-style: none; }
         .steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #444; line-height: 1.6; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
         .steps li:last-child { border-bottom: none; }
-        .step-num { min-width: 22px; height: 22px; border-radius: 50%; background: #0E9E8E; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+        .step-num { min-width: 24px; width: 24px; height: 24px; border-radius: 50%; background: #0E9E8E; color: #fff; font-size: 11px; font-weight: 700; text-align: center; line-height: 24px; margin-top: 1px; }
         .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
         .footer { background: #f9f9f9; padding: 16px 32px; border-top: 1px solid #eee; }
         .footer-text { font-size: 10px; color: #aaa; text-align: center; line-height: 1.6; }
