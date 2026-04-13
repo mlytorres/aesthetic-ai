@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { CheckCircle, CreditCard, Zap } from 'lucide-react';
+import { CheckCircle, CreditCard, Zap, FileText, ExternalLink } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,15 @@ interface Usage {
 	procedures: string[];
 }
 
+interface Invoice {
+	id: string;
+	number: string;
+	date: string;
+	total: string;
+	status: 'paid' | 'open' | 'void';
+	pdf_url: string | null;
+}
+
 interface Props {
 	currentPlan: CurrentPlan | null;
 	plans: Plan[];
@@ -45,6 +54,7 @@ interface Props {
 	has_billing_access: boolean;
 	trial_expired: boolean;
 	has_active_subscription: boolean;
+	invoices: Invoice[];
 }
 
 const PLAN_PRICES: Record<string, string> = {
@@ -59,7 +69,7 @@ const PLAN_HIGHLIGHTS: Record<string, string[]> = {
 	pro: ['Unlimited procedures', 'Unlimited evaluations', 'API access', 'White-label ready'],
 };
 
-export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access, trial_expired, has_active_subscription }: Props) {
+export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access, trial_expired, has_active_subscription, invoices }: Props) {
 	const checkoutForm = useForm<{ plan_slug: string }>({ plan_slug: '' });
 
 	const handleUpgrade = (planSlug: string) => {
@@ -262,6 +272,55 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 					</div>
 				</div>
 			</div>
+			{/* Invoice History */}
+			{invoices.length > 0 && (
+				<div className="rounded-xl border border-border bg-card p-6">
+					<div className="mb-4 flex items-center gap-3">
+						<div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50 border border-border">
+							<FileText className="h-4 w-4 text-[#0E9E8E]" />
+						</div>
+						<div>
+							<h2 className="text-sm font-semibold text-foreground">Invoice History</h2>
+							<p className="text-xs text-muted-foreground">Download past invoices for your records</p>
+						</div>
+					</div>
+
+					<div className="divide-y divide-border/50">
+						{invoices.map((invoice) => (
+							<div key={invoice.id} className="flex items-center justify-between py-3">
+								<div className="flex items-center gap-4">
+									<div>
+										<p className="text-sm font-medium text-foreground">{invoice.number}</p>
+										<p className="text-xs text-muted-foreground">{new Date(invoice.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-4">
+									<span className="text-sm font-semibold text-foreground">{invoice.total}</span>
+									<span className={cn(
+										'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+										invoice.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' :
+										invoice.status === 'open' ? 'bg-amber-500/10 text-amber-400' :
+										'bg-muted text-muted-foreground'
+									)}>
+										{invoice.status}
+									</span>
+									{invoice.pdf_url && (
+										<a
+											href={invoice.pdf_url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
+										>
+											<ExternalLink className="h-3 w-3" />
+											PDF
+										</a>
+									)}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 		</>
 	);
 }

@@ -6,11 +6,13 @@ namespace App\Http\Controllers\Clinic;
 
 use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Str;
 
 class IntegrationController extends Controller
 {
@@ -60,6 +62,69 @@ class IntegrationController extends Controller
         ]);
 
         return back()->with('flash.success', 'Webhook configuration saved.');
+    }
+
+    /**
+     * Fire a synchronous test payload to the configured webhook URL.
+     *
+     * Returns the HTTP status code and latency immediately so the admin can
+     * confirm their endpoint is reachable and verifying the signature correctly.
+     * No WebhookDelivery record is persisted — this is a one-off connectivity check.
+     */
+    public function sendTest(): JsonResponse
+    {
+        $tenant = TenantContext::get();
+
+        if (blank($tenant->webhook_url)) {
+            return response()->json(['error' => 'No webhook URL configured.'], 422);
+        }
+
+        $payload = [
+            'event' => 'evaluation.test',
+            'api_version' => '2025-01',
+            'idempotency_key' => Str::uuid()->toString(),
+            'timestamp' => now()->toIso8601String(),
+            'data' => [
+                'message' => 'This is a test webhook from SymetriHealth. Your endpoint is correctly configured.',
+                'clinic' => $tenant->name,
+            ],
+        ];
+
+        $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $secret = $tenant->webhook_secret ?? '';
+        $signature = 'sha256='.hash_hmac('sha256', $body, $secret);
+
+        $startedAt = microtime(true);
+
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'X-SymetriHealth-Signature' => $signature,
+                    'X-SymetriHealth-Event' => 'evaluation.test',
+                    'User-Agent' => 'SymetriHealth-Webhook/1.0',
+                ])
+                ->withBody($body, 'application/json')
+                ->post($tenant->webhook_url);
+
+            $latencyMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+            return response()->json([
+                'ok' => $response->successful(),
+                'status_code' => $response->status(),
+                'latency_ms' => $latencyMs,
+                'body' => substr($response->body(), 0, 500),
+            ]);
+        } catch (\Throwable $e) {
+            $latencyMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+            return response()->json([
+                'ok' => false,
+                'status_code' => null,
+                'latency_ms' => $latencyMs,
+                'body' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

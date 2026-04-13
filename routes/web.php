@@ -135,6 +135,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
             Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
             Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
             Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
+            Route::post('/integrations/webhook/test', [IntegrationController::class, 'sendTest'])->name('integrations.webhook.test');
         });
 
     // ── Webhook delivery log — owner, admin, coordinator (read + retry) ───

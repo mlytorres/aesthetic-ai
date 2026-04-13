@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Clock, RefreshCw, Webhook } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, RefreshCw, Webhook, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import {
     index as webhooksIndex,
     retry as webhooksRetry,
@@ -107,8 +108,14 @@ function formatTime(iso: string): string {
 }
 
 export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
     const handleRetry = (delivery: Delivery) => {
         router.post(webhooksRetry.url({ webhookDelivery: delivery.id }));
+    };
+
+    const toggleExpand = (id: string) => {
+        setExpandedId(prev => prev === id ? null : id);
     };
 
     return (
@@ -196,59 +203,105 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                 </thead>
                                 <tbody className="divide-y divide-sidebar-border/30">
                                     {deliveries.data.map((delivery) => (
-                                        <tr
-                                            key={delivery.id}
-                                            className="transition-colors hover:bg-background/50"
-                                        >
-                                            <td className="px-4 py-3 font-mono text-xs text-[#0E9E8E]">
-                                                {formatEvent(delivery.event)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <StatusBadge status={delivery.status} />
-                                            </td>
-                                            <td className="px-4 py-3 text-muted-foreground">
-                                                {delivery.evaluation?.procedure ?? '—'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                {delivery.last_response ? (
-                                                    <span
-                                                        className={cn(
-                                                            'font-mono text-xs',
-                                                            delivery.last_response.status_code >= 200 &&
-                                                                delivery.last_response.status_code < 300
-                                                                ? 'text-emerald-400'
-                                                                : 'text-red-400',
-                                                        )}
-                                                    >
-                                                        {delivery.last_response.status_code}
-                                                        <span className="ml-1 text-muted-foreground">
-                                                            ({delivery.last_response.latency_ms}ms)
+                                        <>
+                                            <tr
+                                                key={delivery.id}
+                                                className="cursor-pointer transition-colors hover:bg-background/50"
+                                                onClick={() => toggleExpand(delivery.id)}
+                                            >
+                                                <td className="px-4 py-3 font-mono text-xs text-[#0E9E8E]">
+                                                    {formatEvent(delivery.event)}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <StatusBadge status={delivery.status} />
+                                                </td>
+                                                <td className="px-4 py-3 text-muted-foreground">
+                                                    {delivery.evaluation?.procedure ?? '—'}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    {delivery.last_response ? (
+                                                        <span
+                                                            className={cn(
+                                                                'font-mono text-xs',
+                                                                delivery.last_response.status_code >= 200 &&
+                                                                    delivery.last_response.status_code < 300
+                                                                    ? 'text-emerald-400'
+                                                                    : 'text-red-400',
+                                                            )}
+                                                        >
+                                                            {delivery.last_response.status_code}
+                                                            <span className="ml-1 text-muted-foreground">
+                                                                ({delivery.last_response.latency_ms}ms)
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-muted-foreground/40">—</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-muted-foreground">
-                                                {delivery.attempt_count}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-xs text-muted-foreground">
-                                                {formatTime(delivery.created_at)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                {delivery.status === 'failed' && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleRetry(delivery)}
-                                                        className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-foreground hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
-                                                    >
-                                                        <RefreshCw className="h-3 w-3" />
-                                                        Retry
-                                                    </Button>
-                                                )}
-                                            </td>
-                                        </tr>
+                                                    ) : (
+                                                        <span className="text-muted-foreground/40">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-muted-foreground">
+                                                    {delivery.attempt_count}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-xs text-muted-foreground">
+                                                    {formatTime(delivery.created_at)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                                                        {delivery.status === 'failed' && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleRetry(delivery)}
+                                                                className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-foreground hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
+                                                            >
+                                                                <RefreshCw className="h-3 w-3" />
+                                                                Retry
+                                                            </Button>
+                                                        )}
+                                                        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground/50 transition-transform', expandedId === delivery.id && 'rotate-180')} />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {expandedId === delivery.id && (
+                                                <tr key={`${delivery.id}-detail`} className="bg-muted/20">
+                                                    <td colSpan={7} className="px-4 py-3">
+                                                        <div className="space-y-3 text-xs">
+                                                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                                                <div>
+                                                                    <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Delivery ID</p>
+                                                                    <p className="font-mono text-foreground break-all">{delivery.id}</p>
+                                                                </div>
+                                                                {delivery.evaluation && (
+                                                                    <div>
+                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Evaluation Token</p>
+                                                                        <p className="font-mono text-foreground">{delivery.evaluation.token?.slice(0, 16)}…</p>
+                                                                    </div>
+                                                                )}
+                                                                {delivery.last_response?.attempted_at && (
+                                                                    <div>
+                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Last Attempt</p>
+                                                                        <p className="text-foreground">{formatTime(delivery.last_response.attempted_at)}</p>
+                                                                    </div>
+                                                                )}
+                                                                {delivery.delivered_at && (
+                                                                    <div>
+                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Delivered At</p>
+                                                                        <p className="text-foreground">{formatTime(delivery.delivered_at)}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {delivery.last_response?.body && (
+                                                                <div>
+                                                                    <p className="mb-1 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Response Body</p>
+                                                                    <pre className="rounded border border-border bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
+                                                                        {delivery.last_response.body}
+                                                                    </pre>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </>
                                     ))}
                                 </tbody>
                             </table>

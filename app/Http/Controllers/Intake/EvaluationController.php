@@ -14,6 +14,7 @@ use App\Jobs\AI\CalculateProportionsJob;
 use App\Jobs\AI\ExtractBodyLandmarksJob;
 use App\Jobs\AI\ExtractFacialLandmarksJob;
 use App\Jobs\AI\GenerateBasicRecommendationsJob;
+use App\Jobs\AI\SendPatientConfirmationJob;
 use App\Jobs\AI\ValidatePhotoQualityJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
@@ -142,6 +143,9 @@ class EvaluationController extends Controller
 
         // Notify clinic staff in real time via Reverb WebSocket.
         EvaluationReceived::dispatch($evaluation);
+
+        // Send immediate confirmation email to patient (before AI pipeline runs).
+        SendPatientConfirmationJob::dispatch($evaluation->id)->onQueue('notifications');
 
         // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
         $evaluationId = $evaluation->id;

@@ -1,7 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
-import { RefreshCcw, Copy, Check } from 'lucide-react';
+import { RefreshCcw, Copy, Check, Send } from 'lucide-react';
 import { useState } from 'react';
-import { updateWebhook, rotateSecret } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
+import { updateWebhook, rotateSecret, sendTest } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,28 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     const { post: rotatePost, processing: rotating } = useForm();
 
     const [copiedContent, setCopiedContent] = useState<'script' | 'secret' | null>(null);
+
+    const [testResult, setTestResult] = useState<{
+        ok: boolean;
+        status_code: number | null;
+        latency_ms: number;
+        body: string;
+    } | null>(null);
+    const [testSending, setTestSending] = useState(false);
+
+    const handleSendTest = async () => {
+        setTestResult(null);
+        setTestSending(true);
+        try {
+            const res = await fetch(sendTest.url(), { method: 'POST', headers: { 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '', 'Accept': 'application/json' } });
+            const json = await res.json();
+            setTestResult(json);
+        } catch (e) {
+            setTestResult({ ok: false, status_code: null, latency_ms: 0, body: String(e) });
+        } finally {
+            setTestSending(false);
+        }
+    };
 
     // Widget Generator State
     const [widgetTheme, setWidgetTheme] = useState('luxury-dark');
@@ -317,6 +339,49 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
                     </div>
                 </form>
+
+                {/* Test Webhook */}
+                {data.webhook_url && (
+                    <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-foreground">Test Your Endpoint</h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Send a live <code>evaluation.test</code> payload to <span className="text-foreground">{data.webhook_url}</span> and see the response immediately.
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleSendTest}
+                                disabled={testSending}
+                                className="shrink-0 gap-1.5 bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#2DD4BF]"
+                            >
+                                <Send className={`h-3.5 w-3.5 ${testSending ? 'animate-pulse' : ''}`} />
+                                {testSending ? 'Sending…' : 'Send Test'}
+                            </Button>
+                        </div>
+
+                        {testResult && (
+                            <div className={`mt-4 rounded-md border p-4 ${testResult.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className={`text-sm font-semibold ${testResult.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {testResult.ok ? '✓ Delivered' : '✗ Failed'}
+                                    </span>
+                                    {testResult.status_code && (
+                                        <span className="font-mono text-xs text-muted-foreground">
+                                            HTTP {testResult.status_code}
+                                        </span>
+                                    )}
+                                    <span className="font-mono text-xs text-muted-foreground">{testResult.latency_ms}ms</span>
+                                </div>
+                                {testResult.body && (
+                                    <pre className="text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">{testResult.body}</pre>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="border-t border-border w-full mt-8 mb-8"></div>
 

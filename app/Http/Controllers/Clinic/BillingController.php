@@ -66,6 +66,16 @@ class BillingController extends Controller
             'has_billing_access' => $tenant->hasBillingAccess(),
             'trial_expired' => $trialExpired,
             'has_active_subscription' => $subscription !== null && $subscription->active(),
+            'invoices' => $tenant->hasStripeId()
+                ? $tenant->invoices()->map(fn ($invoice) => [
+                    'id' => $invoice->id,
+                    'number' => $invoice->number,
+                    'date' => $invoice->date()->toDateString(),
+                    'total' => $invoice->total(),
+                    'status' => $invoice->paid ? 'paid' : ($invoice->status === 'open' ? 'open' : 'void'),
+                    'pdf_url' => $invoice->invoice_pdf,
+                ])->values()->all()
+                : [],
         ]);
     }
 
