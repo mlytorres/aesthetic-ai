@@ -22,6 +22,7 @@
 ## Entity Relationship Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'background': '#ffffff', 'mainBkg': '#e8e8e8', 'nodeBorder': '#333333', 'edgeLabelBackground': '#ffffff', 'attributeBackgroundColorEven': '#f5f5f5', 'attributeBackgroundColorOdd': '#e8e8e8'}}}%%
 erDiagram
     tenants ||--o{ users : "has staff"
     tenants ||--o{ patients : "owns"

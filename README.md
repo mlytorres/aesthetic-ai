@@ -36,7 +36,15 @@ April 2026
 
 ### Sprint Summary (Updated April 2026)
 
-**Sprint 1 — Core Infrastructure:** ✅ **Complete** **Sprint 2 — Patient Intake Wizard:** ✅ **Complete** **Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete** **Sprint 3 — AI Pipeline:** ✅ **Complete** **Sprint 5 — Polish + Pilot Launch:** ✅ **Complete** (all dev items done; business items pending BAA + QA)
+**Sprint 1 — Core Infrastructure:** ✅ **Complete**
+**Sprint 2 — Patient Intake Wizard:** ✅ **Complete**
+**Sprint 2 (Extended) — Clinic Dashboard (Sprint 4 scope):** ✅ **Complete**
+**Sprint 3 — AI Pipeline:** ✅ **Complete**
+**Sprint 5 — Polish + Pilot Launch:** ✅ **Complete** (all dev items done; business items pending BAA + QA)
+**Sprint 6 — Advanced AI Vision + Analytics:** ✅ **Complete**
+**Sprint 7 — Multi-Tenant Platform Admin:** ✅ **Complete**
+**Sprint 8 — Body Landmarks + AI Simulation:** ✅ **Complete**
+**Sprint 9 — Billing, Notifications, Webhooks, Security:** ✅ **Complete**
 
 ---
 

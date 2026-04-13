@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Database Schema — AestheticAI</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#fff;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#000}
+  .cover{max-width:1050px;margin:0 auto;padding:60px 60px 40px;border-bottom:3px solid #000}
+  .cover-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#666;margin-bottom:10px}
+  .cover h1{font-size:30px;font-weight:700;margin-bottom:8px}
+  .cover .sub{font-size:14px;color:#444;margin-bottom:20px;line-height:1.5}
+  .cover .meta{font-size:11px;color:#888;border-top:1px solid #ccc;padding-top:12px}
+  .section{max-width:1050px;margin:0 auto;padding:40px 60px;border-bottom:1px solid #ddd}
+  .section-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:6px}
+  h2{font-size:18px;font-weight:700;margin-bottom:16px;margin-top:4px}
+  .diagram-wrap{border:1px solid #ccc;border-radius:4px;padding:20px;background:#fff;text-align:center}
+  .diagram-wrap img{max-width:100%;height:auto;display:block;margin:0 auto}
+  table{width:100%;border-collapse:collapse;margin-top:4px;font-size:12px}
+  th{background:#222;color:#fff;padding:8px 12px;text-align:left;font-weight:600}
+  td{padding:8px 12px;border-bottom:1px solid #e0e0e0;vertical-align:top;line-height:1.5}
+  tr:nth-child(even) td{background:#f8f8f8}
+  code{font-family:'Cascadia Code',Consolas,monospace;font-size:12px;background:#f0f0f0;padding:1px 5px;border-radius:3px}
+  ul.checklist{list-style:none;padding:0;margin-top:4px}
+  ul.checklist li{padding:7px 12px;border-bottom:1px solid #e8e8e8;font-size:12px;line-height:1.4}
+  ul.checklist li::before{content:'☐  ';font-size:14px}
+  ul.checklist li:nth-child(even){background:#f8f8f8}
+  .note{font-size:11px;color:#666;margin-top:10px;font-style:italic}
+  @media print{
+    .section{page-break-inside:avoid}
+    .section.break{page-break-before:always}
+    .cover{page-break-after:always}
+    @page{margin:15mm 15mm 15mm 15mm;size:A4}
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    th{background:#444!important;-webkit-print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+  <div class="cover">
+    <div class="cover-label">AestheticAI &mdash; Technical Documentation</div>
+    <h1>Database Schema</h1>
+    <p class="sub">Full PostgreSQL schema reference. All tenant-scoped tables use Row-Level Security (RLS) + Eloquent HasTenantScope.</p>
+    <div class="meta">April 2026 &nbsp;&middot;&nbsp; 12 tables &nbsp;&middot;&nbsp; Optimised for black &amp; white print</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Section 1 of 4</div>
+    <h2>Entity Relationship Diagram</h2>
+    <div class="diagram-wrap">
+      <img src="https://mermaid.ink/img/eyJjb2RlIjogIiUle2luaXQ6IHsndGhlbWUnOiAnYmFzZScsICd0aGVtZVZhcmlhYmxlcyc6IHsncHJpbWFyeUNvbG9yJzogJyNlOGU4ZTgnLCAncHJpbWFyeVRleHRDb2xvcic6ICcjMDAwMDAwJywgJ3ByaW1hcnlCb3JkZXJDb2xvcic6ICcjMzMzMzMzJywgJ2xpbmVDb2xvcic6ICcjMDAwMDAwJywgJ3NlY29uZGFyeUNvbG9yJzogJyNmMGYwZjAnLCAndGVydGlhcnlDb2xvcic6ICcjZDBkMGQwJywgJ2JhY2tncm91bmQnOiAnI2ZmZmZmZicsICdtYWluQmtnJzogJyNlOGU4ZTgnLCAnbm9kZUJvcmRlcic6ICcjMzMzMzMzJywgJ2VkZ2VMYWJlbEJhY2tncm91bmQnOiAnI2ZmZmZmZicsICdhdHRyaWJ1dGVCYWNrZ3JvdW5kQ29sb3JFdmVuJzogJyNmNWY1ZjUnLCAnYXR0cmlidXRlQmFja2dyb3VuZENvbG9yT2RkJzogJyNlOGU4ZTgnfX19JSVcbmVyRGlhZ3JhbVxuICAgIHRlbmFudHMgfHwtLW97IHVzZXJzIDogXCJoYXMgc3RhZmZcIlxuICAgIHRlbmFudHMgfHwtLW97IHBhdGllbnRzIDogXCJvd25zXCJcbiAgICB0ZW5hbnRzIHx8LS1veyBldmFsdWF0aW9ucyA6IFwib3duc1wiXG4gICAgdGVuYW50cyB8fC0tb3sgd2ViaG9va19kZWxpdmVyaWVzIDogXCJvd25zXCJcbiAgICB0ZW5hbnRzIHx8LS1veyBhcGlfdG9rZW5zIDogXCJvd25zXCJcbiAgICB0ZW5hbnRzIH1vLS18fCBwbGFucyA6IFwic3Vic2NyaWJlcyB0b1wiXG5cbiAgICBwYXRpZW50cyB8fC0tb3sgZXZhbHVhdGlvbnMgOiBcInN1Ym1pdHNcIlxuXG4gICAgZXZhbHVhdGlvbnMgfHwtLXx7IHBob3RvcyA6IFwiY29udGFpbnNcIlxuICAgIGV2YWx1YXRpb25zIHx8LS1veyBhdWRpdF9sb2dfZW50cmllcyA6IFwidHJhY2tlZCBieVwiXG4gICAgZXZhbHVhdGlvbnMgfHwtLW98IHdlYmhvb2tfZGVsaXZlcmllcyA6IFwidHJpZ2dlcnNcIlxuXG4gICAgdXNlcnMgfHwtLW97IGF1ZGl0X2xvZ19lbnRyaWVzIDogXCJnZW5lcmF0ZXNcIlxuXG4gICAgcXVpel9kZWZpbml0aW9ucyB9by0tfHwgcHJvY2VkdXJlcyA6IFwiZGVmaW5lcyBxdWVzdGlvbnMgZm9yXCJcbiAgICBldmFsdWF0aW9ucyB9by0tfHwgcHJvY2VkdXJlcyA6IFwidGFyZ2V0c1wiXG5cbiAgICB0ZW5hbnRzIHtcbiAgICAgICAgdXVpZCBpZCBQS1xuICAgICAgICBzdHJpbmcgc2x1ZyBVS1xuICAgICAgICBzdHJpbmcgbmFtZVxuICAgICAgICB1dWlkIHBsYW5faWQgRktcbiAgICAgICAgc3RyaW5nIHdlYmhvb2tfdXJsXG4gICAgICAgIHN0cmluZyB3ZWJob29rX3NlY3JldFxuICAgICAgICBqc29uYiBzZXR0aW5nc1xuICAgICAgICB0aW1lc3RhbXB0eiBjcmVhdGVkX2F0XG4gICAgICAgIHRpbWVzdGFtcHR6IHVwZGF0ZWRfYXRcbiAgICAgICAgdGltZXN0YW1wdHogZGVsZXRlZF9hdFxuICAgIH1cblxuICAgIHBhdGllbnRzIHtcbiAgICAgICAgdXVpZCBpZCBQS1xuICAgICAgICB1dWlkIHRlbmFudF9pZCBGS1xuICAgICAgICBzdHJpbmcgZW1haWxfZW5jcnlwdGVkXG4gICAgICAgIHN0cmluZyBwaG9uZV9lbmNyeXB0ZWRcbiAgICAgICAgc3RyaW5nIG5hbWVfZW5jcnlwdGVkXG4gICAgICAgIHN0cmluZyBuYW1lX2hhc2hcbiAgICAgICAgc3RyaW5nIGV4dGVybmFsX2NybV9pZFxuICAgICAgICBzdHJpbmcgY3JlYXRlZF92aWFcbiAgICAgICAgdGltZXN0YW1wdHogY3JlYXRlZF9hdFxuICAgICAgICB0aW1lc3RhbXB0eiB1cGRhdGVkX2F0XG4gICAgICAgIHRpbWVzdGFtcHR6IGRlbGV0ZWRfYXRcbiAgICB9XG5cbiAgICBldmFsdWF0aW9ucyB7XG4gICAgICAgIHV1aWQgaWQgUEtcbiAgICAgICAgdXVpZCB0ZW5hbnRfaWQgRktcbiAgICAgICAgdXVpZCBwYXRpZW50X2lkIEZLXG4gICAgICAgIHN0cmluZyBwcm9jZWR1cmVfc2x1ZyBGS1xuICAgICAgICBzdHJpbmcgc3RhdHVzXG4gICAgICAgIGpzb25iIHF1aXpfYW5zd2Vyc1xuICAgICAgICBqc29uYiBhbmFseXNpc19kYXRhXG4gICAgICAgIGludGVnZXIgbGVhZF9zY29yZVxuICAgICAgICBzdHJpbmcgcHJpb3JpdHlcbiAgICAgICAgc3RyaW5nIHNlY3VyZV90b2tlbiBVS1xuICAgICAgICBzdHJpbmcgc2ltdWxhdGlvbl9zdGF0dXNcbiAgICAgICAganNvbmIgc2ltdWxhdGlvbl9kYXRhXG4gICAgICAgIHRpbWVzdGFtcHR6IHNpbXVsYXRpb25fcmVxdWVzdGVkX2F0XG4gICAgICAgIHRpbWVzdGFtcHR6IGNvbXBsZXRlZF9hdFxuICAgICAgICB0aW1lc3RhbXB0eiBjcmVhdGVkX2F0XG4gICAgICAgIHRpbWVzdGFtcHR6IHVwZGF0ZWRfYXRcbiAgICAgICAgdGltZXN0YW1wdHogZGVsZXRlZF9hdFxuICAgIH1cblxuICAgIHBob3RvcyB7XG4gICAgICAgIHV1aWQgaWQgUEtcbiAgICAgICAgdXVpZCB0ZW5hbnRfaWQgRktcbiAgICAgICAgdXVpZCBldmFsdWF0aW9uX2lkIEZLXG4gICAgICAgIHN0cmluZyB0eXBlXG4gICAgICAgIHN0cmluZyBzM19rZXlcbiAgICAgICAgaW50ZWdlciBxdWFsaXR5X3Njb3JlXG4gICAgICAgIHN0cmluZyBhbmFseXNpc19zdGF0dXNcbiAgICAgICAgdGltZXN0YW1wdHogdGFrZW5fYXRcbiAgICAgICAgdGltZXN0YW1wdHogY3JlYXRlZF9hdFxuICAgICAgICB0aW1lc3RhbXB0eiB1cGRhdGVkX2F0XG4gICAgICAgIHRpbWVzdGFtcHR6IGRlbGV0ZWRfYXRcbiAgICB9IiwgIm1lcm1haWQiOiB7InRoZW1lIjogImJhc2UifX0?bgColor=white" alt="Entity Relationship Diagram">
+    </div>
+    <p class="note">RLS enforced on all tables except <code>tenants</code> and <code>plans</code>. PHI columns use AES-256-GCM encryption at the application layer.</p>
+  </div>
+
+  <div class="section break">
+    <div class="section-label">Section 2 of 4</div>
+    <h2>Schema Conventions</h2>
+    <table>
+      <thead><tr><th style="width:220px">Convention</th><th>Rule</th></tr></thead>
+      <tbody><tr><td>Primary keys</td><td>`uuid` for patient-facing tables, `bigserial` for internal/log tables</td></tr><tr><td>Tenant scoping</td><td>Every table (except `tenants`, `plans`) has a non-nullable `tenant_id uuid` FK</td></tr><tr><td>Soft deletes</td><td>All mutable tables include `deleted_at timestamptz` (nullable)</td></tr><tr><td>PHI columns</td><td>Marked with `🔒 PHI` — these use AES-256-GCM encrypted casts at the application layer</td></tr><tr><td>Timestamps</td><td>All tables have `created_at` and `updated_at` (except `audit_log_entries` — immutable, no `updated_at`)</td></tr><tr><td>JSONB</td><td>Used for flexible clinical data that varies per procedure (quiz answers, AI scores)</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="section break">
+    <div class="section-label">Section 3 of 4</div>
+    <h2>Tables Overview</h2>
+    <table>
+      <thead><tr><th style="width:220px">Table</th><th>Description</th></tr></thead>
+      <tbody><tr><td><code>tenants</code></td><td>Represents a clinic (SaaS tenant). The root entity for all tenant-scoped data.</td></tr><tr><td><code>plans</code></td><td>Subscription tier definitions. Managed by AestheticAI admin — not tenant-editable.</td></tr><tr><td><code>users</code></td><td>Clinic staff accounts (coordinators, surgeons, admins, owners). Scoped to a tenant.</td></tr><tr><td><code>patients</code></td><td>Patient identity records. PHI columns are AES-256-GCM encrypted at the application layer.</td></tr><tr><td><code>procedures</code></td><td>Master list of supported procedures. Defines what quizzes and photo protocols are available.</td></tr><tr><td><code>quiz_definitions</code></td><td>JSON-defined quiz branching logic per procedure. Loaded by the quiz engine at runtime.</td></tr><tr><td><code>evaluations</code></td><td>Core table. One row per patient evaluation submission.</td></tr><tr><td><code>photos</code></td><td>Patient photos associated with evaluations. Stored in S3; this table tracks metadata only.</td></tr><tr><td><code>audit_log_entries</code></td><td>Append-only, immutable log of all PHI access and state changes. Never deleted, never updated.</td></tr><tr><td><code>webhook_deliveries</code></td><td>Tracks outbound webhook delivery attempts to clinic CRM endpoints.</td></tr><tr><td><code>api_tokens</code></td><td>Bearer tokens for the External REST API v1.</td></tr><tr><td><code>magic_links</code></td><td>One-time coordinator portal access tokens sent in evaluation notification emails.</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="section break">
+    <div class="section-label">Section 4 of 4</div>
+    <h2>Migration Checklist</h2>
+    <ul class="checklist"><li>Has `tenant_id uuid NOT NULL REFERENCES tenants(id)` (unless it's a global lookup table)</li><li>Has `created_at`, `updated_at` timestamps</li><li>Has `deleted_at` for soft deletes (unless append-only like `audit_log_entries`)</li><li>PHI columns are noted with a comment and use encrypted casts in the model</li><li>RLS policy created and enabled</li><li>`FORCE ROW LEVEL SECURITY` applied (catches application-role bypasses)</li><li>Indexes created for `tenant_id`, all FK columns, and all `WHERE` columns used in queries</li><li>Rollback migration included (drop indexes → drop table)</li></ul>
+  </div>
+</body>
+</html>

@@ -20,6 +20,7 @@
 Full journey from widget load to evaluation submission. Photos are uploaded during the wizard; the final submit dispatches the AI pipeline.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'actorBkg': '#e8e8e8', 'actorBorder': '#333333', 'actorTextColor': '#000000', 'actorLineColor': '#333333', 'signalColor': '#000000', 'signalTextColor': '#000000', 'labelBoxBkgColor': '#f0f0f0', 'labelBoxBorderColor': '#333333', 'labelTextColor': '#000000', 'loopTextColor': '#000000', 'noteBkgColor': '#f0f0f0', 'noteBorderColor': '#333333', 'noteTextColor': '#000000', 'activationBkgColor': '#d0d0d0', 'activationBorderColor': '#333333', 'sequenceNumberColor': '#ffffff', 'background': '#ffffff'}}}%%
 sequenceDiagram
     autonumber
 
@@ -44,7 +45,7 @@ sequenceDiagram
         API-->>Widget: { next_step, progress }
     end
 
-    rect rgb(20, 40, 60)
+    rect rgb(220, 220, 220)
         note over Patient,S3: Photo Capture Step
         Patient->>Widget: Grants camera permission
         Widget->>Widget: MediaPipe quality check<br/>(client-side, no upload)
@@ -77,6 +78,7 @@ sequenceDiagram
 Asynchronous processing chain after evaluation submission. Each job enqueues the next on success, or marks as failed and alerts on error.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'actorBkg': '#e8e8e8', 'actorBorder': '#333333', 'actorTextColor': '#000000', 'actorLineColor': '#333333', 'signalColor': '#000000', 'signalTextColor': '#000000', 'labelBoxBkgColor': '#f0f0f0', 'labelBoxBorderColor': '#333333', 'labelTextColor': '#000000', 'loopTextColor': '#000000', 'noteBkgColor': '#f0f0f0', 'noteBorderColor': '#333333', 'noteTextColor': '#000000', 'activationBkgColor': '#d0d0d0', 'activationBorderColor': '#333333', 'sequenceNumberColor': '#ffffff', 'background': '#ffffff'}}}%%
 sequenceDiagram
     autonumber
 
@@ -145,6 +147,7 @@ sequenceDiagram
 Coordinator receives a notification email, clicks the magic link, and accesses the lead detail page.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'actorBkg': '#e8e8e8', 'actorBorder': '#333333', 'actorTextColor': '#000000', 'actorLineColor': '#333333', 'signalColor': '#000000', 'signalTextColor': '#000000', 'labelBoxBkgColor': '#f0f0f0', 'labelBoxBorderColor': '#333333', 'labelTextColor': '#000000', 'loopTextColor': '#000000', 'noteBkgColor': '#f0f0f0', 'noteBorderColor': '#333333', 'noteTextColor': '#000000', 'activationBkgColor': '#d0d0d0', 'activationBorderColor': '#333333', 'sequenceNumberColor': '#ffffff', 'background': '#ffffff'}}}%%
 sequenceDiagram
     autonumber
 
@@ -205,6 +208,7 @@ sequenceDiagram
 Outbound webhook delivery with HMAC signing, exponential backoff retry, and failure notification.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'actorBkg': '#e8e8e8', 'actorBorder': '#333333', 'actorTextColor': '#000000', 'actorLineColor': '#333333', 'signalColor': '#000000', 'signalTextColor': '#000000', 'labelBoxBkgColor': '#f0f0f0', 'labelBoxBorderColor': '#333333', 'labelTextColor': '#000000', 'loopTextColor': '#000000', 'noteBkgColor': '#f0f0f0', 'noteBorderColor': '#333333', 'noteTextColor': '#000000', 'activationBkgColor': '#d0d0d0', 'activationBorderColor': '#333333', 'sequenceNumberColor': '#ffffff', 'background': '#ffffff'}}}%%
 sequenceDiagram
     autonumber
 
@@ -258,6 +262,7 @@ sequenceDiagram
 How the platform identifies which clinic is making a request across the three resolution methods.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'edgeLabelBackground': '#ffffff', 'clusterBkg': '#f0f0f0', 'clusterBorder': '#333333', 'titleColor': '#000000', 'nodeTextColor': '#000000', 'background': '#ffffff'}}}%%
 flowchart TD
     Request([Incoming Request]) --> Method{Resolution\nMethod?}
 
@@ -292,6 +297,7 @@ flowchart TD
 How Bearer token auth works for the REST API v1.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8e8e8', 'primaryTextColor': '#000000', 'primaryBorderColor': '#333333', 'lineColor': '#000000', 'secondaryColor': '#f0f0f0', 'tertiaryColor': '#d0d0d0', 'actorBkg': '#e8e8e8', 'actorBorder': '#333333', 'actorTextColor': '#000000', 'actorLineColor': '#333333', 'signalColor': '#000000', 'signalTextColor': '#000000', 'labelBoxBkgColor': '#f0f0f0', 'labelBoxBorderColor': '#333333', 'labelTextColor': '#000000', 'loopTextColor': '#000000', 'noteBkgColor': '#f0f0f0', 'noteBorderColor': '#333333', 'noteTextColor': '#000000', 'activationBkgColor': '#d0d0d0', 'activationBorderColor': '#333333', 'sequenceNumberColor': '#ffffff', 'background': '#ffffff'}}}%%
 sequenceDiagram
     autonumber
 
