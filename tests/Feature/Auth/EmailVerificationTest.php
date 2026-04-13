@@ -1,17 +1,22 @@
 <?php
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::emailVerification());
 });
 
 test('email verification screen can be rendered', function () {
-    $user = User::factory()->unverified()->create();
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->unverified()->create(['tenant_id' => $tenant->id]);
 
     $response = $this->actingAs($user)->get(route('verification.notice'));
 
@@ -19,7 +24,8 @@ test('email verification screen can be rendered', function () {
 });
 
 test('email can be verified', function () {
-    $user = User::factory()->unverified()->create();
+    $tenant = Tenant::factory()->create(['slug' => 'verify-clinic']);
+    $user = User::factory()->unverified()->create(['tenant_id' => $tenant->id]);
 
     Event::fake();
 
@@ -33,11 +39,14 @@ test('email can be verified', function () {
 
     Event::assertDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-    $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    // After verification, clinic owners are redirected to their tenant subdomain dashboard.
+    $response->assertRedirectContains('verify-clinic');
+    $response->assertRedirectContains('/dashboard');
 });
 
 test('email is not verified with invalid hash', function () {
-    $user = User::factory()->unverified()->create();
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->unverified()->create(['tenant_id' => $tenant->id]);
 
     Event::fake();
 
@@ -54,7 +63,8 @@ test('email is not verified with invalid hash', function () {
 });
 
 test('email is not verified with invalid user id', function () {
-    $user = User::factory()->unverified()->create();
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->unverified()->create(['tenant_id' => $tenant->id]);
 
     Event::fake();
 
@@ -71,7 +81,8 @@ test('email is not verified with invalid user id', function () {
 });
 
 test('verified user is redirected to dashboard from verification prompt', function () {
-    $user = User::factory()->create();
+    $tenant = Tenant::factory()->create();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
     Event::fake();
 
@@ -82,7 +93,8 @@ test('verified user is redirected to dashboard from verification prompt', functi
 });
 
 test('already verified user visiting verification link is redirected without firing event again', function () {
-    $user = User::factory()->create();
+    $tenant = Tenant::factory()->create(['slug' => 'already-verified']);
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
     Event::fake();
 
@@ -92,8 +104,11 @@ test('already verified user visiting verification link is redirected without fir
         ['id' => $user->id, 'hash' => sha1($user->email)],
     );
 
-    $this->actingAs($user)->get($verificationUrl)
-        ->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    $response = $this->actingAs($user)->get($verificationUrl);
+
+    // Already verified — redirected to subdomain dashboard (no verified event fired).
+    $response->assertRedirectContains('already-verified');
+    $response->assertRedirectContains('/dashboard');
 
     Event::assertNotDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();

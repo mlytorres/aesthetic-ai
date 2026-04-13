@@ -29,10 +29,18 @@ class BillingController extends Controller
         $tenant = TenantContext::get();
         $tenant->load('plan');
 
-        $plans = Plan::orderByRaw("CASE slug WHEN 'starter' THEN 1 WHEN 'growth' THEN 2 WHEN 'pro' THEN 3 ELSE 4 END")
+        // Only return publicly purchasable plans. The FREE plan is admin-assigned only
+        // and must not appear on the self-service billing page.
+        $plans = Plan::where('is_public', true)
+            ->orderByRaw("CASE slug WHEN 'starter' THEN 1 WHEN 'growth' THEN 2 WHEN 'pro' THEN 3 ELSE 4 END")
             ->get(['id', 'slug', 'name', 'max_procedures', 'max_evaluations_mo', 'stripe_price_id', 'features']);
 
         $subscription = $tenant->subscription('default');
+
+        // Trial has run out and no subscription — show the paywall on the billing page.
+        $trialExpired = ! $tenant->hasBillingAccess()
+            && $tenant->trial_ends_at !== null
+            && $tenant->trial_ends_at->isPast();
 
         return Inertia::render('clinic/billing', [
             'currentPlan' => $tenant->plan ? [
@@ -56,6 +64,7 @@ class BillingController extends Controller
                 'trial_ends_at' => $tenant->trial_ends_at?->toDateString(),
             ] : null,
             'has_billing_access' => $tenant->hasBillingAccess(),
+            'trial_expired' => $trialExpired,
         ]);
     }
 

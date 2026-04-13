@@ -43,6 +43,7 @@ interface Props {
 	usage: Usage;
 	subscription: Subscription | null;
 	has_billing_access: boolean;
+	trial_expired: boolean;
 }
 
 const PLAN_PRICES: Record<string, string> = {
@@ -57,7 +58,7 @@ const PLAN_HIGHLIGHTS: Record<string, string[]> = {
 	pro: ['Unlimited procedures', 'Unlimited evaluations', 'API access', 'White-label ready'],
 };
 
-export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access }: Props) {
+export default function BillingPage({ currentPlan, plans, usage, subscription, has_billing_access, trial_expired }: Props) {
 	const checkoutForm = useForm<{ plan_slug: string }>({ plan_slug: '' });
 
 	const handleUpgrade = (planSlug: string) => {
@@ -82,7 +83,22 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 				<Heading title="Billing" description="Manage your subscription and usage." />
 
 				{/* ── Subscription status ─────────────────────────────────────── */}
-				{!has_billing_access && (
+				{trial_expired && (
+					<div className="rounded-xl border border-red-500/40 bg-red-500/10 px-6 py-5">
+						<div className="flex items-start gap-4">
+							<span className="text-2xl">🔒</span>
+							<div>
+								<p className="text-base font-bold text-red-300">Your free trial has ended</p>
+								<p className="mt-1 text-sm text-red-400/80">
+									Your clinic's 14-day trial has expired. All patient intake and dashboard features are
+									paused. Choose a plan below to restore full access immediately.
+								</p>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{!trial_expired && !has_billing_access && (
 					<div className="rounded-lg border border-red-500/30 bg-red-500/10 px-5 py-4">
 						<p className="text-sm font-semibold text-red-400">
 							⚠️ Your subscription has expired. New evaluations are paused until you reactivate.
@@ -176,7 +192,7 @@ export default function BillingPage({ currentPlan, plans, usage, subscription, h
 				{/* ── Plan cards ──────────────────────────────────────────────── */}
 				<div>
 					<h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-[#9B9B8E]">
-						Available Plans
+						{trial_expired ? 'Choose a plan to restore access' : 'Available Plans'}
 					</h2>
 
 					<div className="grid gap-4 md:grid-cols-3">

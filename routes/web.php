@@ -53,7 +53,19 @@ Route::middleware(['tenant'])->group(function (): void {
 //   Owner/Admin        → clinic settings, team, integrations, billing
 //   Owner/Admin/Coord/Surgeon → clinical brief download
 
-Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
+// ── Billing routes — no billing.access gate so expired tenants can upgrade ──
+// Owner/admin only (same role restriction as before).
+Route::middleware(['auth', 'verified', 'tenant', 'role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN])])
+    ->prefix('clinic')->name('clinic.')
+    ->group(function (): void {
+        Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+        Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+        Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+        Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+    });
+
+// ── All other authenticated clinic routes — gated by active billing ──────────
+Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ── Session keepalive (HIPAA inactivity timer) ────────────────────────
@@ -112,12 +124,6 @@ Route::middleware(['auth', 'verified', 'tenant'])->group(function (): void {
             Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
             Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');
             Route::post('/integrations/webhook/rotate', [IntegrationController::class, 'rotateSecret'])->name('integrations.webhook.rotate');
-
-            // ── Billing ───────────────────────────────────────────────────────
-            Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
-            Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
-            Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
-            Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
         });
 
     // ── Webhook delivery log — owner, admin, coordinator (read + retry) ───

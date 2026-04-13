@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // billable_id is a UUID (tenants.id is uuid primary key).
+        // Cashier v16 in this project uses hasMany(getForeignKey()) — which resolves
+        // to 'tenant_id' for the Tenant billable model.
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->uuid('billable_id');
-            $table->string('billable_type');
+            $table->uuid('tenant_id');
             $table->string('type');
             $table->string('stripe_id')->unique();
             $table->string('stripe_status');
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamp('ends_at')->nullable();
             $table->timestamps();
 
-            $table->index(['billable_id', 'billable_type', 'stripe_status']);
+            $table->index(['tenant_id', 'stripe_status']);
         });
     }
 

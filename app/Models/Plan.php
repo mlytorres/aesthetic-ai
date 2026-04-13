@@ -20,13 +20,15 @@ class Plan extends Model
         'max_evaluations_mo',
         'stripe_price_id',
         'features',
+        'is_public',
     ];
 
     protected function casts(): array
     {
         return [
-            'features'           => 'array',
+            'features' => 'array',
             'max_evaluations_mo' => 'integer',
+            'is_public' => 'boolean',
         ];
     }
 

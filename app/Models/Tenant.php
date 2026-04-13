@@ -34,6 +34,7 @@ class Tenant extends Model
         return [
             'settings' => 'array',
             'webhook_secret' => 'encrypted',  // stored encrypted at rest
+            'trial_ends_at' => 'datetime',
         ];
     }
 
@@ -64,22 +65,31 @@ class Tenant extends Model
     // ─── Billing helpers ──────────────────────────────────────────────────────
 
     /**
-     * Whether the tenant has an active Stripe subscription or a valid trial.
+     * Whether the tenant has active access to the platform.
      *
-     * Super-admin-created tenants with no stripe_id bypass billing (internal use).
+     * Access is granted when any of the following is true:
+     *   (a) Tenant is on the FREE plan (admin-assigned — no Stripe required).
+     *   (b) Tenant is within their 14-day trial window.
+     *   (c) Tenant has an active Stripe subscription.
      */
     public function hasBillingAccess(): bool
     {
-        // No Stripe customer yet → grace period (super admin just created them).
-        if ($this->stripe_id === null) {
+        // FREE plan — admin-assigned, no Stripe required.
+        if ($this->plan?->slug === 'free') {
             return true;
         }
 
-        // Trial not yet expired.
+        // Active trial (checks trial_ends_at column, no stripe_id required).
         if ($this->onTrial()) {
             return true;
         }
 
+        // No Stripe customer yet → cannot have an active subscription.
+        if ($this->stripe_id === null) {
+            return false;
+        }
+
+        // Active Stripe subscription.
         return $this->subscribed('default');
     }
 

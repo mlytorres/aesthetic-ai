@@ -76,6 +76,10 @@ class TeamController extends Controller
             'role' => $validated['role'],
         ]);
 
+        // email_verified_at is not in $fillable — call directly so invited staff
+        // can log in immediately without going through email verification.
+        $user->markEmailAsVerified();
+
         Mail::to($user->email)->send(new UserInviteMail(
             user: $user,
             tenant: $tenant,

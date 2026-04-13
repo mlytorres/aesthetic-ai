@@ -22,6 +22,19 @@ class PlanFactory extends Factory
             'max_procedures' => 1,
             'max_evaluations_mo' => 50,
             'stripe_price_id' => null,
+            'is_public' => true,
         ];
+    }
+
+    public function free(): static
+    {
+        return $this->state([
+            'name' => 'Free',
+            'slug' => 'free',
+            'max_procedures' => 1,
+            'max_evaluations_mo' => 20,
+            'stripe_price_id' => null,
+            'is_public' => false,
+        ]);
     }
 }
