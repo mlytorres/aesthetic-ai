@@ -35,6 +35,7 @@
 **Sprint 6 — Advanced AI Vision + Analytics:** ✅ **Complete**
 **Sprint 7 — Multi-Tenant Platform Admin:** ✅ **Complete**
 **Sprint 8 — Body Landmarks + AI Simulation:** ✅ **Complete**
+**Sprint 9 — Billing, Notifications, Webhooks, Security:** ✅ **Complete**
 
 ---
 
@@ -287,6 +288,46 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ---
 
+---
+
+### P1 Sprint 9 — Billing, Notifications, Webhooks & Security ✅ COMPLETE
+
+**Billing:**
+- [x] `BillingController` — plan list, usage, subscription status, Stripe Checkout, plan swap, Customer Portal, post-checkout sync
+- [x] Invoice history — Cashier `$tenant->invoices()` mapped to `id`, `number`, `date`, `total`, `status`, `pdf_url` (Stripe-hosted)
+- [x] `billing.tsx` — current plan card, usage bar, plan grid cards (Upgrade / Switch / Active), invoice history section
+- [x] Billing gate middleware + trial/expiry banners
+
+**Email Notifications:**
+- [x] `PatientConfirmationMail` + `emails.patient-confirmation` Blade — immediate post-submission confirmation to patient (PHI-minimal: first name + procedure only, submission reference badge)
+- [x] `SendPatientConfirmationJob` — `notifications` queue, 3 tries, guards against null/invalid email
+
+**Webhook Enhancements:**
+- [x] `IntegrationController::sendTest()` — synchronous connectivity check to webhook URL; returns `{ok, status_code, latency_ms, body}`; no delivery record created
+- [x] `webhooks.tsx` — expandable table rows with delivery ID, evaluation token (truncated), last attempt, delivered_at, full response body in `<pre>`; retry button stops row-click propagation
+
+**Theme System:**
+- [x] `luxury-dark`, `luxury-light`, `clinical` themes via CSS custom properties scoped to `data-intake-theme` attribute
+- [x] All intake pages (`WizardShell`, all 10 step files) migrated from hardcoded hex to CSS variable references
+- [x] `settings.tsx` — "Intake Page Theme" selector (3 buttons: Luxury Dark, Luxury Light, Clinical)
+- [x] `integrations.tsx` — "Widget Theme" label with helper text linking to Clinic Settings
+
+**Landing Page & Auth:**
+- [x] Self-service tenant registration as primary CTA; "Request a Demo" as secondary for enterprise
+- [x] Welcome page: stats bar, How It Works (3-step), 6-card features grid, security/HIPAA section, demo CTA section
+
+**Security & Rate Limiting:**
+- [x] Named Laravel rate limiters via `AppServiceProvider::configureRateLimiters()`
+  - `intake.evaluation.create` — 3/10 min per IP
+  - `intake.evaluation.submit` — 3/hour per IP
+  - `intake.photos` — 15/10 min per token+IP
+  - `intake.quiz` — 30/min per token+IP
+  - `access-requests` — 5/hour per IP
+- [x] Per-email+procedure+tenant 24h cooldown in `EvaluationController::submit()` — prevents duplicate submissions within 24 hours; excludes draft and failed evaluations
+- [x] 8 tests in `IntakeRateLimitTest.php`
+
+---
+
 ## Phase 2 — Foundation
 
 **Theme:** Multi-procedure, multi-tenant, revenue model live.
@@ -311,16 +352,24 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [ ] Custom domain support (CNAME → AestheticAI)
 - [ ] Subdomain provisioning automation (DNS record creation on tenant create)
 
-**Billing:** ⬜ *Not started*
-- [ ] Stripe integration (subscription plans)
-- [ ] Plans: Starter (1 procedure, 50 evals/mo) → Growth (5 procedures, 200/mo) → Pro (unlimited)
-- [ ] Usage metering (evaluations counted per billing period)
-- [ ] Invoice generation + dunning management
-- [ ] Plan enforcement in middleware (block intake if over limit)
+**Billing:** ✅ *Complete (Sprint 9)*
+- [x] Stripe integration via Laravel Cashier — Starter / Growth / Pro monthly plans
+- [x] Stripe Checkout — new subscription flow (hosted page)
+- [x] Plan swaps — prorated immediate plan changes for active subscribers
+- [x] Stripe Customer Portal — self-service card/invoice management
+- [x] Invoice history — past invoices with PDF download links in billing page
+- [x] Usage metering — `evals_this_month` + `procedures_count` displayed with progress bar
+- [x] Plan enforcement middleware — blocks new evaluations when trial expired or subscription lapsed
+- [x] Trial banner — amber notice with trial end date; red paywall for expired accounts
+- [x] Webhook plan sync — `WebhookReceived` listener syncs `plan_id` from Stripe events
+- [ ] Usage overage alerts — email Owner when eval count reaches 80% of plan limit
+- [ ] Annual billing — yearly plans with discount; Stripe annual price IDs
+- [ ] Promo codes — Stripe coupon support in checkout flow
 
 **CRM Integration — Phase 2:** 🚧 *Partially delivered*
 - [x] Generic webhook system (signed `X-AestheticAI-Signature` HMAC-SHA256 payload)
-- [x] Webhook delivery log + retry UI in dashboard (`/clinic/webhooks`)
+- [x] Webhook delivery log + retry UI in dashboard (`/clinic/webhooks`) — expandable response bodies, HTTP status, latency, attempt count
+- [x] Test webhook endpoint — synchronous connectivity check from integrations page (shows status code + latency inline)
 - [ ] HubSpot native integration (contact creation + property sync)
 - [ ] Nextech webhook (lead creation)
 
@@ -425,13 +474,19 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🔥 1 | Stripe billing + plan enforcement (Starter / Growth / Pro) | Phase 2 | Large |
-| 🔥 2 | Tenant self-registration flow (public sign-up → auto-onboard) | Phase 2 | Medium |
-| 3 | CloudWatch / production alerts | Infra | Small |
-| 4 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
-| 5 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
-| 6 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| 🔥 1 | Usage overage alerts — email Owner at 80% eval cap | Phase 2 | Small |
+| 🔥 2 | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Small |
+| 3 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
+| 4 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
+| 5 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| 6 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
 | 7 | Multilingual support (Spanish — Miami market priority) | Backlog | Large |
+| ✅ | Stripe billing — Checkout, plan swaps, Customer Portal, invoices | Phase 2 | Done |
+| ✅ | Tenant self-registration + "Request a Demo" enterprise CTA | Phase 2 | Done |
+| ✅ | Patient confirmation email (immediate post-submission) | Phase 2 | Done |
+| ✅ | Webhook delivery log expandable rows + test endpoint | Phase 2 | Done |
+| ✅ | Intake rate limiting (named limiters + 24h email cooldown) | Security | Done |
+| ✅ | Intake theme system (luxury-dark, luxury-light, clinical) | Phase 2 | Done |
 | ✅ | GitHub Actions CI (Pest + tsc + Pint + ESLint) | Infra | Done |
 | ✅ | Shareable secure link for simulation result | Phase 3 | Done |
 | ✅ | Full procedure library (26 procedures via ProcedureRegistry) | Phase 2 | Done |

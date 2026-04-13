@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Facades\TenantContext;
 
 /**
  * Handles the patient evaluation lifecycle during intake.
@@ -108,9 +109,29 @@ class EvaluationController extends Controller
             abort(403, 'Security validation failed. Please refresh the page and try again.');
         }
 
-        // Create or find patient by email hash (deduplication)
+        // ── Per-email+procedure+tenant cooldown (24 h) ────────────────────────
+        // Prevent the same email address from submitting the same procedure at
+        // the same clinic more than once per day — bot loops and accidental
+        // double-submits included.
         $emailHash = Patient::hashEmail($validated['patient']['email']);
+        $tenantId = TenantContext::get()->id;
 
+        $recentDuplicate = Evaluation::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('procedure_slug', $evaluation->procedure_slug)
+            ->whereNotIn('status', [Evaluation::STATUS_DRAFT, Evaluation::STATUS_FAILED])
+            ->whereHas('patient', fn ($q) => $q->where('email_hash', $emailHash))
+            ->where('created_at', '>=', now()->subHours(24))
+            ->where('id', '!=', $evaluation->id)
+            ->exists();
+
+        if ($recentDuplicate) {
+            return response()->json([
+                'message' => 'You have already submitted an evaluation for this procedure recently. Please wait 24 hours before submitting again.',
+            ], 429);
+        }
+
+        // Create or find patient by email hash (deduplication)
         $patient = Patient::findByEmail($validated['patient']['email'])
             ?? Patient::find($evaluation->patient_id);
 

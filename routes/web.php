@@ -35,7 +35,9 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])->name('access-requests.store');
+Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])
+    ->middleware(['throttle:access-requests'])
+    ->name('access-requests.store');
 
 // ─── Magic link authentication ────────────────────────────────────────────────
 // One-time coordinator login links sent in evaluation notification emails.
@@ -160,14 +162,15 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
     // Evaluation lifecycle (JSON responses — not Inertia redirects)
     Route::post('/evaluations', [EvaluationController::class, 'store'])
-        ->middleware(['throttle:5,1', 'plan.limits'])
+        ->middleware(['throttle:intake.evaluation.create', 'plan.limits'])
         ->name('evaluations.store');
 
     Route::post('/evaluations/{token}/quiz', [EvaluationController::class, 'quiz'])
+        ->middleware(['throttle:intake.quiz'])
         ->name('evaluations.quiz');
 
     Route::post('/evaluations/{token}/submit', [EvaluationController::class, 'submit'])
-        ->middleware(['throttle:5,1', 'plan.limits'])
+        ->middleware(['throttle:intake.evaluation.submit', 'plan.limits'])
         ->name('evaluations.submit');
 
     // Plan limit exceeded — shown when a clinic's eval cap or subscription has lapsed.
@@ -175,6 +178,7 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 
     // Photo upload
     Route::post('/evaluations/{token}/photos', [PhotoController::class, 'store'])
+        ->middleware(['throttle:intake.photos'])
         ->name('evaluations.photos.store');
 
     // Patient Beauty Roadmap PDF (no auth — gated by evaluation token)

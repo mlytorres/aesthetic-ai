@@ -10,9 +10,12 @@ use App\Services\AuditLog;
 use App\Services\SecureFileService;
 use App\Services\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Cashier;
@@ -42,6 +45,44 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(WebhookReceived::class, HandleStripeSubscriptionUpdated::class);
 
         $this->configureDefaults();
+        $this->configureRateLimiters();
+    }
+
+    /**
+     * Define named rate limiters for intake and public-facing endpoints.
+     *
+     * - intake.evaluation.create  → 3 new evaluations per 10 min per IP
+     * - intake.evaluation.submit  → 3 final submits per hour per IP
+     * - intake.photos             → 15 photo uploads per 10 min per token+IP
+     * - intake.quiz               → 30 quiz saves per minute per token+IP
+     * - access-requests           → 5 demo/access requests per hour per IP
+     */
+    protected function configureRateLimiters(): void
+    {
+        RateLimiter::for('intake.evaluation.create', function (Request $request): Limit {
+            return Limit::perMinutes(10, 3)->by($request->ip());
+        });
+
+        RateLimiter::for('intake.evaluation.submit', function (Request $request): Limit {
+            return Limit::perHour(3)->by($request->ip());
+        });
+
+        RateLimiter::for('intake.photos', function (Request $request): Limit {
+            // Keyed by token (from route parameter) + IP to prevent cross-token abuse.
+            $token = $request->route('token') ?? $request->ip();
+
+            return Limit::perMinutes(10, 15)->by($token.'|'.$request->ip());
+        });
+
+        RateLimiter::for('intake.quiz', function (Request $request): Limit {
+            $token = $request->route('token') ?? $request->ip();
+
+            return Limit::perMinute(30)->by($token.'|'.$request->ip());
+        });
+
+        RateLimiter::for('access-requests', function (Request $request): Limit {
+            return Limit::perHour(5)->by($request->ip());
+        });
     }
 
     protected function configureDefaults(): void
