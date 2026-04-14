@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\PlatformController;
+use App\Http\Controllers\Admin\QuizAdminController;
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Clinic\BillingController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
 use App\Http\Controllers\Intake\SimulationShareController;
+use App\Http\Controllers\Patient\PatientPortalController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -199,7 +201,7 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
         ->name('simulation.share');
 
     // Patient Portal (Status Check & Action Hub)
-    Route::get('/portal/{token}', [\App\Http\Controllers\Patient\PatientPortalController::class, 'show'])
+    Route::get('/portal/{token}', [PatientPortalController::class, 'show'])
         ->name('patient.portal');
 });
 
@@ -227,6 +229,14 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
 
     // Impersonation — at /admin/users/{user}/impersonate (outside the tenants prefix).
     Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'impersonate'])->name('users.impersonate');
+
+    // ── Quiz editor — global quiz management ──────────────────────────────
+    Route::prefix('quizzes')->name('quizzes.')->group(function (): void {
+        Route::get('/', [QuizAdminController::class, 'index'])->name('index');
+        Route::get('/{procedureSlug}', [QuizAdminController::class, 'show'])->name('show');
+        Route::patch('/{procedureSlug}', [QuizAdminController::class, 'update'])->name('update');
+        Route::post('/{procedureSlug}/versions/{definitionId}/activate', [QuizAdminController::class, 'activate'])->name('activate');
+    });
 });
 
 // Stop impersonating — accessible while logged in as a tenant user (no super-admin middleware).

@@ -1219,11 +1219,1264 @@ class ProcedureSeeder extends Seeder
             ]
         );
 
+        // ─── Quiz: Gynecomastia ────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'gynecomastia', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'reduce_size',    'label' => 'Reduce chest size and fullness'],
+                            ['value' => 'flat_chest',     'label' => 'Achieve a flatter, more masculine chest'],
+                            ['value' => 'remove_skin',    'label' => 'Remove excess or sagging skin'],
+                            ['value' => 'definition',     'label' => 'Improve chest muscle definition'],
+                            ['value' => 'asymmetry',      'label' => 'Correct asymmetry between sides'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_tissue_type',
+                        'type' => 'select',
+                        'label' => 'How would you describe the tissue in your chest?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'glandular', 'label' => 'Firm tissue behind the nipple (glandular)'],
+                            ['value' => 'fatty',     'label' => 'Soft, fatty tissue throughout the chest'],
+                            ['value' => 'mixed',     'label' => 'Both firm and fatty tissue'],
+                            ['value' => 'unsure',    'label' => 'Not sure'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_cause',
+                        'type' => 'select',
+                        'label' => 'Do you know the likely cause of your gynecomastia?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'puberty',     'label' => 'Developed during puberty'],
+                            ['value' => 'steroids',    'label' => 'Anabolic steroid or supplement use'],
+                            ['value' => 'medication',  'label' => 'Prescription medication side-effect'],
+                            ['value' => 'weight',      'label' => 'Weight fluctuation'],
+                            ['value' => 'unknown',     'label' => 'Unknown / no clear cause'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_weight_stable']],
+                    ],
+                    [
+                        'id' => 'q_weight_stable',
+                        'type' => 'boolean',
+                        'label' => 'Has your weight been stable for the past 6 months or more?',
+                        'required' => true,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $6,000'],
+                            ['value' => '10k_15k',   'label' => '$6,000 – $10,000'],
+                            ['value' => '15k_25k',   'label' => '$10,000 – $15,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $15,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Abdominal Etching ───────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'abdominal_etching', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for abdominal etching?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'six_pack',       'label' => 'Define a six-pack appearance'],
+                            ['value' => 'waist',          'label' => 'Slim and define the waist'],
+                            ['value' => 'athletic',       'label' => 'Achieve an athletic, sculpted look'],
+                            ['value' => 'linea_alba',     'label' => 'Define the linea alba (central line)'],
+                            ['value' => 'obliques',       'label' => 'Highlight oblique muscles'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_fitness_level',
+                        'type' => 'select',
+                        'label' => 'How would you describe your current fitness level?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'athletic',  'label' => 'Athletic — train 4+ days per week'],
+                            ['value' => 'active',    'label' => 'Active — exercise regularly'],
+                            ['value' => 'moderate',  'label' => 'Moderate — occasional exercise'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_weight_stable',
+                        'type' => 'boolean',
+                        'label' => 'Has your weight been stable for the past 6 months or more?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_timeline'],
+                            'false' => ['next' => 'q_weight_note'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_weight_note',
+                        'type' => 'text',
+                        'label' => 'Etching results are best when weight is stable. Please share more.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $6,000'],
+                            ['value' => '10k_15k',   'label' => '$6,000 – $10,000'],
+                            ['value' => '15k_25k',   'label' => '$10,000 – $15,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $15,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Liposuction (general) ───────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'liposuction', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'Which areas would you like to treat?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'abdomen',     'label' => 'Abdomen'],
+                            ['value' => 'flanks',      'label' => 'Flanks / love handles'],
+                            ['value' => 'back',        'label' => 'Back / bra rolls'],
+                            ['value' => 'inner_thighs', 'label' => 'Inner thighs'],
+                            ['value' => 'outer_thighs', 'label' => 'Outer thighs'],
+                            ['value' => 'arms',        'label' => 'Arms'],
+                            ['value' => 'chin_neck',   'label' => 'Chin / neck'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_skin_laxity',
+                        'type' => 'select',
+                        'label' => 'How would you describe your skin elasticity in the target area(s)?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'excellent', 'label' => 'Excellent — firm and elastic'],
+                            ['value' => 'mild',      'label' => 'Mild laxity — some looseness'],
+                            ['value' => 'moderate',  'label' => 'Moderate laxity — noticeable looseness'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_weight_stable',
+                        'type' => 'boolean',
+                        'label' => 'Has your weight been stable for the past 12 months?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_timeline'],
+                            'false' => ['next' => 'q_weight_note'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_weight_note',
+                        'type' => 'text',
+                        'label' => 'Liposuction results are best when weight is stable. Please tell us more.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $5,000'],
+                            ['value' => '10k_15k',   'label' => '$5,000 – $10,000'],
+                            ['value' => '15k_25k',   'label' => '$10,000 – $20,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $20,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Reverse BBL ─────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'reverse_bbl', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for a Reverse BBL?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'reduce_volume',  'label' => 'Reduce excess buttock volume'],
+                            ['value' => 'reshape',        'label' => 'Reshape and improve contour'],
+                            ['value' => 'waist_hip',      'label' => 'Improve waist-to-hip ratio'],
+                            ['value' => 'upper_body',     'label' => 'Transfer fat to enhance upper body or hips'],
+                            ['value' => 'flatten',        'label' => 'Create a flatter, more athletic silhouette'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_prior_bbl',
+                        'type' => 'boolean',
+                        'label' => 'Have you previously had a Brazilian Butt Lift (BBL)?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_prior_details'],
+                            'false' => ['next' => 'q_weight_stable'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_prior_details',
+                        'type' => 'text',
+                        'label' => 'Please tell us about your previous BBL (when, surgeon, any concerns).',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_weight_stable']],
+                    ],
+                    [
+                        'id' => 'q_weight_stable',
+                        'type' => 'boolean',
+                        'label' => 'Has your weight been stable for the past 6 months or more?',
+                        'required' => true,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $8,000'],
+                            ['value' => '10k_15k',   'label' => '$8,000 – $15,000'],
+                            ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: J Plasma ────────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'j_plasma', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'Which areas would you like to tighten?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'arms',     'label' => 'Arms / underarm skin'],
+                            ['value' => 'abdomen',  'label' => 'Abdomen / stomach'],
+                            ['value' => 'thighs',   'label' => 'Inner or outer thighs'],
+                            ['value' => 'neck',     'label' => 'Neck / chin area'],
+                            ['value' => 'back',     'label' => 'Back / flanks'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_prior_lipo',
+                        'type' => 'boolean',
+                        'label' => 'Have you previously had liposuction in the target area(s)?',
+                        'required' => true,
+                        'branches' => ['*' => ['next' => 'q_skin_laxity']],
+                    ],
+                    [
+                        'id' => 'q_skin_laxity',
+                        'type' => 'select',
+                        'label' => 'How would you describe the skin laxity in the target area(s)?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'mild',     'label' => 'Mild — slightly loose or crepey'],
+                            ['value' => 'moderate', 'label' => 'Moderate — noticeably loose skin'],
+                            ['value' => 'severe',   'label' => 'Significant — very loose or hanging skin'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $5,000'],
+                            ['value' => '10k_15k',   'label' => '$5,000 – $10,000'],
+                            ['value' => '15k_25k',   'label' => '$10,000 – $20,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $20,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Arm Lipo & Lift / Arm & Thigh Lift / Back Lipo & Lift ──────
+
+        foreach (['arm_lipo_lift', 'arm_thigh_lift', 'back_liposuction_lift'] as $slug) {
+            $areaLabel = match ($slug) {
+                'arm_lipo_lift' => 'arms',
+                'arm_thigh_lift' => 'arms and thighs',
+                'back_liposuction_lift' => 'back',
+            };
+
+            QuizDefinition::updateOrCreate(
+                ['procedure_slug' => $slug, 'is_active' => true],
+                [
+                    'version' => 1,
+                    'is_active' => true,
+                    'questions' => [
+                        [
+                            'id' => 'q_concerns',
+                            'type' => 'multiselect',
+                            'label' => "What are your primary goals for your {$areaLabel}?",
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'loose_skin',   'label' => 'Remove loose or sagging skin'],
+                                ['value' => 'remove_fat',   'label' => 'Remove excess fat'],
+                                ['value' => 'definition',   'label' => 'Improve contour and definition'],
+                                ['value' => 'post_wl',      'label' => 'Address post-weight-loss changes'],
+                                ['value' => 'asymmetry',    'label' => 'Correct asymmetry'],
+                            ],
+                            'branches' => [],
+                        ],
+                        [
+                            'id' => 'q_weight_loss',
+                            'type' => 'boolean',
+                            'label' => 'Have you experienced significant weight loss (20+ lbs) in the past 2 years?',
+                            'required' => true,
+                            'branches' => ['*' => ['next' => 'q_weight_stable']],
+                        ],
+                        [
+                            'id' => 'q_weight_stable',
+                            'type' => 'boolean',
+                            'label' => 'Is your weight currently stable (past 6 months)?',
+                            'required' => true,
+                            'branches' => [
+                                'true' => ['next' => 'q_timeline'],
+                                'false' => ['next' => 'q_weight_note'],
+                            ],
+                        ],
+                        [
+                            'id' => 'q_weight_note',
+                            'type' => 'text',
+                            'label' => 'Lift procedures are best performed once weight is stable. Please tell us more.',
+                            'required' => false,
+                            'branches' => ['*' => ['next' => 'q_timeline']],
+                        ],
+                        [
+                            'id' => 'q_timeline',
+                            'type' => 'select',
+                            'label' => 'What is your timeline for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'asap',        'label' => 'As soon as possible'],
+                                ['value' => '3_months',    'label' => 'Within 3 months'],
+                                ['value' => '6_months',    'label' => 'Within 6 months'],
+                                ['value' => 'researching', 'label' => 'Still researching'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_budget']],
+                        ],
+                        [
+                            'id' => 'q_budget',
+                            'type' => 'select',
+                            'label' => 'What is your approximate budget for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'under_10k', 'label' => 'Under $8,000'],
+                                ['value' => '10k_15k',   'label' => '$8,000 – $15,000'],
+                                ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
+                                ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_referral']],
+                        ],
+                        [
+                            'id' => 'q_referral',
+                            'type' => 'select',
+                            'label' => 'How did you hear about us?',
+                            'required' => false,
+                            'options' => [
+                                ['value' => 'instagram', 'label' => 'Instagram'],
+                                ['value' => 'google',    'label' => 'Google Search'],
+                                ['value' => 'referral',  'label' => 'Friend or family'],
+                                ['value' => 'tiktok',    'label' => 'TikTok'],
+                                ['value' => 'other',     'label' => 'Other'],
+                            ],
+                            'branches' => [],
+                        ],
+                    ],
+                ]
+            );
+        }
+
+        // ─── Quiz: Axillary Liposuction ────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'axillary_liposuction', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'armpit_fat',    'label' => 'Reduce excess fat in the armpit area'],
+                            ['value' => 'bra_bulge',     'label' => 'Eliminate bra or underarm bulge'],
+                            ['value' => 'fit_clothing',  'label' => 'Improve fit of clothing and swimwear'],
+                            ['value' => 'definition',    'label' => 'Improve overall arm and chest contour'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_weight_stable',
+                        'type' => 'boolean',
+                        'label' => 'Has your weight been stable for the past 6 months or more?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_timeline'],
+                            'false' => ['next' => 'q_weight_note'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_weight_note',
+                        'type' => 'text',
+                        'label' => 'Liposuction results are best when weight is stable. Please tell us more.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $4,000'],
+                            ['value' => '10k_15k',   'label' => '$4,000 – $7,000'],
+                            ['value' => '15k_25k',   'label' => '$7,000 – $12,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $12,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Labiaplasty ─────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'labiaplasty', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary reasons for considering this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'discomfort',    'label' => 'Physical discomfort during activity or clothing'],
+                            ['value' => 'aesthetic',     'label' => 'Aesthetic concerns — size or shape'],
+                            ['value' => 'asymmetry',     'label' => 'Asymmetry between sides'],
+                            ['value' => 'post_childbirth', 'label' => 'Changes following childbirth'],
+                            ['value' => 'hygiene',       'label' => 'Hygiene or irritation concerns'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_functional',
+                        'type' => 'select',
+                        'label' => 'Is your concern primarily functional, aesthetic, or both?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'functional',  'label' => 'Primarily functional — discomfort or interference with activity'],
+                            ['value' => 'aesthetic',   'label' => 'Primarily aesthetic'],
+                            ['value' => 'both',        'label' => 'Both functional and aesthetic'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $3,000'],
+                            ['value' => '10k_15k',   'label' => '$3,000 – $6,000'],
+                            ['value' => '15k_25k',   'label' => '$6,000 – $10,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $10,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Scar Revision ───────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'scar_revision', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What type of scar are you looking to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'hypertrophic', 'label' => 'Raised / thickened scar (hypertrophic)'],
+                            ['value' => 'keloid',       'label' => 'Keloid — scar that grew beyond the wound'],
+                            ['value' => 'surgical',     'label' => 'Surgical scar (from prior procedure)'],
+                            ['value' => 'contracture',  'label' => 'Tight or contracture scar limiting movement'],
+                            ['value' => 'aesthetic',    'label' => 'Visible scar affecting appearance'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_scar_age',
+                        'type' => 'select',
+                        'label' => 'How old is the scar you would like to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'recent',    'label' => 'Less than 1 year old'],
+                            ['value' => '1_3_years', 'label' => '1–3 years old'],
+                            ['value' => 'older',     'label' => 'More than 3 years old'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_prior_treatment',
+                        'type' => 'boolean',
+                        'label' => 'Have you previously had any treatment for this scar (steroid injections, laser, silicone sheets)?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_prior_details'],
+                            'false' => ['next' => 'q_timeline'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_prior_details',
+                        'type' => 'text',
+                        'label' => 'Please briefly describe the previous treatment(s) and results.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $2,000'],
+                            ['value' => '10k_15k',   'label' => '$2,000 – $5,000'],
+                            ['value' => '15k_25k',   'label' => '$5,000 – $10,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $10,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Face and Neck Lift ──────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'face_and_neck_lift', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'Which concerns would you like to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'neck_laxity',  'label' => 'Neck laxity / "turkey neck"'],
+                            ['value' => 'jowling',      'label' => 'Jowling / lower face sagging'],
+                            ['value' => 'chin_fat',     'label' => 'Excess fat under the chin'],
+                            ['value' => 'jaw',          'label' => 'Loss of jaw definition'],
+                            ['value' => 'overall',      'label' => 'Overall facial and neck aging'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_result_preference',
+                        'type' => 'select',
+                        'label' => 'What level of rejuvenation are you looking for?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'subtle',      'label' => 'Subtle — refreshed, natural look'],
+                            ['value' => 'moderate',    'label' => 'Moderate — noticeably younger'],
+                            ['value' => 'significant', 'label' => 'Significant transformation'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_smoker',
+                        'type' => 'boolean',
+                        'label' => 'Do you currently smoke, vape, or use tobacco products?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_smoker_note'],
+                            'false' => ['next' => 'q_timeline'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_smoker_note',
+                        'type' => 'text',
+                        'label' => 'Smoking significantly affects healing. Please share any relevant context.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $15,000'],
+                            ['value' => '10k_15k',   'label' => '$15,000 – $25,000'],
+                            ['value' => '15k_25k',   'label' => '$25,000 – $40,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $40,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Eyelid Surgery (Blepharoplasty) ─────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'eyelid_surgery', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'Which concerns would you like to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'upper_sagging',  'label' => 'Sagging or drooping upper eyelids'],
+                            ['value' => 'upper_hooding',  'label' => 'Excess skin hooding over upper lids'],
+                            ['value' => 'lower_bags',     'label' => 'Under-eye bags or puffiness'],
+                            ['value' => 'lower_hollows',  'label' => 'Under-eye hollowing or dark circles'],
+                            ['value' => 'asymmetry',      'label' => 'Asymmetry between eyes'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_area',
+                        'type' => 'select',
+                        'label' => 'Which eyelids are you looking to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'upper_only', 'label' => 'Upper eyelids only'],
+                            ['value' => 'lower_only', 'label' => 'Lower eyelids only'],
+                            ['value' => 'both',       'label' => 'Both upper and lower'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_vision_impact',
+                        'type' => 'boolean',
+                        'label' => 'Do the drooping eyelids affect your field of vision?',
+                        'required' => true,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $4,000'],
+                            ['value' => '10k_15k',   'label' => '$4,000 – $8,000'],
+                            ['value' => '15k_25k',   'label' => '$8,000 – $15,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $15,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Chin Lipo ───────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'chin_lipo', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for chin / neck liposuction?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'double_chin', 'label' => 'Eliminate double chin'],
+                            ['value' => 'jaw_define',  'label' => 'Define the jawline'],
+                            ['value' => 'neck_slim',   'label' => 'Slim the neck profile'],
+                            ['value' => 'profile',     'label' => 'Improve side profile appearance'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_skin_laxity',
+                        'type' => 'select',
+                        'label' => 'How would you describe the skin in the chin / neck area?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'firm',     'label' => 'Firm and elastic'],
+                            ['value' => 'mild',     'label' => 'Mildly loose'],
+                            ['value' => 'moderate', 'label' => 'Noticeably loose or saggy'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $3,000'],
+                            ['value' => '10k_15k',   'label' => '$3,000 – $6,000'],
+                            ['value' => '15k_25k',   'label' => '$6,000 – $10,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $10,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Bichectomy ──────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'bichectomy', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What are your primary goals for bichectomy?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'slim_face',    'label' => 'Slim and contour the face'],
+                            ['value' => 'cheekbones',   'label' => 'Enhance cheekbone definition'],
+                            ['value' => 'less_round',   'label' => 'Reduce facial roundness'],
+                            ['value' => 'symmetry',     'label' => 'Improve facial symmetry'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_result_preference',
+                        'type' => 'select',
+                        'label' => 'What degree of change are you looking for?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'subtle',      'label' => 'Subtle — slight refinement'],
+                            ['value' => 'moderate',    'label' => 'Moderate — noticeable contour change'],
+                            ['value' => 'significant', 'label' => 'Significant — dramatic slimming'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $3,000'],
+                            ['value' => '10k_15k',   'label' => '$3,000 – $5,000'],
+                            ['value' => '15k_25k',   'label' => '$5,000 – $8,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $8,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
+        // ─── Quiz: Otoplasty ───────────────────────────────────────────────────
+
+        QuizDefinition::updateOrCreate(
+            ['procedure_slug' => 'otoplasty', 'is_active' => true],
+            [
+                'version' => 1,
+                'is_active' => true,
+                'questions' => [
+                    [
+                        'id' => 'q_concerns',
+                        'type' => 'multiselect',
+                        'label' => 'What concerns would you like to address?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'prominent',   'label' => 'Prominent or protruding ears'],
+                            ['value' => 'asymmetry',   'label' => 'Asymmetry between ears'],
+                            ['value' => 'size',        'label' => 'Ear size — too large'],
+                            ['value' => 'shape',       'label' => 'Ear shape or missing folds'],
+                            ['value' => 'post_trauma', 'label' => 'Post-trauma or injury correction'],
+                        ],
+                        'branches' => [],
+                    ],
+                    [
+                        'id' => 'q_area',
+                        'type' => 'select',
+                        'label' => 'Which ear(s) require correction?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'both',  'label' => 'Both ears'],
+                            ['value' => 'right', 'label' => 'Right ear only'],
+                            ['value' => 'left',  'label' => 'Left ear only'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_prior_surgery']],
+                    ],
+                    [
+                        'id' => 'q_prior_surgery',
+                        'type' => 'boolean',
+                        'label' => 'Have you had any previous ear surgery?',
+                        'required' => true,
+                        'branches' => [
+                            'true' => ['next' => 'q_prior_details'],
+                            'false' => ['next' => 'q_timeline'],
+                        ],
+                    ],
+                    [
+                        'id' => 'q_prior_details',
+                        'type' => 'text',
+                        'label' => 'Please briefly describe your previous ear surgery.',
+                        'required' => false,
+                        'branches' => ['*' => ['next' => 'q_timeline']],
+                    ],
+                    [
+                        'id' => 'q_timeline',
+                        'type' => 'select',
+                        'label' => 'What is your timeline for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'asap',        'label' => 'As soon as possible'],
+                            ['value' => '3_months',    'label' => 'Within 3 months'],
+                            ['value' => '6_months',    'label' => 'Within 6 months'],
+                            ['value' => 'researching', 'label' => 'Still researching'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_budget']],
+                    ],
+                    [
+                        'id' => 'q_budget',
+                        'type' => 'select',
+                        'label' => 'What is your approximate budget for this procedure?',
+                        'required' => true,
+                        'options' => [
+                            ['value' => 'under_10k', 'label' => 'Under $4,000'],
+                            ['value' => '10k_15k',   'label' => '$4,000 – $7,000'],
+                            ['value' => '15k_25k',   'label' => '$7,000 – $12,000'],
+                            ['value' => 'over_25k',  'label' => 'Over $12,000'],
+                        ],
+                        'branches' => ['*' => ['next' => 'q_referral']],
+                    ],
+                    [
+                        'id' => 'q_referral',
+                        'type' => 'select',
+                        'label' => 'How did you hear about us?',
+                        'required' => false,
+                        'options' => [
+                            ['value' => 'instagram', 'label' => 'Instagram'],
+                            ['value' => 'google',    'label' => 'Google Search'],
+                            ['value' => 'referral',  'label' => 'Friend or family'],
+                            ['value' => 'tiktok',    'label' => 'TikTok'],
+                            ['value' => 'other',     'label' => 'Other'],
+                        ],
+                        'branches' => [],
+                    ],
+                ],
+            ]
+        );
+
         // ─── Generate Generic Quizzes for remaining procedures ─────────────────
 
         $mvpSlugs = [
             'rhinoplasty', 'bbl', 'lipo_360', 'breast_augmentation', 'facelift',
             'tummy_tuck', 'mommy_makeover', 'breast_lift', 'breast_reduction', 'skinny_bbl',
+            'gynecomastia', 'abdominal_etching', 'liposuction', 'reverse_bbl', 'j_plasma',
+            'arm_lipo_lift', 'arm_thigh_lift', 'back_liposuction_lift', 'axillary_liposuction',
+            'labiaplasty', 'scar_revision', 'face_and_neck_lift', 'eyelid_surgery',
+            'chin_lipo', 'bichectomy', 'otoplasty',
         ];
 
         foreach ($procedures as $data) {

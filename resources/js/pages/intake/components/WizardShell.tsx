@@ -31,11 +31,18 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
             <header className="flex items-center justify-between border-b border-[var(--intake-border-xs)] px-6 py-4">
                 <div className="flex items-center gap-3">
                     {clinicLogo ? (
-                        <img
-                            src={clinicLogo}
-                            alt={clinicName}
-                            className="h-8 w-auto object-contain"
-                        />
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-9 items-center justify-center rounded border border-white/10 bg-white px-2 py-1 shadow-sm shrink-0">
+                                <img
+                                    src={clinicLogo}
+                                    alt={clinicName}
+                                    className="h-full w-auto max-w-[120px] object-contain"
+                                />
+                            </div>
+                            <span className="text-sm font-semibold tracking-wide text-[var(--intake-fg)] hidden sm:block">
+                                {clinicName}
+                            </span>
+                        </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             {/* Wordmark fallback */}
