@@ -34,7 +34,7 @@ class SendUsageOverageAlertJob implements ShouldQueue
 
     public int $timeout = 30;
 
-    public function __construct(private readonly int $tenantId) {}
+    public function __construct(private readonly string $tenantId) {}
 
     public function handle(): void
     {
