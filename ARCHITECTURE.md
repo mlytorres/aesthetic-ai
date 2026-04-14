@@ -138,11 +138,20 @@ photos
 ├── id
 ├── tenant_id
 ├── evaluation_id
-├── type                    -- front|left_profile|right_profile|additional
+├── type                    -- front|left_profile|right_profile|back|left_side|right_side|
+│                              abdomen_front|abdomen_side|chest_front|eyes_closed|arm_front|additional
 ├── s3_key                  -- Encrypted path in S3
 ├── quality_score           -- 0-100 from validation job
 ├── analysis_status         -- pending|complete|failed
 └── taken_at
+
+quiz_definitions            -- Global (no tenant_id) — managed by platform via QuizAdminController
+├── id (uuid)
+├── procedure_slug          -- FK → procedures.slug
+├── version                 -- Integer, increments on each save
+├── questions (jsonb)       -- [{id, type, label, required, options[], branches{}}]
+├── is_active               -- Unique(procedure_slug, is_active) — one active + one archived max
+└── timestamps
 
 audit_log_entries           -- Append-only, never deleted
 ├── id
@@ -397,7 +406,7 @@ ECS Fargate (Laravel + Octane)
 
 ### ADR-006: ProcedureRegistry as Single Source of Truth
 
-**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `AppServicesProcedureRegistry` as `public const` arrays.
+**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `App\Services\ProcedureRegistry` as `public const` arrays.
 
 **Rationale:**
 
@@ -411,7 +420,51 @@ ECS Fargate (Laravel + Octane)
 1.  Add slug to `BODY_PROCEDURES` or `FACE_PROCEDURES` in `ProcedureRegistry`.
 2.  Add a prompt method in `GenerateSimulationJob::buildPrompt()`.
 3.  Add a recommendations method in `GenerateBasicRecommendationsJob`.
-4.  Add the procedure row in `ProcedureSeeder`.
+4.  Add the procedure row + photo protocol + quiz in `ProcedureSeeder` (or use the Quiz Editor at `/admin/quizzes`).
+
+---
+
+### ADR-007: Procedure-Specific Photo Slots (PhotoSlot over PhotoType string)
+
+**Decision:** The `photo_protocol` column stores rich slot objects `{type, required, guide_label}` rather than bare type strings. `ProcedureResource` transforms these into `PhotoSlot[]` with `{type, label, tip}` for the frontend.
+
+**Rationale:**
+
+-   Each procedure needs different patient instructions for the same physical angle (a BBL rear shot vs. a scar revision rear shot have different guidance). Embedding guidance in the slot avoids a parallel lookup table.
+-   The frontend `PhotoCapture.tsx` is fully data-driven — no hardcoded labels or tips.
+-   `Procedure::simulationPhotoType()` derives the primary AI photo from the first required slot, keeping the simulation job in sync with the seeder automatically without a separate DB column.
+
+**PhotoType values (12 total):**
+
+`front`, `left_profile`, `right_profile`, `back`, `left_side`, `right_side`, `abdomen_front`, `abdomen_side`, `chest_front`, `eyes_closed`, `arm_front`, `additional` (legacy — kept for backward compatibility)
+
+---
+
+### ADR-008: Global Quiz Versioning with Single-Archive Constraint
+
+**Decision:** `quiz_definitions` has a `UNIQUE(procedure_slug, is_active)` constraint, allowing at most one active and one archived (previous) version per procedure. Saving via the Quiz Editor creates a new version record.
+
+**Rationale:**
+
+-   The unique constraint was intentional to enforce one canonical quiz per procedure and prevent stale definitions from being served.
+-   Keeping exactly one rollback copy (the previous version) is sufficient for operational needs (typo correction, accidental deletion) without relaxing the constraint or adding a migration.
+-   The `QuizAdminController::update()` three-step pattern (delete archive → set active to inactive → insert new active) satisfies the constraint while preserving history.
+
+**Version swap order (must be respected to avoid constraint violations):**
+
+```php
+// CORRECT — frees the is_active=false slot before creating another
+QuizDefinition::where(...)->where('is_active', false)->delete();
+$existing->update(['is_active' => false]);
+QuizDefinition::create([..., 'is_active' => true]);
+
+// WRONG — two is_active=false rows would exist momentarily → constraint violation
+$existing->update(['is_active' => false]); // ← fails if an archived row already exists
+```
+
+**Universal keys (must always be present):**
+
+`q_timeline`, `q_budget`, `q_concerns`, `q_referral` — required by `LeadScoringService`. The Quiz Editor UI locks these as read-only and warns when any are missing.
 
 ---
 

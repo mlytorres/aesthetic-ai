@@ -37,6 +37,7 @@
 **Sprint 8 — Body Landmarks + AI Simulation:** ✅ **Complete**
 **Sprint 9 — Billing, Notifications, Webhooks, Security:** ✅ **Complete**
 **Sprint 10 — White-Label, SMS, Multilingual & Usage Alerts:** ✅ **Complete**
+**Sprint 11 — Procedure-Specific Photos, Quiz Expansion & Quiz Editor:** ✅ **Complete**
 
 ---
 
@@ -369,6 +370,44 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ---
 
+---
+
+### P1 Sprint 11 — Procedure-Specific Photos, Quiz Expansion & Quiz Editor ✅ COMPLETE
+
+**Procedure-Specific Photo Protocols (Phase 1):**
+- [x] `PhotoType` expanded from 3 to 12 semantic types: `front`, `left_profile`, `right_profile`, `back`, `left_side`, `right_side`, `abdomen_front`, `abdomen_side`, `chest_front`, `eyes_closed`, `arm_front`, `additional` (legacy)
+- [x] `PhotoSlot` interface — each slot carries `{ type, label, tip }` so the frontend is fully data-driven (no hardcoded labels)
+- [x] `ProcedureResource::transformPhotoProtocol()` — converts raw DB `photo_protocol` array into typed `{ required: PhotoSlot[], optional: PhotoSlot[], category }` shape; derives labels and patient-facing tips from slot metadata
+- [x] `PhotoCapture.tsx` rewritten — renders procedure-aware cards with `slot.label` and `slot.tip`; emoji icon per photo type; separate FACE_TIPS / BODY_TIPS hint blocks
+- [x] `UploadPhotoRequest` — expanded `Rule::in([...])` to cover all 12 photo types
+- [x] `Procedure::simulationPhotoType()` — derives the primary photo type from the first required slot in `photo_protocol`; keeps simulation job in sync with seeder automatically
+- [x] `GenerateSimulationJob` — uses `simulationPhotoType()` instead of hardcoded `'front'`; body procedures (breast, abdominal) now pick the correct photo
+- [x] `ProcedureSeeder` — replaced all `additional` slots with semantic types across all 26 procedures (BBL/lipo: `back`/`left_side`/`right_side`; tummy tuck/etching: `abdomen_front`; breast: `chest_front`; eyelid: `eyes_closed`; arms: `arm_front`)
+
+**Quiz Definitions Expansion (Phase 2 — all 26 procedures):**
+- [x] Full proper quizzes added for all 16 remaining procedures: `gynecomastia`, `abdominal_etching`, `liposuction`, `reverse_bbl`, `j_plasma`, `arm_lipo_lift`, `arm_thigh_lift`, `back_liposuction_lift`, `axillary_liposuction`, `labiaplasty`, `scar_revision`, `face_and_neck_lift`, `eyelid_surgery`, `chin_lipo`, `bichectomy`, `otoplasty`
+- [x] `$mvpSlugs` updated to include all 26 slugs — generic fallback quiz (`buildGenericQuiz()`) no longer called for any procedure
+- [x] All quizzes include the four universal scoring keys (`q_timeline`, `q_budget`, `q_concerns`, `q_referral`) required by `LeadScoringService`
+
+**Super-Admin Quiz Editor:**
+- [x] `QuizAdminController` — `index` (procedure overview), `show` (active quiz + version history), `update` (save new version, archive previous), `activate` (restore archived version)
+- [x] Version history strategy — unique constraint on `(procedure_slug, is_active)` means at most one active + one archived per procedure; save creates a new version by purging the old archive, archiving current, inserting new active
+- [x] Routes — `GET/PATCH /admin/quizzes/{slug}` + `POST /admin/quizzes/{slug}/versions/{id}/activate` under `admin.` prefix
+- [x] `admin/quizzes/index.tsx` — table of all 26 procedures with quiz status (active version, question count, last updated, missing-quiz warning)
+- [x] `admin/quizzes/show.tsx` — full question editor: expandable cards per question with type selector, label, required toggle, option CRUD, branching JSON field; up/down reorder; universal keys (`q_timeline`, `q_budget`, `q_concerns`, `q_referral`) locked/read-only with teal badge; missing-universal-keys warning banner; version history sidebar with rollback
+- [x] `Quiz Editor` nav link added to Platform Admin sidebar
+- [x] `ProcedureFactory` + `QuizDefinitionFactory` — new factories for tests
+- [x] 12 tests in `AdminQuizTest.php` (access control, CRUD, versioning, validation, rollback)
+
+**Patient Portal & Email Fixes:**
+- [x] Patient portal booking — `phone` and `booking_url` added to clinic settings JSONB; `PatientPortalController` passes both; portal shows three-state CTA (booking URL → `tel:` phone link → fallback text)
+- [x] Patient report email portal link — "Visit Your Patient Portal →" button added to beauty roadmap email (`PatientReportMail` + `patient-report.blade.php`)
+- [x] Bug fix — `SendUsageOverageAlertJob` `$tenantId` type changed `int → string` (tenant IDs are UUIDs)
+- [x] Bug fix — `audit-log.tsx` `entries.meta` → flat paginator structure (`entries.total`, `entries.last_page`, etc.)
+- [x] 3 tests added to `PatientPortalTest.php` for booking URL / phone / null cases
+
+---
+
 ## Phase 2 — Foundation
 
 **Theme:** Multi-procedure, multi-tenant, revenue model live.
@@ -451,7 +490,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 **Patient Experience Enhancements:**
 - [x] Beauty Roadmap PDF — personalized report emailed to patient ✅ *Sprint 6*
 - [x] Patient portal: check evaluation status — `/intake/portal/{token}` with 4-step status timeline (Received → AI Analysis → Doctor Review → Ready), AI Simulation card + Beauty Roadmap card (gated until complete)
-- [ ] Patient portal: book consultation directly — "Contact Clinic to Book" button exists but is a placeholder (`javascript:void(0)`); needs clinic phone/booking URL from settings wired up
+- [x] Patient portal: book consultation directly — clinic `phone` + `booking_url` stored in settings JSONB; portal shows three-state CTA: booking URL button → `tel:` phone link → fallback text ✅ *Sprint 11*
 
 **Analytics Dashboard:** ✅ *Complete (Sprint 6)*
 - [x] Clinic conversion funnel metrics (intake funnel drop-off by step)
@@ -520,16 +559,24 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🐛 1 | **Fix impersonation cross-domain redirect** — use `Inertia::location()` so browser does a hard nav to tenant subdomain (current `redirect()` stays on main domain for Inertia requests) | Bug | XS |
-| 🔥 2 | **Patient portal: book consultation** — wire clinic phone/booking URL to the "Contact Clinic to Book" button + notify patient by email when analysis is ready | Phase 3 | Small |
-| 🔥 3 | **HubSpot / Nextech native CRM integration** | Phase 2 | Medium |
-| 4 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
-| 5 | Coordinator digest email — daily summary for high-volume clinics | Phase 2 | Small |
-| 6 | Promo codes — Stripe coupon support in checkout flow | Phase 2 | Small |
+| 🔥 1 | **Lead score visibility** — surface quiz-derived score badge + breakdown tooltip prominently in evaluation list and detail; makes the whole intake quiz investment visible to coordinators | Phase 3 | Small |
+| 🔥 2 | **Per-tenant quiz customization** — tenants add custom questions on top of the universal keys; global quiz is the base; tenant overrides layered on top (Pro feature) | Phase 4 | Medium |
+| 3 | **Patient follow-up email** — 48-hour "did you book?" nudge with portal link dispatched after evaluation completes; closes more leads with minimal friction | Phase 2 | Small |
+| 4 | **Photo quality client-side enforcement** — actual blur/face detection in the browser (MediaPipe) instead of hardcoded `quality_score: 80` placeholder; prevents bad-angle photos reaching AI | ADR-004/005 | Medium |
+| 5 | **Nightwatch PHI redaction config** — configure sampling rates and redact patient name/email/phone from Nightwatch request bodies before handling real patient data | Infra | XS |
+| 6 | **HubSpot / Nextech native CRM integration** | Phase 2 | Medium |
+| 7 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
+| 8 | Coordinator digest email — daily summary for high-volume clinics | Phase 2 | Small |
+| 9 | Promo codes — Stripe coupon support in checkout flow | Phase 2 | Small |
+| 🐛 | **Fix impersonation cross-domain redirect** — use `Inertia::location()` so browser does a hard nav to tenant subdomain (current `redirect()` stays on main domain for Inertia requests) | Bug | XS |
+| ✅ | Procedure-specific photo protocols — 12 semantic `PhotoType` values, `PhotoSlot` with label+tip, procedure-aware `PhotoCapture.tsx` | Sprint 11 | Done |
+| ✅ | Quiz definitions for all 26 procedures — proper quizzes replacing generic stubs for all 16 remaining procedures | Sprint 11 | Done |
+| ✅ | Super-admin quiz editor — CRUD UI with versioning, rollback, universal key guards | Sprint 11 | Done |
+| ✅ | Patient portal booking — clinic phone + booking URL in settings, three-state CTA on portal | Sprint 11 | Done |
+| ✅ | Patient report email portal link — "Visit Your Patient Portal" button in beauty roadmap email | Sprint 11 | Done |
 | ✅ | 2FA redirect — `TwoFactorLoginResponse` override (super-admin → `/admin`, tenant → subdomain) | Auth | Done |
 | ✅ | Impersonation — super-admin session switch + amber banner + stop button | Sprint 7 | Done |
-| ✅ | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Done |
-| ✅ | Patient follow-up sequence — scheduled reminder emails | Phase 2 | Done |
+| ✅ | AI Simulation — procedure-specific photo selection via `Procedure::simulationPhotoType()` | Sprint 11 | Done |
 | ✅ | White-label branding (logo, brand color, email sender, custom domain) | Phase 4 | Done |
 | ✅ | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Done |
 | ✅ | Spanish intake wizard (full EN/ES translation system) | Backlog | Done |
