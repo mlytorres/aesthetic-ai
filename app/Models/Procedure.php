@@ -45,4 +45,29 @@ class Procedure extends Model
     {
         return $this->quizDefinitions()->where('is_active', true)->first();
     }
+
+    /**
+     * Returns the photo type that should be used as the primary input for AI simulation.
+     *
+     * Derived from the first required slot in the photo_protocol so it stays in sync
+     * with the seeder automatically — no separate DB column needed.
+     *
+     * Face procedures  → 'front'  (face-forward shot)
+     * Body full-body   → 'front'  (standing front shot)
+     * Breast           → 'chest_front'
+     * Abdomen          → 'front'  (full body used for proportion context)
+     */
+    public function simulationPhotoType(): string
+    {
+        $protocol = $this->photo_protocol ?? [];
+
+        // Find the first required slot — that's the most diagnostically important view.
+        foreach ($protocol as $slot) {
+            if ($slot['required'] ?? false) {
+                return $slot['type'];
+            }
+        }
+
+        return 'front';
+    }
 }

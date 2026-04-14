@@ -516,7 +516,12 @@ class GenerateSimulationJob implements ShouldQueue
      */
     private function resolvePhotoAttachment(Evaluation $evaluation): ?Files\Image
     {
-        $photo = $evaluation->photos()->where('type', 'front')->first();
+        // Use the procedure's primary simulation photo type (e.g. 'chest_front' for breast
+        // procedures, 'front' for face/body), falling back to any available photo.
+        $primaryType = $evaluation->procedure?->simulationPhotoType() ?? 'front';
+
+        $photo = $evaluation->photos()->where('type', $primaryType)->first()
+            ?? $evaluation->photos()->first();
 
         if ($photo === null) {
             return null;

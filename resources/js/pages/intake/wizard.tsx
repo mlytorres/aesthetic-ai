@@ -390,9 +390,9 @@ return;
 
                 {state.step === 'photos' && photoProtocol && (
                     <PhotoCapture
-                        requiredTypes={photoProtocol.required}
-                        optionalTypes={photoProtocol.optional ?? []}
-                        instructions={photoProtocol.instructions}
+                        requiredSlots={photoProtocol.required}
+                        optionalSlots={photoProtocol.optional ?? []}
+                        category={photoProtocol.category}
                         state={state}
                         dispatch={dispatch}
                         t={t}

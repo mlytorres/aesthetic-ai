@@ -62,21 +62,36 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 	const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
+		
+		// Immediately preview the file locally
+		setLogoUrl(URL.createObjectURL(file));
 		setLogoUploading(true);
+		
 		router.post(
 			settings.logo.upload.url(),
 			{ logo: file },
 			{
 				forceFormData: true,
 				preserveScroll: true,
-				onSuccess: () => setLogoUploading(false),
-				onError: () => setLogoUploading(false),
+				onSuccess: () => {
+					setLogoUploading(false);
+					e.target.value = '';
+				},
+				onError: () => {
+					setLogoUploading(false);
+					setLogoUrl(clinic.logo_url);
+					e.target.value = '';
+				},
 			}
 		);
 	};
 
 	const handleLogoDelete = () => {
-		router.delete(settings.logo.delete.url(), { preserveScroll: true });
+		setLogoUrl(null);
+		router.delete(settings.logo.delete.url(), { 
+			preserveScroll: true,
+			onError: () => setLogoUrl(clinic.logo_url),
+		});
 	};
 
 	const handleAddEmail = () => {

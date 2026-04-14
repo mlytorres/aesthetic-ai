@@ -20,7 +20,14 @@ class UploadPhotoRequest extends FormRequest
     {
         return [
             'photo'            => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:10240'], // 10MB
-            'type'             => ['required', 'string', Rule::in(['front', 'left_profile', 'right_profile', 'additional'])],
+            'type'             => ['required', 'string', Rule::in([
+                'front', 'left_profile', 'right_profile',
+                'back', 'left_side', 'right_side',
+                'abdomen_front', 'abdomen_side',
+                'chest_front', 'eyes_closed',
+                'arm_front',
+                'additional', // legacy — kept for backward-compatibility
+            ])],
             'quality_score'    => ['required', 'integer', 'min:0', 'max:100'],
             'capture_metadata' => ['nullable', 'array'],
         ];

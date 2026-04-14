@@ -1,102 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Your Beauty Roadmap</title>
-    <style>
-        body { margin: 0; padding: 0; background: #f4f4f0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-        .wrapper { max-width: 580px; margin: 32px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-        .header { background: #1a1a24; padding: 28px 32px 22px; }
-        .header-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #0E9E8E; margin-bottom: 8px; }
-        .header-title { font-size: 22px; font-weight: 700; color: #F5F0E8; line-height: 1.25; }
-        .header-sub { font-size: 12px; color: #9B9B8E; margin-top: 4px; }
-        .body { padding: 28px 32px; }
-        .greeting { font-size: 15px; color: #333; line-height: 1.65; margin-bottom: 20px; }
-        .card { background: #fffdf7; border: 1px solid #e8d9a8; border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; }
-        .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #B8912B; margin-bottom: 8px; }
-        .card-text { font-size: 13px; color: #444; line-height: 1.6; }
-        .cta-wrap { text-align: center; margin: 24px 0; }
-        .cta-btn { display: inline-block; background: #0E9E8E; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; padding: 13px 32px; border-radius: 5px; letter-spacing: 0.3px; }
-        .divider { border: none; border-top: 1px solid #eee; margin: 20px 0; }
-        .disclaimer { font-size: 10px; color: #bbb; line-height: 1.6; }
-        .footer { background: #f9f9f9; padding: 16px 32px; border-top: 1px solid #eee; }
-        .footer-text { font-size: 10px; color: #aaa; text-align: center; line-height: 1.6; }
-    </style>
-</head>
-<body>
-<div class="wrapper">
+@extends('emails.layouts.luxury-dark')
 
-    <div class="header">
-        <div class="header-eyebrow">{{ $clinicName }}</div>
-        <div class="header-title">Your Beauty Roadmap is Ready</div>
-        <div class="header-sub">{{ $procedureLabel }} — Personalised Report</div>
+@section('title', 'Your Beauty Roadmap')
+
+@section('content')
+    <h1 style="color: #F5F0E8; font-size: 22px; margin-bottom: 24px; font-weight: 500;">Your Beauty Roadmap is Ready</h1>
+    <p>
+        Hi {{ $firstName }},<br><br>
+        Thank you for completing your aesthetic evaluation with
+        <strong>{{ $clinicName }}</strong>. Our AI has finished analysing your submission
+        and your personalised Beauty Roadmap report is now ready.
+    </p>
+
+    <div class="card">
+        <h3 style="margin-top: 0; color: #C9A84C; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid rgba(245, 240, 232, 0.05); padding-bottom: 12px; margin-bottom: 12px;">What's in your report</h3>
+        <p style="margin: 0; font-size: 14px;">
+            Your Beauty Roadmap includes your AI harmony analysis result, key measurements,
+            personalised insights about your {{ $procedureLabel }} consultation, answers to
+            frequently asked questions relevant to your concerns, and clear next steps.
+        </p>
     </div>
 
-    <div class="body">
-        <div class="greeting">
-            Hi {{ $firstName }},<br><br>
-            Thank you for completing your aesthetic evaluation with
-            <strong>{{ $clinicName }}</strong>. Our AI has finished analysing your submission
-            and your personalised Beauty Roadmap report is now ready.
-        </div>
-
-        <div class="card">
-            <div class="card-title">What's in your report</div>
-            <div class="card-text">
-                Your Beauty Roadmap includes your AI harmony analysis result, key measurements,
-                personalised insights about your {{ $procedureLabel }} consultation, answers to
-                frequently asked questions relevant to your concerns, and clear next steps.
-            </div>
-        </div>
-
-        <div class="cta-wrap">
-            <a href="{{ $reportUrl }}" class="cta-btn">View Your Beauty Roadmap &rarr;</a>
-        </div>
-
-        <p style="font-size:11px; color:#aaa; text-align:center; margin-top:-10px; margin-bottom:20px;">
+    <div style="text-align: center;">
+        <a href="{{ $reportUrl }}" class="cta-btn" style="margin-bottom: 8px;">View Your Beauty Roadmap &rarr;</a>
+        <p style="font-size:12px; color:#9B9B8E; margin-bottom:24px;">
             Your report is also attached to this email as a PDF.
         </p>
-
-        <div class="cta-wrap" style="margin-top:8px;">
-            <a href="{{ url('/intake/portal/' . $secureToken) }}" style="display:inline-block; border:1px solid #0E9E8E; color:#0E9E8E; font-size:12px; font-weight:600; text-decoration:none; padding:10px 24px; border-radius:5px; letter-spacing:0.3px;">
-                Visit Your Patient Portal &rarr;
-            </a>
-        </div>
-
-        <hr class="divider"/>
-
-        <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:6px;">
-            A member of our team will be in touch shortly to discuss your results and schedule
-            your consultation. If you have any questions in the meantime, please don't hesitate
-            to contact us directly.
-        </p>
-
-        <p style="font-size:13px; color:#555; line-height:1.6;">
-            We look forward to meeting you.
-        </p>
-
-        <p style="font-size:13px; color:#555; margin-top:14px;">
-            Warm regards,<br>
-            <strong>{{ $clinicName }}</strong>
-        </p>
-
-        <hr class="divider"/>
-
-        <div class="disclaimer">
-            This report is generated by an AI system for informational purposes only and does not
-            constitute a medical diagnosis or treatment recommendation. All findings should be
-            discussed with a qualified surgeon during your consultation. Individual results vary.
-        </div>
     </div>
 
-    <div class="footer">
-        <div class="footer-text">
-            {{ $clinicName }} &bull; Powered by SymetriHealth<br>
-            You received this email because you submitted an aesthetic evaluation request.
-        </div>
+    <div style="text-align: center; margin-bottom: 24px;">
+        <a href="{{ url('/intake/portal/' . $secureToken) }}" style="display:inline-block; border:1px solid rgba(201, 168, 76, 0.5); color:#C9A84C; font-size:13px; font-weight:600; text-decoration:none; padding:12px 24px; border-radius:6px; letter-spacing:0.02em;">
+            Visit Your Patient Portal &rarr;
+        </a>
     </div>
 
-</div>
-</body>
-</html>
+    <hr class="divider"/>
+
+    <p style="font-size: 14px;">
+        A member of our team will be in touch shortly to discuss your results and schedule
+        your consultation. If you have any questions in the meantime, please don't hesitate
+        to contact us directly.
+    </p>
+
+    <p style="font-size: 14px;">
+        We look forward to meeting you.
+    </p>
+
+    <p style="font-size: 14px; margin-top: 16px;">
+        Warm regards,<br>
+        <strong>{{ $clinicName }}</strong>
+    </p>
+
+    <hr class="divider"/>
+
+    <p style="font-size: 11px; color: #9B9B8E; line-height: 1.6;">
+        This report is generated by an AI system for informational purposes only and does not
+        constitute a medical diagnosis or treatment recommendation. All findings should be
+        discussed with a qualified surgeon during your consultation. Individual results vary.
+    </p>
+@endsection
+
+@section('footer-note')
+    Powered by SymetriHealth<br>
+    You received this email because you submitted an aesthetic evaluation request.
+@endsection

@@ -37,14 +37,42 @@ export interface Procedure {
 }
 
 export interface PhotoProtocol {
-    required: PhotoType[];
-    optional?: PhotoType[];
-    instructions?: string;
+    required: PhotoSlot[];
+    optional: PhotoSlot[];
+    /** Category of the procedure — drives which tip set to show ('face' | 'body') */
+    category?: string;
 }
 
 // ─── Photo types ─────────────────────────────────────────────────────────────
 
-export type PhotoType = 'front' | 'left_profile' | 'right_profile' | 'additional';
+/**
+ * Semantic photo position identifiers.
+ * - Face procedures use: front, left_profile, right_profile, eyes_closed
+ * - Body procedures use: front, left_profile, right_profile, back, left_side, right_side, abdomen_front, abdomen_side, chest_front
+ * - 'additional' is kept for legacy backward-compatibility only
+ */
+export type PhotoType =
+    | 'front'           // Face-forward / full-body front
+    | 'left_profile'    // 90° left — face or body
+    | 'right_profile'   // 90° right — face or body
+    | 'back'            // Full-body rear view
+    | 'left_side'       // Body left-side view (45° or 90°)
+    | 'right_side'      // Body right-side view (45° or 90°)
+    | 'abdomen_front'   // Abdominal area close-up (front)
+    | 'abdomen_side'    // Abdominal area close-up (side)
+    | 'chest_front'     // Chest close-up (front)
+    | 'eyes_closed'     // Eyes-closed (eyelid surgery)
+    | 'additional';     // Legacy catch-all
+
+/**
+ * A single photo slot as returned by ProcedureResource.
+ * Contains all metadata needed to render the slot without any static lookup tables.
+ */
+export interface PhotoSlot {
+    type: PhotoType;
+    label: string;
+    tip: string;
+}
 
 export interface UploadedPhoto {
     id: number;

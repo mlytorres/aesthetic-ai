@@ -1,15 +1,16 @@
 import { useRef, useState } from 'react';
 import type {FC, ChangeEvent} from 'react';
-import type {PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
+import type {PhotoSlot, PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
 import { WebcamCapture } from './WebcamCapture';
 import type { TranslationKey } from '@/i18n/translations';
 
 type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
-    requiredTypes: PhotoType[];
-    optionalTypes: PhotoType[];
-    instructions?: string;
+    requiredSlots: PhotoSlot[];
+    optionalSlots: PhotoSlot[];
+    /** 'face' | 'body' — drives which photo tips to show */
+    category?: string;
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
     t: TFn;
@@ -18,31 +19,24 @@ interface Props {
     onBack: () => void;
 }
 
-const TYPE_LABELS: Record<PhotoType, string> = {
-    front:         'Front View',
-    left_profile:  'Left Profile',
-    right_profile: 'Right Profile',
-    additional:    'Additional',
-};
+const FACE_TIPS = [
+    'Natural lighting — near a window works great',
+    'Plain background, no heavy shadows',
+    'Remove glasses and pull hair back',
+    'Neutral expression, mouth closed',
+];
 
-const TYPE_ICONS: Record<PhotoType, string> = {
-    front:         '😐',
-    left_profile:  '👤',
-    right_profile: '👤',
-    additional:    '📷',
-};
-
-const TYPE_TIPS: Record<PhotoType, string> = {
-    front:         'Face the camera directly. Neutral expression, hair pulled back.',
-    left_profile:  'Turn 90° to your left. Keep chin level.',
-    right_profile: 'Turn 90° to your right. Keep chin level.',
-    additional:    'Any additional angle relevant to your procedure.',
-};
+const BODY_TIPS = [
+    'Natural lighting — near a window works great',
+    'Wear form-fitting clothing or a swimsuit',
+    'Stand straight with arms relaxed at your sides',
+    'Full body in frame — head to toe visible',
+];
 
 const PhotoCapture: FC<Props> = ({
-    requiredTypes,
-    optionalTypes,
-    instructions,
+    requiredSlots,
+    optionalSlots,
+    category = 'face',
     state,
     dispatch,
     t,
@@ -50,28 +44,27 @@ const PhotoCapture: FC<Props> = ({
     onNext,
     onBack,
 }) => {
-    const allRequired = requiredTypes.every((type) =>
-        state.photos.some((p) => p.type === type && !p.uploading && !p.error),
+    const allRequired = requiredSlots.every((slot) =>
+        state.photos.some((p) => p.type === slot.type && !p.uploading && !p.error),
     );
+
+    const tips = category === 'body' ? BODY_TIPS : FACE_TIPS;
+    const remainingCount = requiredSlots.filter(
+        (slot) => !state.photos.some((p) => p.type === slot.type && !p.uploading && !p.error),
+    ).length;
 
     return (
         <div className="py-6">
             <h2 className="text-xl font-bold text-[var(--intake-fg)]">{t('photos.title')}</h2>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
-                {instructions ??
-                    'Clear, well-lit photos help our AI provide an accurate evaluation. No makeup or filters.'}
+                Clear, well-lit photos help our AI provide an accurate evaluation. No filters.
             </p>
 
-            {/* Quality tips */}
+            {/* Quality tips — procedure-aware */}
             <div className="mt-4 rounded-xl border border-[#0E9E8E]/20 bg-[#0E9E8E]/5 px-4 py-3">
                 <p className="text-xs font-semibold text-[#0E9E8E] mb-1">📸 Photo tips</p>
                 <ul className="space-y-0.5">
-                    {[
-                        'Natural lighting — near a window works great',
-                        'Plain background, no heavy shadows',
-                        'Remove glasses and pull hair back',
-                        'Neutral expression, mouth closed',
-                    ].map((tip) => (
+                    {tips.map((tip) => (
                         <li key={tip} className="text-xs text-[var(--intake-muted)]">
                             · {tip}
                         </li>
@@ -84,12 +77,12 @@ const PhotoCapture: FC<Props> = ({
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-[#0E9E8E]">
                     Required
                 </p>
-                {requiredTypes.map((type) => (
-                    <PhotoSlot
-                        key={type}
-                        type={type}
+                {requiredSlots.map((slot) => (
+                    <PhotoSlotCard
+                        key={slot.type}
+                        slot={slot}
                         required
-                        uploaded={state.photos.find((p) => p.type === type)}
+                        uploaded={state.photos.find((p) => p.type === slot.type)}
                         onUpload={onUpload}
                         dispatch={dispatch}
                     />
@@ -97,17 +90,17 @@ const PhotoCapture: FC<Props> = ({
             </div>
 
             {/* Optional photos */}
-            {optionalTypes.length > 0 && (
+            {optionalSlots.length > 0 && (
                 <div className="mt-6 space-y-3">
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
                         Optional
                     </p>
-                    {optionalTypes.map((type) => (
-                        <PhotoSlot
-                            key={type}
-                            type={type}
+                    {optionalSlots.map((slot) => (
+                        <PhotoSlotCard
+                            key={slot.type}
+                            slot={slot}
                             required={false}
-                            uploaded={state.photos.find((p) => p.type === type)}
+                            uploaded={state.photos.find((p) => p.type === slot.type)}
                             onUpload={onUpload}
                             dispatch={dispatch}
                         />
@@ -142,7 +135,7 @@ const PhotoCapture: FC<Props> = ({
                 >
                     {allRequired
                         ? t('nav.continue')
-                        : t('photos.continue_cta', { count: requiredTypes.filter((type) => !state.photos.some((p) => p.type === type && !p.uploading && !p.error)).length })
+                        : t('photos.continue_cta', { count: remainingCount })
                     }
                 </button>
             </div>
@@ -150,35 +143,46 @@ const PhotoCapture: FC<Props> = ({
     );
 };
 
-// ─── PhotoSlot ────────────────────────────────────────────────────────────────
+// ─── PhotoSlotCard ────────────────────────────────────────────────────────────
 
-interface PhotoSlotProps {
-    type: PhotoType;
+interface PhotoSlotCardProps {
+    slot: PhotoSlot;
     required: boolean;
     uploaded: UploadedPhoto | undefined;
     onUpload: (file: File, type: PhotoType) => Promise<void>;
     dispatch: React.Dispatch<WizardAction>;
 }
 
-const PhotoSlot: FC<PhotoSlotProps> = ({ type, required, uploaded, onUpload, dispatch }) => {
+const SLOT_ICONS: Partial<Record<PhotoType, string>> = {
+    front:         '😐',
+    left_profile:  '👤',
+    right_profile: '👤',
+    back:          '🔄',
+    left_side:     '👤',
+    right_side:    '👤',
+    abdomen_front: '🩺',
+    abdomen_side:  '🩺',
+    chest_front:   '🩺',
+    eyes_closed:   '👁️',
+    additional:    '📷',
+};
+
+const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpload, dispatch }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isStreaming, setIsStreaming] = useState(false);
 
     const handleChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
         const file = e.target.files?.[0];
-
-        if (!file) {
-return;
-}
-
-        await onUpload(file, type);
-        // reset input so same file can be re-selected
+        if (!file) return;
+        await onUpload(file, slot.type);
         e.target.value = '';
     };
 
     const handleRemove = (): void => {
-        dispatch({ type: 'PHOTO_REMOVE', photoType: type });
+        dispatch({ type: 'PHOTO_REMOVE', photoType: slot.type });
     };
+
+    const icon = SLOT_ICONS[slot.type] ?? '📷';
 
     return (
         <div
@@ -196,7 +200,7 @@ return;
                 {uploaded?.local_url && !uploaded.uploading ? (
                     <img
                         src={uploaded.local_url}
-                        alt={TYPE_LABELS[type]}
+                        alt={slot.label}
                         className="h-full w-full object-cover"
                     />
                 ) : uploaded?.uploading ? (
@@ -208,7 +212,7 @@ return;
                     </div>
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-2xl">
-                        {TYPE_ICONS[type]}
+                        {icon}
                     </div>
                 )}
 
@@ -232,7 +236,7 @@ return;
             {/* Info */}
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--intake-fg)]">
-                    {TYPE_LABELS[type]}
+                    {slot.label}
                     {required && !uploaded && (
                         <span className="ml-1 text-[#0E9E8E]">*</span>
                     )}
@@ -243,7 +247,7 @@ return;
                     <p className="text-xs text-[#0E9E8E] mt-0.5">Uploaded ✓</p>
                 ) : (
                     <p className="text-xs text-[var(--intake-muted)] mt-0.5 line-clamp-2">
-                        {TYPE_TIPS[type]}
+                        {slot.tip}
                     </p>
                 )}
             </div>
@@ -292,10 +296,10 @@ return;
 
             {isStreaming && (
                 <WebcamCapture
-                    type={type}
+                    type={slot.type}
                     onCapture={async (file) => {
                         setIsStreaming(false);
-                        await onUpload(file, type);
+                        await onUpload(file, slot.type);
                     }}
                     onCancel={() => setIsStreaming(false)}
                 />
