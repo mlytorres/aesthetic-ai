@@ -26,14 +26,12 @@ interface PaginationLink {
 interface PaginatedEntries {
     data: AuditEntry[];
     links: PaginationLink[];
-    meta: {
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-        from: number | null;
-        to: number | null;
-    };
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
 }
 
 interface Tenant {
@@ -106,7 +104,7 @@ export default function AuditLogPage({ entries, tenants, filters }: Props) {
                     <div>
                         <h1 className="text-xl font-semibold text-foreground">Audit Log</h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            All platform activity · {entries.meta.total.toLocaleString()} entries
+                            All platform activity · {entries.total.toLocaleString()} entries
                         </p>
                     </div>
                 </div>
@@ -232,10 +230,10 @@ export default function AuditLogPage({ entries, tenants, filters }: Props) {
                 </div>
 
                 {/* Pagination */}
-                {entries.meta.last_page > 1 && (
+                {entries.last_page > 1 && (
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>
-                            {entries.meta.from}–{entries.meta.to} of {entries.meta.total.toLocaleString()}
+                            {entries.from}–{entries.to} of {entries.total.toLocaleString()}
                         </span>
                         <div className="flex gap-1">
                             {entries.links
