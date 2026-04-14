@@ -14,6 +14,7 @@ use App\Jobs\AI\CalculateProportionsJob;
 use App\Jobs\AI\ExtractBodyLandmarksJob;
 use App\Jobs\AI\ExtractFacialLandmarksJob;
 use App\Jobs\AI\GenerateBasicRecommendationsJob;
+use App\Jobs\AI\GenerateSimulationJob;
 use App\Jobs\AI\SendPatientConfirmationJob;
 use App\Jobs\AI\SendPatientSmsConfirmationJob;
 use App\Jobs\AI\ValidatePhotoQualityJob;
@@ -204,6 +205,7 @@ class EvaluationController extends Controller
             $landmarkJob,
             $proportionsJob,
             new GenerateBasicRecommendationsJob($evaluationId),
+            new GenerateSimulationJob($evaluationId),
         ])
             ->onQueue('ai')
             ->catch(function (Throwable $e) use ($evaluationId): void {

@@ -17,10 +17,8 @@
 
         .page {
             width: 210mm;
-            min-height: 297mm;
             padding: 0;
-            display: flex;
-            flex-direction: column;
+            display: block;
         }
 
         /* ── Cover stripe ── */
@@ -81,13 +79,16 @@
             font-weight: 500;
         }
 
-        /* ── Body ── */
         .body {
-            padding: 14px 20mm 16px 20mm;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            padding: 14px 20mm 50px 20mm; /* Added bottom padding to accommodate fixed footer */
+            display: block;
+        }
+
+        .body > * {
+            margin-bottom: 16px;
+        }
+        .body > *:last-child {
+            margin-bottom: 0;
         }
 
         /* ── Greeting ── */
@@ -109,6 +110,8 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .section-title {
@@ -130,6 +133,8 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .score-circle {
@@ -253,6 +258,8 @@
             padding: 6px 10px;
             background: #f9f9f9;
             border-radius: 4px;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .insight-dot {
@@ -281,6 +288,8 @@
             border: 1px solid #eee;
             border-radius: 5px;
             overflow: hidden;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         .faq-q {
@@ -341,13 +350,19 @@
             font-size: 8px;
             color: #aaa;
             line-height: 1.5;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         /* ── Footer ── */
         .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
             background: #f9f9f9;
             border-top: 1px solid #eee;
-            padding: 8px 20mm;
+            padding: 10px 20mm;
             display: flex;
             justify-content: space-between;
             align-items: center;

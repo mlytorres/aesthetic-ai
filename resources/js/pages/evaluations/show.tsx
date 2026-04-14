@@ -63,6 +63,7 @@ interface AuditEntry {
 interface Props {
     evaluation:  Evaluation;
     auditEntries?: AuditEntry[];
+    portal_url?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -647,9 +648,36 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
     );
 }
 
+function MagicLinkCard({ portalUrl }: { portalUrl?: string }) {
+    const [copied, setCopied] = useState(false);
+
+    if (!portalUrl) return null;
+
+    const copyLink = async () => {
+        await navigator.clipboard.writeText(portalUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <SectionCard title="Sales Magic Link">
+            <p className="mb-3 text-xs text-muted-foreground">
+                Copy the secure Patient Portal link to share with this patient via SMS or email for instant access to their simulation and report.
+            </p>
+            <Button
+                onClick={copyLink}
+                variant="outline"
+                className="w-full text-sm border-[#C9A84C]/50 text-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/10"
+            >
+                {copied ? '✓ Link copied!' : '⎘ Copy Portal Link'}
+            </Button>
+        </SectionCard>
+    );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function EvaluationShow({ evaluation, auditEntries }: Props) {
+export default function EvaluationShow({ evaluation, auditEntries, portal_url }: Props) {
     return (
         <>
             <Head title={`Evaluation — ${formatProcedure(evaluation.procedure_slug)}`} />
@@ -715,6 +743,7 @@ export default function EvaluationShow({ evaluation, auditEntries }: Props) {
 
                     {/* Right — coordinator actions (1/3) */}
                     <div className="lg:col-span-1 space-y-6">
+                        <MagicLinkCard portalUrl={portal_url} />
                         <SimulationViewer evaluation={evaluation} />
                         <CoordinatorPanel evaluation={evaluation} />
                     </div>

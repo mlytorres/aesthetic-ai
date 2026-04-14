@@ -1,8 +1,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Download } from 'lucide-react';
-import { useState } from 'react';
+import { Download, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { exportMethod, index, show } from '@/routes/evaluations';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -57,7 +59,12 @@ interface StatusCounts {
 
 interface Props {
     evaluations: EvaluationCollection;
-    filters: { status: string };
+    filters: {
+        status: string;
+        search?: string;
+        priority?: string;
+        min_score?: string;
+    };
     statusCounts: StatusCounts;
 }
 
@@ -133,8 +140,23 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
     const { auth } = usePage().props as unknown as { auth: { user: { role: string } } };
     const canExport = EXPORT_ROLES.has(auth.user.role);
 
+    const [search, setSearch] = useState(filters.search || '');
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (search !== (filters.search || '')) {
+                updateFilter('search', search || undefined);
+            }
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [search, filters.search]);
+
+    const updateFilter = (key: string, value: string | undefined) => {
+        router.get(index.url({ query: { ...filters, [key]: value, page: undefined } }), {}, { preserveState: true, replace: true });
+    };
+
     const navigateTab = (status: string) => {
-        router.get(index.url({ query: { status } }), {}, { preserveState: true, replace: true });
+        router.get(index.url({ query: { ...filters, status, page: undefined } }), {}, { preserveState: true, replace: true });
     };
 
     return (
@@ -154,7 +176,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
 
                     {canExport && (
                         <a
-                            href={exportMethod.url({ query: { status: activeTab } })}
+                            href={exportMethod.url({ query: { ...filters } as any })}
                             className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-border active:scale-95"
                         >
                             <Download className="h-4 w-4 text-muted-foreground" />
@@ -200,11 +222,55 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
                     ))}
                 </div>
 
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-2">
+                    <div className="relative w-full sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search patients..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-9 bg-card border-sidebar-border/50"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Select
+                            value={filters.priority || 'all'}
+                            onValueChange={(val) => updateFilter('priority', val === 'all' ? undefined : val)}
+                        >
+                            <SelectTrigger className="w-[140px] bg-card border-sidebar-border/50">
+                                <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Priorities</SelectItem>
+                                <SelectItem value="urgent">Urgent</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="standard">Standard</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={filters.min_score || 'all'}
+                            onValueChange={(val) => updateFilter('min_score', val === 'all' ? undefined : val)}
+                        >
+                            <SelectTrigger className="w-[140px] bg-card border-sidebar-border/50">
+                                <SelectValue placeholder="Lead Score" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Scores</SelectItem>
+                                <SelectItem value="75">&ge; 75 (High)</SelectItem>
+                                <SelectItem value="50">&ge; 50 (Med)</SelectItem>
+                                <SelectItem value="25">&ge; 25 (Low)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
                 {/* Table */}
                 <div className="rounded-xl border border-sidebar-border/50 bg-card overflow-hidden">
                     {evaluations.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <p className="text-muted-foreground">No evaluations in this queue.</p>
+                            <p className="text-muted-foreground">No evaluations matched your search.</p>
                         </div>
                     ) : (
                         <table className="w-full text-sm">

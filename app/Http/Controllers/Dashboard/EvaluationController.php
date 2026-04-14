@@ -30,6 +30,9 @@ class EvaluationController extends Controller
     public function index(Request $request): Response
     {
         $status = $request->query('status', 'active');
+        $search = $request->query('search');
+        $priority = $request->query('priority');
+        $minScore = $request->query('min_score');
 
         $evaluations = Evaluation::withCount('photos')
             ->when($status === 'active', fn ($q) => $q->whereNotIn('status', [
@@ -40,6 +43,15 @@ class EvaluationController extends Controller
                 Evaluation::STATUS_FAILED,
             ]))
             ->when($status !== 'active', fn ($q) => $q->where('status', $status))
+            ->when($search, function ($q, $search) {
+                $q->whereHas('patient', function ($pq) use ($search) {
+                    $pq->where('name', 'ilike', '%' . $search . '%')
+                       ->orWhere('email', 'ilike', '%' . $search . '%')
+                       ->orWhere('phone', 'ilike', '%' . $search . '%');
+                });
+            })
+            ->when($priority, fn ($q, $priority) => $q->where('priority', $priority))
+            ->when(is_numeric($minScore), fn ($q) => $q->where('lead_score', '>=', (int) $minScore))
             ->orderByRaw("
                 CASE priority
                     WHEN 'urgent'   THEN 1
@@ -58,7 +70,12 @@ class EvaluationController extends Controller
 
         return Inertia::render('evaluations/index', [
             'evaluations' => EvaluationResource::collection($evaluations),
-            'filters' => ['status' => $status],
+            'filters' => [
+                'status' => $status,
+                'search' => $search,
+                'priority' => $priority,
+                'min_score' => $minScore,
+            ],
             'statusCounts' => [
                 'analyzing' => Evaluation::where('status', Evaluation::STATUS_ANALYZING)->count(),
                 'complete' => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
@@ -84,6 +101,7 @@ class EvaluationController extends Controller
 
         return Inertia::render('evaluations/show', [
             'evaluation' => (new EvaluationResource($evaluation))->resolve(),
+            'portal_url' => route('intake.patient.portal', ['token' => $evaluation->secure_token]),
 
             // Deferred: audit timeline loads after the main page renders.
             'auditEntries' => Inertia::defer(fn () => AuditLogEntry::where('subject_type', 'Evaluation')

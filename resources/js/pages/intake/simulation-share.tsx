@@ -25,14 +25,14 @@ const SimulationSharePage: FC<Props> = ({ procedure, simulationUrl, tenantName }
         <>
             <Head title={`AI Simulation — ${procedureLabel(procedure)}`} />
 
-            <div className="flex min-h-screen flex-col items-center bg-[var(--intake-bg)] px-6 py-12">
+            <div className="flex min-h-screen flex-col items-center bg-[var(--intake-bg,-#0A0A0F)] px-6 py-12" data-intake-theme="luxury-dark">
                 {/* Header */}
                 <div className="mb-8 text-center">
-                    <p className="text-xs uppercase tracking-widest text-[#C9A84C] mb-2">{clinic}</p>
-                    <h1 className="text-2xl font-light text-[var(--intake-fg)]">
+                    <p className="text-xs uppercase tracking-widest text-[var(--intake-accent,-#C9A84C)] mb-2">{clinic}</p>
+                    <h1 className="text-2xl font-light text-[var(--intake-fg,-#F5F0E8)]">
                         AI Simulation Result
                     </h1>
-                    <p className="mt-1 text-sm text-[var(--intake-muted)]">{procedureLabel(procedure)}</p>
+                    <p className="mt-1 text-sm text-[var(--intake-muted,-#9B9B8E)]">{procedureLabel(procedure)}</p>
                 </div>
 
                 {/* Simulation image or placeholder */}
@@ -41,12 +41,12 @@ const SimulationSharePage: FC<Props> = ({ procedure, simulationUrl, tenantName }
                         <img
                             src={simulationUrl}
                             alt={`AI simulation result for ${procedureLabel(procedure)}`}
-                            className="w-full rounded-xl border border-[var(--intake-border)] object-cover shadow-2xl"
+                            className="w-full rounded-xl border border-[var(--intake-border,-rgba(255,255,255,0.1))] object-cover shadow-2xl"
                         />
                     ) : (
-                        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#C9A84C]/20 bg-[#0D0D14] py-16 px-8">
+                        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#C9A84C]/50 bg-[var(--intake-surface,-#111118)] py-16 px-8">
                             <span className="text-3xl text-[#C9A84C]">✦</span>
-                            <p className="text-center text-sm text-[var(--intake-muted)]">
+                            <p className="text-center text-sm text-[var(--intake-muted,-#9B9B8E)]">
                                 Simulation image is currently unavailable. Please contact your clinic.
                             </p>
                         </div>
@@ -54,8 +54,8 @@ const SimulationSharePage: FC<Props> = ({ procedure, simulationUrl, tenantName }
                 </div>
 
                 {/* Disclaimer */}
-                <div className="mt-6 w-full max-w-md rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-                    <p className="text-center text-[11px] leading-relaxed text-amber-300/70">
+                <div className="mt-6 w-full max-w-md rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+                    <p className="text-center text-[11px] leading-relaxed text-amber-500 font-medium">
                         ⚠ This simulation is a visual aid for consultation purposes only.
                         Results are computer-generated and are not a guarantee of surgical outcome.
                         Individual results may vary.

@@ -64,12 +64,13 @@
 
         <hr class="divider"/>
 
-        <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom: 6px;">
-            If you have any questions in the meantime, please contact us directly and
-            reference your submission ID:
+        <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom: 16px;">
+            You can track the live status of your evaluation and view your AI Simulation at any time via your secure patient portal:
         </p>
-        <p style="margin: 0 0 20px;">
-            <span class="badge">{{ strtoupper(substr($secureToken, 0, 12)) }}</span>
+        <p style="text-align: center; margin: 24px 0;">
+            <a href="{{ url('/intake/portal/' . $secureToken) }}" style="display: inline-block; background-color: #0E9E8E; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">
+                Check My Status
+            </a>
         </p>
 
         <p style="font-size:13px; color:#555; line-height:1.6;">

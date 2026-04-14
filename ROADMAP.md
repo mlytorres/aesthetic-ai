@@ -394,7 +394,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [x] Plan enforcement middleware — blocks new evaluations when trial expired or subscription lapsed
 - [x] Trial banner — amber notice with trial end date; red paywall for expired accounts
 - [x] Webhook plan sync — `WebhookReceived` listener syncs `plan_id` from Stripe events
-- [ ] Usage overage alerts — email Owner when eval count reaches 80% of plan limit
+- [x] Usage overage alerts — email Owner when eval count reaches 80% of plan limit
 - [ ] Annual billing — yearly plans with discount; Stripe annual price IDs
 - [ ] Promo codes — Stripe coupon support in checkout flow
 
@@ -513,10 +513,10 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 |---|---|---|---|
 | 🔥 1 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
 | 🔥 2 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
-| 3 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| ✅ | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Done |
 | 4 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
 | 5 | Coordinator digest email — daily summary for high-volume clinics | Phase 2 | Small |
-| 6 | Patient follow-up sequence — scheduled reminder emails | Phase 2 | Medium |
+| ✅ | Patient follow-up sequence — scheduled reminder emails | Phase 2 | Done |
 | ✅ | White-label branding (logo, brand color, email sender, custom domain) | Phase 4 | Done |
 | ✅ | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Done |
 | ✅ | Spanish intake wizard (full EN/ES translation system) | Backlog | Done |

@@ -194,6 +194,10 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
     // AI simulation share page (no auth — gated by evaluation secure_token)
     Route::get('/simulations/{token}', [SimulationShareController::class, 'show'])
         ->name('simulation.share');
+
+    // Patient Portal (Status Check & Action Hub)
+    Route::get('/portal/{token}', [\App\Http\Controllers\Patient\PatientPortalController::class, 'show'])
+        ->name('patient.portal');
 });
 
 // ─── Super-admin panel ────────────────────────────────────────────────────────
