@@ -35,6 +35,9 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+Route::inertia('/legal/privacy', 'legal/privacy')->name('legal.privacy');
+Route::inertia('/legal/terms', 'legal/terms')->name('legal.terms');
+
 Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])
     ->middleware(['throttle:access-requests'])
     ->name('access-requests.store');
