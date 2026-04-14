@@ -31,10 +31,13 @@ export default function Welcome() {
 
                 {/* Navigation */}
                 <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <div className="rounded-xl bg-white px-3 py-1.5 shadow-sm">
-                            <img src="/logo.png" alt="SymetriHealth" className="h-10 w-auto" />
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-xl bg-white p-1.5 shadow-sm shrink-0">
+                            <img src="/logo.png" alt="SymetriHealth Logo" className="h-9 w-auto" />
                         </div>
+                        <span className="text-xl font-bold tracking-widest text-[#0E9E8E] uppercase hidden sm:block">
+                            SymetriHealth
+                        </span>
                     </div>
                     <div className="flex gap-6 items-center">
                         {auth.user ? (
@@ -375,8 +378,14 @@ export default function Welcome() {
 
                 {/* Footer */}
                 <footer className="border-t border-border border-dashed py-8">
-                    <div className="max-w-7xl mx-auto px-6 text-center text-xs text-muted-foreground">
-                        &copy; 2026 SymetriHealth Platform. All rights reserved. Strictly confidential.
+                    <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex justify-center gap-6">
+                            <Link href="/legal/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+                            <Link href="/legal/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+                        </div>
+                        <div>
+                            &copy; 2026 SymetriHealth Platform. All rights reserved. Strictly confidential.
+                        </div>
                     </div>
                 </footer>
             </div>
