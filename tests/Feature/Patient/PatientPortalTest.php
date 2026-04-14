@@ -71,4 +71,62 @@ class PatientPortalTest extends TestCase
             ->get('/intake/portal/invalid-token-xyz');
         $response->assertStatus(404);
     }
+
+    public function test_portal_passes_booking_url_when_set(): void
+    {
+        $tenant = Tenant::factory()->create([
+            'settings' => ['booking_url' => 'https://calendly.com/testclinic'],
+        ]);
+        $evaluation = Evaluation::factory()->create([
+            'tenant_id' => $tenant->id,
+            'secure_token' => 'booking-url-token',
+        ]);
+
+        $response = $this->withoutMiddleware(TenantMiddleware::class)
+            ->get('/intake/portal/booking-url-token');
+
+        $response->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->where('bookingUrl', 'https://calendly.com/testclinic')
+                ->where('phone', null)
+            );
+    }
+
+    public function test_portal_passes_phone_when_set(): void
+    {
+        $tenant = Tenant::factory()->create([
+            'settings' => ['phone' => '+1 305 555 0100'],
+        ]);
+        $evaluation = Evaluation::factory()->create([
+            'tenant_id' => $tenant->id,
+            'secure_token' => 'phone-token',
+        ]);
+
+        $response = $this->withoutMiddleware(TenantMiddleware::class)
+            ->get('/intake/portal/phone-token');
+
+        $response->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->where('phone', '+1 305 555 0100')
+                ->where('bookingUrl', null)
+            );
+    }
+
+    public function test_portal_passes_null_contact_info_when_not_configured(): void
+    {
+        $tenant = Tenant::factory()->create(['settings' => []]);
+        $evaluation = Evaluation::factory()->create([
+            'tenant_id' => $tenant->id,
+            'secure_token' => 'no-contact-token',
+        ]);
+
+        $response = $this->withoutMiddleware(TenantMiddleware::class)
+            ->get('/intake/portal/no-contact-token');
+
+        $response->assertStatus(200)
+            ->assertInertia(fn ($page) => $page
+                ->where('phone', null)
+                ->where('bookingUrl', null)
+            );
+    }
 }

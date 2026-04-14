@@ -58,6 +58,12 @@
             Your report is also attached to this email as a PDF.
         </p>
 
+        <div class="cta-wrap" style="margin-top:8px;">
+            <a href="{{ url('/intake/portal/' . $secureToken) }}" style="display:inline-block; border:1px solid #0E9E8E; color:#0E9E8E; font-size:12px; font-weight:600; text-decoration:none; padding:10px 24px; border-radius:5px; letter-spacing:0.3px;">
+                Visit Your Patient Portal &rarr;
+            </a>
+        </div>
+
         <hr class="divider"/>
 
         <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:6px;">

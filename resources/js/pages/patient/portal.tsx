@@ -28,6 +28,8 @@ interface Props {
             logo_url?: string;
         };
     };
+    phone: string | null;
+    bookingUrl: string | null;
 }
 
 function procedureLabel(slug: string): string {
@@ -50,7 +52,7 @@ const getActiveStep = (status: string) => {
     return 0;
 };
 
-const PatientPortal: FC<Props> = ({ evaluation, status, isComplete, tenant }) => {
+const PatientPortal: FC<Props> = ({ evaluation, status, isComplete, tenant, phone, bookingUrl }) => {
     const clinic = tenant.name;
     const activeStep = getActiveStep(status);
 
@@ -176,10 +178,31 @@ const PatientPortal: FC<Props> = ({ evaluation, status, isComplete, tenant }) =>
                         Contact our patient coordinators to finalize your surgical plan and reserve your date.
                     </p>
                     
-                    <a href="javascript:void(0)" className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-all shadow-md sm:w-auto hover:opacity-90" style={{ backgroundColor: 'var(--intake-accent)', color: 'var(--intake-icon-on-teal)' }}>
-                        <Phone className="h-4 w-4" />
-                        Contact Clinic to Book
-                    </a>
+                    {bookingUrl ? (
+                        <a
+                            href={bookingUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-all shadow-md sm:w-auto hover:opacity-90"
+                            style={{ backgroundColor: 'var(--intake-accent)', color: 'var(--intake-icon-on-teal)' }}
+                        >
+                            <Calendar className="h-4 w-4" />
+                            Book a Consultation
+                        </a>
+                    ) : phone ? (
+                        <a
+                            href={`tel:${phone}`}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-all shadow-md sm:w-auto hover:opacity-90"
+                            style={{ backgroundColor: 'var(--intake-accent)', color: 'var(--intake-icon-on-teal)' }}
+                        >
+                            <Phone className="h-4 w-4" />
+                            {phone}
+                        </a>
+                    ) : (
+                        <p className="text-sm text-[var(--intake-muted)]">
+                            Our team will reach out within 1–2 business days to schedule your consultation.
+                        </p>
+                    )}
                 </div>
 
                 {/* Footer */}

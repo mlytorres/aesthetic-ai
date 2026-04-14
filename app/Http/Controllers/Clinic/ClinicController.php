@@ -36,6 +36,8 @@ class ClinicController extends Controller
                 'locale' => $settings['locale'] ?? 'en',
                 'procedures_enabled' => $settings['procedures_enabled'] ?? ['rhinoplasty'],
                 'coordinator_emails' => $settings['coordinator_emails'] ?? [],
+                'phone' => $settings['phone'] ?? null,
+                'booking_url' => $settings['booking_url'] ?? null,
             ],
             'availableProcedures' => Procedure::where('active', true)
                 ->get(['slug', 'label', 'category'])
@@ -59,6 +61,8 @@ class ClinicController extends Controller
             'procedures_enabled.*' => ['string', 'exists:procedures,slug'],
             'coordinator_emails' => ['nullable', 'array'],
             'coordinator_emails.*' => ['email'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'booking_url' => ['nullable', 'url', 'max:500'],
         ]);
 
         $tenant->update([
@@ -71,6 +75,8 @@ class ClinicController extends Controller
                 'locale' => $validated['locale'],
                 'procedures_enabled' => $validated['procedures_enabled'],
                 'coordinator_emails' => $validated['coordinator_emails'] ?? [],
+                'phone' => $validated['phone'] ?: null,
+                'booking_url' => $validated['booking_url'] ?: null,
                 'clinic_configured' => true,
             ]),
         ]);

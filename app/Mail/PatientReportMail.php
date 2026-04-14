@@ -33,6 +33,8 @@ class PatientReportMail extends Mailable
 
     public string $reportUrl;
 
+    public string $secureToken;
+
     public function __construct(
         public readonly Evaluation $evaluation,
         string $reportUrl,
@@ -51,6 +53,7 @@ class PatientReportMail extends Mailable
         $this->procedureLabel = ucwords(str_replace(['-', '_'], ' ', $procedure));
         $this->clinicName = $tenant?->name ?? config('app.name');
         $this->reportUrl = $reportUrl;
+        $this->secureToken = $evaluation->secure_token;
     }
 
     public function envelope(): Envelope

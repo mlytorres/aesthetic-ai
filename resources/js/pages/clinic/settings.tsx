@@ -25,12 +25,16 @@ interface ClinicFormData {
 	locale: string;
 	procedures_enabled: string[];
 	coordinator_emails: string[];
+	phone: string;
+	booking_url: string;
 }
 
 interface Props {
 	clinic: ClinicFormData & {
 		slug: string;
 		logo_url: string | null;
+		phone: string | null;
+		booking_url: string | null;
 	};
 	availableProcedures: AvailableProcedure[];
 }
@@ -46,6 +50,8 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 			locale: clinic.locale ?? 'en',
 			procedures_enabled: clinic.procedures_enabled,
 			coordinator_emails: clinic.coordinator_emails,
+			phone: clinic.phone ?? '',
+			booking_url: clinic.booking_url ?? '',
 		});
 
 	const [newEmail, setNewEmail] = useState('');
@@ -473,6 +479,51 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 							</div>
 						</div>
 						<InputError message={errors.coordinator_emails} />
+					</div>
+
+					{/* Contact & Booking Card */}
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+						<h3 className="mb-1 text-base font-semibold text-foreground">
+							Contact &amp; Booking
+						</h3>
+						<p className="mb-6 text-xs text-muted-foreground">
+							Shown to patients on their portal so they can reach out to schedule a consultation.
+						</p>
+
+						<div className="space-y-4">
+							<div className="grid gap-2">
+								<Label htmlFor="phone" className="text-foreground">
+									Clinic Phone
+								</Label>
+								<Input
+									id="phone"
+									type="tel"
+									value={data.phone}
+									onChange={(e) => setData('phone', e.target.value)}
+									placeholder="+1 (305) 555-0100"
+									className="max-w-sm bg-background text-foreground"
+								/>
+								<InputError message={errors.phone} />
+							</div>
+
+							<div className="grid gap-2">
+								<Label htmlFor="booking_url" className="text-foreground">
+									Online Booking URL
+								</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									If set, the "Book Consultation" button on the patient portal will link here instead of showing the phone number.
+								</p>
+								<Input
+									id="booking_url"
+									type="url"
+									value={data.booking_url}
+									onChange={(e) => setData('booking_url', e.target.value)}
+									placeholder="https://calendly.com/yourclinic"
+									className="max-w-sm bg-background text-foreground"
+								/>
+								<InputError message={errors.booking_url} />
+							</div>
+						</div>
 					</div>
 
 					{/* Save Button */}

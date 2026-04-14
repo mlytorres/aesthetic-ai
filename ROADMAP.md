@@ -255,6 +255,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [x] `EnsureSuperAdmin` middleware — guards `/admin/*` routes
 - [x] `super-admin` middleware alias registered in `bootstrap/app.php`
 - [x] `LoginResponse` override — super-admins redirected to `/admin` after login (not `/dashboard`)
+- [x] `TwoFactorLoginResponse` override — same tenant-aware redirect after 2FA challenge (super-admin → `/admin`, tenant user → subdomain `/dashboard`)
 - [x] Super-admin seeded: `admin@aesthetic-ai.test / password`
 
 **Admin Tenant Controller:**
@@ -274,10 +275,18 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [x] Temporary password auto-generated (`Str::password(12, symbols: false)`)
 - [x] Resend invite resets password + resends email
 
+**Impersonation:**
+- [x] `ImpersonationController` — super-admin can impersonate any tenant user; session stores original admin ID (`impersonating_id`); `auth()->login($user)` switches context; redirects to tenant subdomain `/dashboard`
+- [x] `leave()` — restores original super-admin session via `session()->pull('impersonating_id')`; redirects back to `/admin/tenants`
+- [x] `EnsureSuperAdmin` blocks impersonation of super-admins (tenant_id = null guard in controller)
+- [x] `HandleInertiaRequests` — shares `impersonating: { as: name }` prop to all Inertia pages while active
+- [x] Amber impersonation banner in `app-sidebar-layout.tsx` — shows impersonated user name + "Stop Impersonating" button
+- [x] 5 tests in `ImpersonationTest.php`
+
 **Admin React Pages:**
 - [x] `resources/js/pages/admin/tenants/index.tsx` — stats row + tenants table (active/inactive badges, deactivate/restore)
 - [x] `resources/js/pages/admin/tenants/create.tsx` — form with auto-slug from name, procedure toggles, owner account fields
-- [x] `resources/js/pages/admin/tenants/show.tsx` — edit details, add staff, staff list with resend invite button
+- [x] `resources/js/pages/admin/tenants/show.tsx` — edit details, add staff, staff list with resend invite + impersonate buttons
 
 **Sidebar + Theme:**
 - [x] `AppSidebar` shows "Platform Admin" nav section for super-admin users, clinic nav for regular users
@@ -380,7 +389,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 **Multi-Tenant Onboarding:** 🚧 *Partially delivered (Sprint 7)*
 - [x] Super-admin panel — create/edit/deactivate tenants, add users, send invitations
 - [x] Invitation email with temporary credentials per tenant subdomain
-- [ ] **Tenant self-registration flow** — public sign-up page → tenant created → owner invited *(next priority)*
+- [x] **Tenant self-registration flow** — public sign-up page → tenant created → owner invited (landing page + registration CTA shipped Sprint 9)
 - [ ] Custom domain support (CNAME → AestheticAI)
 - [ ] Subdomain provisioning automation (DNS record creation on tenant create)
 
@@ -441,8 +450,8 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 **Patient Experience Enhancements:**
 - [x] Beauty Roadmap PDF — personalized report emailed to patient ✅ *Sprint 6*
-- [ ] Patient portal: check evaluation status
-- [ ] Patient portal: book consultation directly
+- [x] Patient portal: check evaluation status — `/intake/portal/{token}` with 4-step status timeline (Received → AI Analysis → Doctor Review → Ready), AI Simulation card + Beauty Roadmap card (gated until complete)
+- [ ] Patient portal: book consultation directly — "Contact Clinic to Book" button exists but is a placeholder (`javascript:void(0)`); needs clinic phone/booking URL from settings wired up
 
 **Analytics Dashboard:** ✅ *Complete (Sprint 6)*
 - [x] Clinic conversion funnel metrics (intake funnel drop-off by step)
@@ -511,11 +520,15 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🔥 1 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
-| 🔥 2 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
-| ✅ | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Done |
+| 🐛 1 | **Fix impersonation cross-domain redirect** — use `Inertia::location()` so browser does a hard nav to tenant subdomain (current `redirect()` stays on main domain for Inertia requests) | Bug | XS |
+| 🔥 2 | **Patient portal: book consultation** — wire clinic phone/booking URL to the "Contact Clinic to Book" button + notify patient by email when analysis is ready | Phase 3 | Small |
+| 🔥 3 | **HubSpot / Nextech native CRM integration** | Phase 2 | Medium |
 | 4 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
 | 5 | Coordinator digest email — daily summary for high-volume clinics | Phase 2 | Small |
+| 6 | Promo codes — Stripe coupon support in checkout flow | Phase 2 | Small |
+| ✅ | 2FA redirect — `TwoFactorLoginResponse` override (super-admin → `/admin`, tenant → subdomain) | Auth | Done |
+| ✅ | Impersonation — super-admin session switch + amber banner + stop button | Sprint 7 | Done |
+| ✅ | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Done |
 | ✅ | Patient follow-up sequence — scheduled reminder emails | Phase 2 | Done |
 | ✅ | White-label branding (logo, brand color, email sender, custom domain) | Phase 4 | Done |
 | ✅ | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Done |

@@ -27,14 +27,18 @@ class PatientPortalController extends Controller
             ->where('secure_token', $token)
             ->firstOrFail();
 
+        $settings = $evaluation->tenant?->settings ?? [];
+
         return Inertia::render('patient/portal', [
             'evaluation' => $evaluation,
             'status' => $evaluation->status,
             'isComplete' => $evaluation->isAiComplete() || in_array($evaluation->status, [
-                Evaluation::STATUS_CONTACTED, 
-                Evaluation::STATUS_BOOKED
+                Evaluation::STATUS_CONTACTED,
+                Evaluation::STATUS_BOOKED,
             ]),
             'tenant' => $evaluation->tenant,
+            'phone' => $settings['phone'] ?? null,
+            'bookingUrl' => $settings['booking_url'] ?? null,
         ]);
     }
 }
