@@ -1,14 +1,18 @@
 import type {FC, ChangeEvent} from 'react';
 import type {WizardState, WizardAction, ContactFormData} from '@/types/intake';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    t: TFn;
     onNext: () => void;
     onBack: () => void;
 }
 
-const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
+const ContactInfo: FC<Props> = ({ state, dispatch, t, onNext, onBack }) => {
     const { contact } = state;
 
     const set = (field: keyof ContactFormData) =>
@@ -22,22 +26,21 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
 
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[var(--intake-fg)]">Your contact details</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{t('contact.title')}</h2>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
-                We will use these details to send you your evaluation report and to schedule
-                a consultation. Your information is never sold or shared.
+                {t('contact.subtitle')}
             </p>
 
             <div className="mt-8 space-y-4">
                 {/* Name */}
                 <div>
                     <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
-                        Full Name <span className="text-[#0E9E8E]">*</span>
+                        {t('contact.name_label')} <span className="text-[#0E9E8E]">*</span>
                     </label>
                     <input
                         type="text"
                         autoComplete="name"
-                        placeholder="Jane Smith"
+                        placeholder={t('contact.name_placeholder')}
                         value={contact.name}
                         onChange={set('name')}
                         className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
@@ -47,12 +50,12 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                 {/* Email */}
                 <div>
                     <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
-                        Email Address <span className="text-[#0E9E8E]">*</span>
+                        {t('contact.email_label')} <span className="text-[#0E9E8E]">*</span>
                     </label>
                     <input
                         type="email"
                         autoComplete="email"
-                        placeholder="jane@example.com"
+                        placeholder={t('contact.email_placeholder')}
                         value={contact.email}
                         onChange={set('email')}
                         className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
@@ -62,19 +65,20 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                 {/* Phone */}
                 <div>
                     <label className="mb-1.5 block text-xs font-semibold text-[var(--intake-muted)] uppercase tracking-widest">
-                        Phone Number{' '}
+                        {t('contact.phone_label')}{' '}
                         <span className="ml-1 text-white/30 normal-case font-normal tracking-normal">
-                            (optional)
+                            ({t('consent.optional_badge')})
                         </span>
                     </label>
                     <input
                         type="tel"
                         autoComplete="tel"
-                        placeholder="+1 (305) 555-0100"
+                        placeholder={t('contact.phone_placeholder')}
                         value={contact.phone}
                         onChange={set('phone')}
                         className="w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors"
                     />
+                    <p className="mt-1 text-xs text-[var(--intake-muted)]">{t('contact.phone_hint')}</p>
                 </div>
             </div>
 
@@ -89,8 +93,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                     />
                 </svg>
                 <p className="text-xs text-[var(--intake-muted)] leading-relaxed">
-                    Your data is encrypted and stored in compliance with HIPAA. We will never
-                    share your information without your explicit consent.
+                    {t('footer.hipaa_notice')}
                 </p>
             </div>
 
@@ -106,7 +109,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                     onClick={onBack}
                     className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
                 >
-                    ← Back
+                    {t('nav.back')}
                 </button>
                 <button
                     type="button"
@@ -119,7 +122,7 @@ const ContactInfo: FC<Props> = ({ state, dispatch, onNext, onBack }) => {
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >
-                    Review & Submit →
+                    {t('contact.continue_cta')}
                 </button>
             </div>
         </div>

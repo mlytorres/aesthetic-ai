@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { useReducer, useCallback  } from 'react';
 import type {FC} from 'react';
 import type {WizardState, WizardAction, WizardStep, Procedure, PhotoType, ClinicConfig, CreateEvaluationResponse, UploadPhotoResponse, ValidationErrorResponse} from '@/types/intake';
+import { useTranslation } from '@/i18n/useTranslation';
 
 import WizardShell    from './components/WizardShell';
 import ConsentSubmit   from './steps/ConsentSubmit';
@@ -54,6 +55,7 @@ const initialState: WizardState = {
         hipaa_acknowledged: false,
         terms_accepted:     false,
         photo_use_consent:  false,
+        opt_in_sms:         false,
         consented_at:       '',
     },
     turnstileToken: null,
@@ -185,6 +187,7 @@ async function apiPost<T>(url: string, body: unknown): Promise<T> {
 
 const WizardPage: FC<Props> = ({ clinic, procedures, hideHeader = false, turnstileSiteKey }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
+    const { t } = useTranslation(clinic.locale ?? 'en');
 
     // ── Step 1: select procedure → create evaluation ──────────────────────────
     const handleProcedureNext = useCallback(async (): Promise<void> => {
@@ -329,6 +332,7 @@ return;
                     hipaa_acknowledged: state.consent.hipaa_acknowledged,
                     terms_accepted:     state.consent.terms_accepted,
                     photo_use_consent:  state.consent.photo_use_consent,
+                    opt_in_sms:         state.consent.opt_in_sms,
                     consented_at:       consentedAt,
                 },
                 turnstile_token: state.turnstileToken,
@@ -354,16 +358,19 @@ return;
                 clinicName={clinic.name}
                 clinicLogo={clinic.logo}
                 theme={clinic.theme}
+                brandPrimary={clinic.brand_primary}
                 currentStep={state.step}
                 hideHeader={hideHeader}
+                t={t}
             >
                 {state.step === 'procedure' && (
                     <ProcedureSelect
                         procedures={procedures}
                         state={state}
                         dispatch={dispatch}
+                        t={t}
                         onNext={() => {
- void handleProcedureNext(); 
+ void handleProcedureNext();
 }}
                     />
                 )}
@@ -373,8 +380,9 @@ return;
                         questions={procedure.quiz.questions}
                         state={state}
                         dispatch={dispatch}
+                        t={t}
                         onNext={() => {
- void handleQuizNext(); 
+ void handleQuizNext();
 }}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
                     />
@@ -387,6 +395,7 @@ return;
                         instructions={photoProtocol.instructions}
                         state={state}
                         dispatch={dispatch}
+                        t={t}
                         onUpload={handlePhotoUpload}
                         onNext={handlePhotosNext}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
@@ -397,6 +406,7 @@ return;
                     <ContactInfo
                         state={state}
                         dispatch={dispatch}
+                        t={t}
                         onNext={handleContactNext}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
                     />
@@ -406,9 +416,10 @@ return;
                     <ConsentSubmit
                         state={state}
                         dispatch={dispatch}
+                        t={t}
                         turnstileSiteKey={turnstileSiteKey}
                         onSubmit={() => {
- void handleSubmit(); 
+ void handleSubmit();
 }}
                         onBack={() => dispatch({ type: 'PREV_STEP' })}
                     />

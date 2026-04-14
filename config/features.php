@@ -41,4 +41,16 @@ return [
     */
     'notifications' => (bool) env('FEATURE_NOTIFICATIONS', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Notifications
+    |--------------------------------------------------------------------------
+    |
+    | Master switch for Twilio SMS notifications. If false, SMS text
+    | messages will not be sent to patients, even if they opt in.
+    |
+    */
+
+    'sms_enabled' => env('FEATURE_SMS_ENABLED', false),
+
 ];

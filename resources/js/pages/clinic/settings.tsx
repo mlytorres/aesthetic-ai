@@ -1,5 +1,5 @@
-import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { update } from '@/routes/clinic/settings';
+import settings, { update } from '@/routes/clinic/settings';
 
 interface AvailableProcedure {
 	slug: string;
@@ -19,12 +19,19 @@ interface AvailableProcedure {
 interface ClinicFormData {
 	name: string;
 	theme: string;
+	brand_primary: string;
+	from_name: string;
+	custom_domain: string;
+	locale: string;
 	procedures_enabled: string[];
 	coordinator_emails: string[];
 }
 
 interface Props {
-	clinic: ClinicFormData & { slug: string; logo_url: string | null };
+	clinic: ClinicFormData & {
+		slug: string;
+		logo_url: string | null;
+	};
 	availableProcedures: AvailableProcedure[];
 }
 
@@ -33,11 +40,38 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 		useForm<ClinicFormData>({
 			name: clinic.name,
 			theme: clinic.theme,
+			brand_primary: clinic.brand_primary ?? '',
+			from_name: clinic.from_name ?? '',
+			custom_domain: clinic.custom_domain ?? '',
+			locale: clinic.locale ?? 'en',
 			procedures_enabled: clinic.procedures_enabled,
 			coordinator_emails: clinic.coordinator_emails,
 		});
 
 	const [newEmail, setNewEmail] = useState('');
+	const [logoUrl, setLogoUrl] = useState<string | null>(clinic.logo_url);
+	const [logoUploading, setLogoUploading] = useState(false);
+	const logoInputRef = useRef<HTMLInputElement>(null);
+
+	const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		setLogoUploading(true);
+		router.post(
+			settings.logo.upload.url(),
+			{ logo: file },
+			{
+				forceFormData: true,
+				preserveScroll: true,
+				onSuccess: () => setLogoUploading(false),
+				onError: () => setLogoUploading(false),
+			}
+		);
+	};
+
+	const handleLogoDelete = () => {
+		router.delete(settings.logo.delete.url(), { preserveScroll: true });
+	};
 
 	const handleAddEmail = () => {
 		if (newEmail.trim() && !data.coordinator_emails.includes(newEmail)) {
@@ -114,6 +148,35 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 								<InputError message={errors.name} />
 							</div>
 
+							{/* Intake language */}
+							<div className="grid gap-2">
+								<Label className="text-foreground">Intake Language</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									Language shown to patients in the intake wizard.
+								</p>
+								<div className="flex gap-3">
+									{[
+										{ value: 'en', label: '🇺🇸 English' },
+										{ value: 'es', label: '🇪🇸 Español' },
+									].map(({ value, label }) => (
+										<button
+											key={value}
+											type="button"
+											onClick={() => setData('locale', value)}
+											className={cn(
+												'flex-1 rounded-lg border-2 px-4 py-3 font-medium transition-all max-w-[140px]',
+												data.locale === value
+													? 'border-[#0E9E8E] bg-[#0E9E8E]/10 text-[#0E9E8E]'
+													: 'border-sidebar-border/50 bg-transparent text-muted-foreground hover:border-[#0E9E8E]/50'
+											)}
+										>
+											{label}
+										</button>
+									))}
+								</div>
+								<InputError message={errors.locale} />
+							</div>
+
 							<div className="grid gap-2">
 								<Label className="text-foreground">Intake Page Theme</Label>
 								<p className="text-xs text-muted-foreground -mt-1">
@@ -141,6 +204,155 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
 									))}
 								</div>
 								<InputError message={errors.theme} />
+							</div>
+						</div>
+					</div>
+
+					{/* Branding Card */}
+					<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+						<h3 className="mb-6 text-base font-semibold text-foreground">
+							Branding
+						</h3>
+
+						<div className="space-y-6">
+							{/* Logo upload */}
+							<div className="grid gap-2">
+								<Label className="text-foreground">Clinic Logo</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									Shown in the intake wizard header. PNG, JPG, or SVG — max 2 MB.
+								</p>
+								<div className="flex items-center gap-4">
+									{logoUrl ? (
+										<img
+											src={logoUrl}
+											alt="Clinic logo"
+											className="h-12 w-auto max-w-[160px] rounded-md border border-border object-contain p-1"
+										/>
+									) : (
+										<div className="flex h-12 w-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-xs text-muted-foreground">
+											No logo
+										</div>
+									)}
+									<div className="flex flex-col gap-2">
+										<input
+											ref={logoInputRef}
+											type="file"
+											accept="image/jpeg,image/png,image/webp,image/svg+xml"
+											className="hidden"
+											onChange={handleLogoChange}
+										/>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											disabled={logoUploading}
+											onClick={() => logoInputRef.current?.click()}
+										>
+											{logoUploading ? 'Uploading…' : 'Upload Logo'}
+										</Button>
+										{logoUrl && (
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												className="text-red-400 hover:text-red-300"
+												onClick={handleLogoDelete}
+											>
+												Remove
+											</Button>
+										)}
+									</div>
+								</div>
+							</div>
+
+							{/* Brand primary color */}
+							<div className="grid gap-2">
+								<Label htmlFor="brand_primary" className="text-foreground">
+									Brand Color
+								</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									Replaces the default teal (#0E9E8E) on buttons and accents in the intake wizard.
+								</p>
+								<div className="flex items-center gap-3">
+									<input
+										type="color"
+										id="brand_primary_picker"
+										value={data.brand_primary || '#0E9E8E'}
+										onChange={(e) => setData('brand_primary', e.target.value)}
+										className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent p-0.5"
+									/>
+									<Input
+										id="brand_primary"
+										value={data.brand_primary}
+										onChange={(e) => setData('brand_primary', e.target.value)}
+										placeholder="#0E9E8E"
+										className="w-32 bg-background font-mono text-foreground"
+										maxLength={7}
+									/>
+									{data.brand_primary && (
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											className="text-muted-foreground"
+											onClick={() => setData('brand_primary', '')}
+										>
+											Reset
+										</Button>
+									)}
+								</div>
+								<InputError message={errors.brand_primary} />
+							</div>
+
+							{/* Email sender name */}
+							<div className="grid gap-2">
+								<Label htmlFor="from_name" className="text-foreground">
+									Email Sender Name
+								</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									The "From" name shown in patient emails. Defaults to your clinic name.
+								</p>
+								<Input
+									id="from_name"
+									value={data.from_name}
+									onChange={(e) => setData('from_name', e.target.value)}
+									placeholder={clinic.name}
+									className="max-w-sm bg-background text-foreground"
+								/>
+								<InputError message={errors.from_name} />
+							</div>
+
+							{/* Custom domain */}
+							<div className="grid gap-2">
+								<Label htmlFor="custom_domain" className="text-foreground">
+									Custom Domain
+									<span className="ml-2 rounded-full bg-[#0E9E8E]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0E9E8E] uppercase tracking-wide">
+										Pro
+									</span>
+								</Label>
+								<p className="text-xs text-muted-foreground -mt-1">
+									Point your own domain (e.g. <code className="font-mono">intake.yourclinic.com</code>) to your intake page.
+								</p>
+								<Input
+									id="custom_domain"
+									value={data.custom_domain}
+									onChange={(e) => setData('custom_domain', e.target.value)}
+									placeholder="intake.yourclinic.com"
+									className="max-w-sm bg-background font-mono text-foreground"
+								/>
+								<InputError message={errors.custom_domain} />
+								{data.custom_domain && (
+									<div className="rounded-md border border-border/50 bg-muted/30 p-4 text-xs text-muted-foreground space-y-2 max-w-sm mt-1">
+										<p className="font-semibold text-foreground">DNS Setup Instructions</p>
+										<p>Add a <code className="font-mono">CNAME</code> record at your DNS provider:</p>
+										<div className="rounded bg-background px-3 py-2 font-mono text-xs border border-border/30">
+											<span className="text-[#0E9E8E]">{data.custom_domain}</span>
+											{' → '}
+											<span className="text-foreground">{clinic.slug}.aesthetic-ai.com</span>
+										</div>
+										<p>DNS changes may take up to 24 hours to propagate. Contact support once your record is live to activate SSL.</p>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>

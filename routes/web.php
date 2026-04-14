@@ -129,6 +129,8 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
         ->group(function (): void {
             Route::get('/settings', [ClinicController::class, 'edit'])->name('settings.edit');
             Route::patch('/settings', [ClinicController::class, 'update'])->name('settings.update');
+            Route::post('/settings/logo', [ClinicController::class, 'uploadLogo'])->name('settings.logo.upload');
+            Route::delete('/settings/logo', [ClinicController::class, 'deleteLogo'])->name('settings.logo.delete');
 
             Route::get('/team', [TeamController::class, 'index'])->name('team.index');
             Route::post('/team', [TeamController::class, 'store'])->name('team.store');

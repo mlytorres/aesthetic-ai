@@ -63,6 +63,48 @@ class SendPatientConfirmationJob implements ShouldQueue
             'evaluation_id' => $this->evaluationId,
             'tenant_id' => $evaluation->tenant_id,
         ]);
+
+        $this->sendSmsIfOptedIn($evaluation);
+    }
+
+    private function sendSmsIfOptedIn(Evaluation $evaluation): void
+    {
+        if (! config('features.sms_enabled')) {
+            return;
+        }
+
+        $optedIn = $evaluation->quiz_answers['_consent']['opt_in_sms'] ?? false;
+        if (! $optedIn) {
+            return;
+        }
+
+        $phone = $evaluation->patient?->phone_encrypted;
+        if (blank($phone)) {
+            return;
+        }
+
+        try {
+            $client = new \Twilio\Rest\Client(
+                config('services.twilio.sid'),
+                config('services.twilio.token')
+            );
+
+            $clinicName = $evaluation->tenant?->name ?? 'SymetriHealth';
+
+            $client->messages->create($phone, [
+                'from' => config('services.twilio.from'),
+                'body' => "{$clinicName}: We've received your evaluation. Your clinical team is reviewing it now.",
+            ]);
+
+            Log::info('SendPatientConfirmationJob: SMS confirmation sent', [
+                'evaluation_id' => $this->evaluationId,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('SendPatientConfirmationJob: Twilio SMS failed', [
+                'evaluation_id' => $this->evaluationId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function failed(\Throwable $e): void

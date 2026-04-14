@@ -33,11 +33,18 @@ class IntakeController extends Controller
             ->with(['quizDefinitions' => fn ($q) => $q->where('is_active', true)])
             ->get();
 
+        $settings = $tenant->settings ?? [];
+
         return Inertia::render('intake/wizard', [
             'clinic' => [
                 'name' => $tenant->name,
-                'theme' => $tenant->settings['theme'] ?? 'luxury-dark',
-                'logo' => $tenant->settings['logo_url'] ?? null,
+                'theme' => match ($settings['theme'] ?? 'luxury-dark') {
+                    'clean-light' => 'luxury-light',
+                    default => $settings['theme'] ?? 'luxury-dark',
+                },
+                'logo' => $settings['logo_url'] ?? null,
+                'brand_primary' => $settings['brand_primary'] ?? null,
+                'locale' => $settings['locale'] ?? 'en',
             ],
             'hideHeader' => $request->query('hide_header') === 'true',
             'turnstileSiteKey' => config('services.turnstile.site_key'),

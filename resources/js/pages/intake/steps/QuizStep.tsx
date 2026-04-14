@@ -1,16 +1,20 @@
 import { useState  } from 'react';
 import type {FC} from 'react';
 import type {QuizQuestion, WizardState, WizardAction} from '@/types/intake';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     questions: QuizQuestion[];
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    t: TFn;
     onNext: () => void;
     onBack: () => void;
 }
 
-const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => {
+const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) => {
     const [activeIndex, setActiveIndex] = useState(0);
 
     const question = questions[activeIndex];
@@ -22,6 +26,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                 total={questions.length}
                 loading={state.loading}
                 error={state.error}
+                t={t}
                 onSubmit={onNext}
                 onBack={() => setActiveIndex(questions.length - 1)}
             />
@@ -164,7 +169,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                     }}
                     className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] transition-colors hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)]"
                 >
-                    ← Back
+                    {t('nav.back')}
                 </button>
 
                 <button
@@ -178,7 +183,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, onNext, onBack }) => 
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >
-                    Next →
+                    {t('nav.next')}
                 </button>
             </div>
         </div>
@@ -306,11 +311,12 @@ interface QuizCompleteProps {
     total: number;
     loading: boolean;
     error: string | null;
+    t: TFn;
     onSubmit: () => void;
     onBack: () => void;
 }
 
-const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, onBack }) => (
+const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, t, onSubmit, onBack }) => (
     <div className="py-6 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#0E9E8E]/15 ring-1 ring-[#0E9E8E]/30">
             <svg className="h-8 w-8 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
@@ -324,9 +330,11 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
             </svg>
         </div>
 
-        <h2 className="text-xl font-bold text-[var(--intake-fg)]">All {total} questions answered</h2>
+        <h2 className="text-xl font-bold text-[var(--intake-fg)]">
+            {t('quiz.question_of', { current: total, total })}
+        </h2>
         <p className="mt-2 text-sm text-[var(--intake-muted)]">
-            Ready to continue? We'll now guide you through uploading your photos.
+            {t('quiz.submit')}
         </p>
 
         {error && (
@@ -341,7 +349,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
                 onClick={onBack}
                 className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
             >
-                ← Review
+                {t('nav.back')}
             </button>
             <button
                 type="button"
@@ -354,7 +362,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, onSubmit, 
                         : 'bg-[#0E9E8E] text-[var(--intake-icon-on-teal)] hover:bg-[#a8883e] active:scale-[0.98]',
                 ].join(' ')}
             >
-                {loading ? 'Saving…' : 'Continue to Photos →'}
+                {loading ? t('quiz.saving') : t('quiz.submit')}
             </button>
         </div>
     </div>

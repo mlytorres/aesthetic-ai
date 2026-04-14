@@ -7,6 +7,7 @@ namespace App\Mail;
 use App\Models\Evaluation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -33,6 +34,9 @@ class PatientConfirmationMail extends Mailable
 
     public string $secureToken;
 
+    /** Custom From name set by the tenant (white-label branding). */
+    private string $fromName;
+
     public function __construct(public readonly Evaluation $evaluation)
     {
         $patient = $evaluation->patient;
@@ -46,11 +50,15 @@ class PatientConfirmationMail extends Mailable
         $this->procedureLabel = ucwords(str_replace(['-', '_'], ' ', $evaluation->procedure_slug));
         $this->clinicName = $tenant?->name ?? config('app.name');
         $this->secureToken = $evaluation->secure_token;
+
+        // Use the tenant's custom from_name if set, otherwise fall back to clinic name.
+        $this->fromName = $tenant?->settings['from_name'] ?? $this->clinicName;
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address(config('mail.from.address'), $this->fromName),
             subject: "We received your {$this->procedureLabel} evaluation — {$this->clinicName}",
         );
     }

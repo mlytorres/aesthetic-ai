@@ -36,6 +36,7 @@
 **Sprint 7 — Multi-Tenant Platform Admin:** ✅ **Complete**
 **Sprint 8 — Body Landmarks + AI Simulation:** ✅ **Complete**
 **Sprint 9 — Billing, Notifications, Webhooks, Security:** ✅ **Complete**
+**Sprint 10 — White-Label, SMS, Multilingual & Usage Alerts:** ✅ **Complete**
 
 ---
 
@@ -328,6 +329,37 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ---
 
+---
+
+### P1 Sprint 10 — White-Label, SMS, Multilingual & Usage Alerts ✅ COMPLETE
+
+**White-Label Branding:**
+- [x] Logo upload — `POST /clinic/settings/logo` + `DELETE /clinic/settings/logo`; stored in public disk; shown in WizardShell header
+- [x] Brand primary color — hex color picker in settings, passed to intake as `--intake-accent` CSS variable override (replaces default `#0E9E8E`)
+- [x] Email sender name — `from_name` setting drives Mailable `From:` header (falls back to clinic name)
+- [x] Custom domain instructions — store `custom_domain` in settings, show CNAME DNS setup panel inline with a "Pro" badge
+
+**SMS Confirmations:**
+- [x] `opt_in_sms` consent checkbox in wizard (already in `ConsentFormData` type, now rendered as optional consent item)
+- [x] `SendPatientSmsConfirmationJob` — Twilio REST API via `Http::withBasicAuth`; dispatched on `notifications` queue when patient opts in
+- [x] `consent.opt_in_sms` stored in `quiz_answers._consent`; job guards against missing phone or unconfigured Twilio
+- [x] SMS opt-in is visibly marked optional in UI
+
+**Usage Overage Alerts:**
+- [x] `SendUsageOverageAlertJob` — checks if usage ≥ 80% of plan limit; sends to clinic Owner once per calendar month (cached)
+- [x] `UsageOverageAlertMail` + `emails.usage-overage-alert` Blade — shows progress bar, current/remaining/limit stats, upgrade CTA
+- [x] Dispatched on every `EvaluationController::store()` call on `notifications` queue (idempotent — skips if already sent this month)
+
+**Multilingual Support (English + Spanish):**
+- [x] `resources/js/i18n/translations.ts` — full bilingual dictionary (EN + ES) for all intake UI strings
+- [x] `resources/js/i18n/useTranslation.ts` — `useTranslation(locale)` hook returning `t(key, vars)` with `{variable}` interpolation
+- [x] `locale` setting in clinic settings — English / Español toggle, stored in `tenant.settings.locale`
+- [x] `IntakeController` passes `locale` in `clinic` prop to intake wizard
+- [x] All intake step components (`ProcedureSelect`, `ContactInfo`, `ConsentSubmit`, `QuizStep`, `PhotoCapture`, `WizardShell`) accept and use `t()`
+- [x] Quiz questions remain clinic-defined (backend) — only UI chrome (labels, buttons, navigation) is translated
+
+---
+
 ## Phase 2 — Foundation
 
 **Theme:** Multi-procedure, multi-tenant, revenue model live.
@@ -428,8 +460,12 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ### Key Deliverables
 
-**White-Label Program:** ⬜
-- [ ] Full rebranding capability (logo, colors, domain, email sender)
+**White-Label Program:** 🚧 *Partially delivered (Sprint 10)*
+- [x] Logo upload and display in intake wizard header
+- [x] Brand primary color override (CSS variable, full intake wizard)
+- [x] Custom email sender name (From name in patient emails)
+- [x] Custom domain field with CNAME setup instructions
+- [ ] Full rebranding: custom email domain (actual SMTP / DNS provisioning)
 - [ ] Reseller program for medical marketing agencies
 - [ ] Reseller dashboard: manage multiple clinic accounts
 
@@ -462,7 +498,8 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - Mobile native apps (iOS + Android) for photo capture
 - Telemedicine integration (video consultation scheduling)
 - Insurance eligibility pre-check (for reconstructive procedures)
-- Multilingual support (Spanish — critical for Miami market)
+- ~~Multilingual support (Spanish — critical for Miami market)~~ ✅ Done (Sprint 10)
+- Additional languages: Portuguese, French, Mandarin
 - AI chatbot for pre-evaluation patient questions
 - Integration with practice management software (ModMed, Kareo)
 - Outcome photography tracking (before + after comparison)
@@ -474,13 +511,16 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🔥 1 | Usage overage alerts — email Owner at 80% eval cap | Phase 2 | Small |
-| 🔥 2 | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Small |
-| 3 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
-| 4 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
-| 5 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
-| 6 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
-| 7 | Multilingual support (Spanish — Miami market priority) | Backlog | Large |
+| 🔥 1 | Patient portal — status check + self-schedule consultation | Phase 3 | Medium |
+| 🔥 2 | HubSpot / Nextech native CRM integration | Phase 2 | Medium |
+| 3 | AI Simulation — rhinoplasty facial edit (source photo via S3 download) | Phase 3 | Medium |
+| 4 | Annual billing — yearly plans with Stripe discount pricing | Phase 2 | Small |
+| 5 | Coordinator digest email — daily summary for high-volume clinics | Phase 2 | Small |
+| 6 | Patient follow-up sequence — scheduled reminder emails | Phase 2 | Medium |
+| ✅ | White-label branding (logo, brand color, email sender, custom domain) | Phase 4 | Done |
+| ✅ | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Done |
+| ✅ | Spanish intake wizard (full EN/ES translation system) | Backlog | Done |
+| ✅ | Usage overage alerts at 80% eval cap | Phase 2 | Done |
 | ✅ | Stripe billing — Checkout, plan swaps, Customer Portal, invoices | Phase 2 | Done |
 | ✅ | Tenant self-registration + "Request a Demo" enterprise CTA | Phase 2 | Done |
 | ✅ | Patient confirmation email (immediate post-submission) | Phase 2 | Done |

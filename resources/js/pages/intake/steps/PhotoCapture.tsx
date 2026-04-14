@@ -2,6 +2,9 @@ import { useRef, useState } from 'react';
 import type {FC, ChangeEvent} from 'react';
 import type {PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
 import { WebcamCapture } from './WebcamCapture';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     requiredTypes: PhotoType[];
@@ -9,6 +12,7 @@ interface Props {
     instructions?: string;
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    t: TFn;
     onUpload: (file: File, type: PhotoType) => Promise<void>;
     onNext: () => void;
     onBack: () => void;
@@ -41,17 +45,18 @@ const PhotoCapture: FC<Props> = ({
     instructions,
     state,
     dispatch,
+    t,
     onUpload,
     onNext,
     onBack,
 }) => {
-    const allRequired = requiredTypes.every((t) =>
-        state.photos.some((p) => p.type === t && !p.uploading && !p.error),
+    const allRequired = requiredTypes.every((type) =>
+        state.photos.some((p) => p.type === type && !p.uploading && !p.error),
     );
 
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[var(--intake-fg)]">Upload your photos</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{t('photos.title')}</h2>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
                 {instructions ??
                     'Clear, well-lit photos help our AI provide an accurate evaluation. No makeup or filters.'}
@@ -122,7 +127,7 @@ const PhotoCapture: FC<Props> = ({
                     onClick={onBack}
                     className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
                 >
-                    ← Back
+                    {t('nav.back')}
                 </button>
                 <button
                     type="button"
@@ -135,7 +140,10 @@ const PhotoCapture: FC<Props> = ({
                             : 'cursor-not-allowed bg-white/10 text-white/30',
                     ].join(' ')}
                 >
-                    {allRequired ? 'Continue →' : `${requiredTypes.filter((t) => !state.photos.some((p) => p.type === t && !p.uploading && !p.error)).length} photo(s) remaining`}
+                    {allRequired
+                        ? t('nav.continue')
+                        : t('photos.continue_cta', { count: requiredTypes.filter((type) => !state.photos.some((p) => p.type === type && !p.uploading && !p.error)).length })
+                    }
                 </button>
             </div>
         </div>

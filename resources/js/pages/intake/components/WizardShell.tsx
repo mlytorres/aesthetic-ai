@@ -1,6 +1,9 @@
 import type {FC, ReactNode} from 'react';
 import type {WizardStep} from '@/types/intake';
 import ProgressBar from './ProgressBar';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     clinicName: string;
@@ -9,11 +12,20 @@ interface Props {
     children: ReactNode;
     hideHeader?: boolean;
     theme?: string;
+    /** Optional hex color that overrides the default teal accent (#0E9E8E). */
+    brandPrimary?: string | null;
+    /** Translation function from useTranslation. */
+    t?: TFn;
 }
 
-const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeader = false, children, theme = 'luxury-dark' }) => {
+const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeader = false, children, theme = 'luxury-dark', brandPrimary, t }) => {
+    // Build an inline style that overrides --intake-accent when a brand color is set.
+    const brandStyle = brandPrimary
+        ? ({ '--intake-accent': brandPrimary } as React.CSSProperties)
+        : undefined;
+
     return (
-        <div className="flex min-h-screen flex-col bg-[var(--intake-bg)]" data-intake-theme={theme}>
+        <div className="flex min-h-screen flex-col bg-[var(--intake-bg)]" data-intake-theme={theme} style={brandStyle}>
             {/* Header */}
             {!hideHeader && (
             <header className="flex items-center justify-between border-b border-[var(--intake-border-xs)] px-6 py-4">
@@ -41,7 +53,7 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
 
                 {/* Powered-by badge */}
                 <span className="text-[10px] font-medium tracking-widest text-[var(--intake-muted-faint)] uppercase">
-                    AI Evaluation
+                    {t ? t('footer.powered_by') : 'AI Evaluation'}
                 </span>
             </header>
             )}
@@ -57,7 +69,7 @@ const WizardShell: FC<Props> = ({ clinicName, clinicLogo, currentStep, hideHeade
             {/* Footer */}
             <footer className="border-t border-[var(--intake-border-xs)] py-4 text-center">
                 <p className="text-[11px] text-[var(--intake-muted-faint)]">
-                    Your information is encrypted and protected under HIPAA.
+                    {t ? t('footer.hipaa_notice') : 'Your information is encrypted and protected under HIPAA.'}
                 </p>
             </footer>
         </div>

@@ -27,6 +27,7 @@ class SubmitEvaluationRequest extends FormRequest
             'consent.hipaa_acknowledged' => ['required', 'accepted'],
             'consent.terms_accepted'     => ['required', 'accepted'],
             'consent.photo_use_consent'  => ['required', 'accepted'],
+            'consent.opt_in_sms'         => ['sometimes', 'boolean'],
             'consent.consented_at'       => ['required', 'date'],
 
             // Security

@@ -15,7 +15,9 @@ use App\Jobs\AI\ExtractBodyLandmarksJob;
 use App\Jobs\AI\ExtractFacialLandmarksJob;
 use App\Jobs\AI\GenerateBasicRecommendationsJob;
 use App\Jobs\AI\SendPatientConfirmationJob;
+use App\Jobs\AI\SendPatientSmsConfirmationJob;
 use App\Jobs\AI\ValidatePhotoQualityJob;
+use App\Jobs\SendUsageOverageAlertJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
 use App\Services\AuditLog;
@@ -59,6 +61,9 @@ class EvaluationController extends Controller
         ]);
 
         $this->auditLog->record('evaluation.created', $evaluation);
+
+        // Check if usage has crossed the 80% threshold and alert the clinic Owner.
+        SendUsageOverageAlertJob::dispatch($evaluation->tenant_id)->onQueue('notifications');
 
         return response()->json([
             'token' => $evaluation->secure_token,
@@ -155,6 +160,7 @@ class EvaluationController extends Controller
                     'hipaa_acknowledged' => $validated['consent']['hipaa_acknowledged'],
                     'terms_accepted' => $validated['consent']['terms_accepted'],
                     'photo_use_consent' => $validated['consent']['photo_use_consent'],
+                    'opt_in_sms' => (bool) ($validated['consent']['opt_in_sms'] ?? false),
                     'consented_at' => $validated['consent']['consented_at'],
                 ],
             ]),
@@ -167,6 +173,14 @@ class EvaluationController extends Controller
 
         // Send immediate confirmation email to patient (before AI pipeline runs).
         SendPatientConfirmationJob::dispatch($evaluation->id)->onQueue('notifications');
+
+        // Optionally send SMS confirmation if patient opted in.
+        if ((bool) ($validated['consent']['opt_in_sms'] ?? false)) {
+            SendPatientSmsConfirmationJob::dispatch($evaluation->id)->onQueue('notifications');
+        }
+
+        // Check if the tenant just hit 80% usage boundary.
+        \App\Jobs\Billing\CheckTenantUsageCapJob::dispatch($evaluation->tenant_id)->onQueue('notifications');
 
         // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
         $evaluationId = $evaluation->id;

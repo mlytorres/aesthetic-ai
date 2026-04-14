@@ -64,6 +64,10 @@ export interface ClinicConfig {
     name: string;
     logo?: string;
     theme?: string;
+    /** Hex color override for accent/CTA color (replaces default teal #0E9E8E). */
+    brand_primary?: string | null;
+    /** BCP-47 locale code: 'en' | 'es' */
+    locale?: string;
 }
 
 // ─── Wizard state machine ────────────────────────────────────────────────────
@@ -110,6 +114,7 @@ export interface ConsentFormData {
     hipaa_acknowledged: boolean;
     terms_accepted: boolean;
     photo_use_consent: boolean;
+    opt_in_sms: boolean;
     consented_at: string;
 }
 

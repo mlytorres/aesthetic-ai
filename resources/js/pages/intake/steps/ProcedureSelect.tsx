@@ -1,21 +1,31 @@
 import type {FC} from 'react';
 import type {Procedure, WizardState, WizardAction} from '@/types/intake';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     procedures: Procedure[];
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    t: TFn;
     onNext: () => void;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
+const CATEGORY_LABEL_KEYS: Record<string, TranslationKey> = {
+    face:   'procedure.category.face',
+    body:   'procedure.category.body',
+    skin:   'procedure.category.skin',
+};
+
+const CATEGORY_DISPLAY: Record<string, string> = {
     face:   'Face & Nose',
     body:   'Body Contouring',
     breast: 'Breast',
     skin:   'Skin & Rejuvenation',
 };
 
-const ProcedureSelect: FC<Props> = ({ procedures, state, dispatch, onNext }) => {
+const ProcedureSelect: FC<Props> = ({ procedures, state, dispatch, t, onNext }) => {
     // Group procedures by category
     const groups = procedures.reduce<Record<string, Procedure[]>>((acc, p) => {
         const cat = p.category ?? 'other';
@@ -36,18 +46,19 @@ acc[cat] = [];
     return (
         <div className="py-6">
             <h1 className="text-2xl font-bold text-[var(--intake-fg)] tracking-tight">
-                What brings you in today?
+                {t('procedure.title')}
             </h1>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
-                Select the procedure you are interested in. Our AI will guide you through a
-                personalised evaluation.
+                {t('procedure.subtitle')}
             </p>
 
             <div className="mt-8 space-y-6">
                 {Object.entries(groups).map(([category, procs]) => (
                     <div key={category}>
                         <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#0E9E8E]">
-                            {CATEGORY_LABELS[category] ?? category}
+                            {CATEGORY_LABEL_KEYS[category]
+                                ? t(CATEGORY_LABEL_KEYS[category] as TranslationKey)
+                                : (CATEGORY_DISPLAY[category] ?? category)}
                         </p>
 
                         <div className="space-y-2">
@@ -134,10 +145,10 @@ acc[cat] = [];
                 {state.loading ? (
                     <span className="flex items-center justify-center gap-2">
                         <Spinner />
-                        Starting evaluation…
+                        {t('procedure.select_cta')}…
                     </span>
                 ) : (
-                    'Continue →'
+                    t('procedure.select_cta')
                 )}
             </button>
         </div>

@@ -165,6 +165,14 @@
 /* ── Intake Page Themes ─────────────────────────────────────────────────── */
 /* Applied via data-intake-theme on the WizardShell root div.               */
 /* All intake components consume these vars instead of hardcoded hex values. */
+/*                                                                           */
+/* --intake-accent defaults to teal (#0E9E8E) and can be overridden by      */
+/* an inline style on the WizardShell root when a clinic has a custom        */
+/* brand_primary color set (white-label branding feature).                   */
+
+[data-intake-theme] {
+    --intake-accent: #0E9E8E;
+}
 
 [data-intake-theme="luxury-dark"] {
     --intake-bg:           #0A0A0F;

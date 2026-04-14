@@ -1,45 +1,20 @@
 import { Turnstile } from '@marsidev/react-turnstile';
 import type {FC} from 'react';
 import type {WizardState, WizardAction, ConsentFormData} from '@/types/intake';
+import type { TranslationKey } from '@/i18n/translations';
+
+type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 interface Props {
     state: WizardState;
     dispatch: React.Dispatch<WizardAction>;
+    t: TFn;
     turnstileSiteKey: string;
     onSubmit: () => void;
     onBack: () => void;
 }
 
-const CONSENTS: {
-    field: keyof ConsentFormData;
-    label: string;
-    description: string;
-    required: boolean;
-}[] = [
-    {
-        field: 'hipaa_acknowledged',
-        label: 'HIPAA Privacy Notice',
-        description:
-            'I acknowledge that I have been informed of my rights under the Health Insurance Portability and Accountability Act (HIPAA). My protected health information may be used for treatment and evaluation purposes.',
-        required: true,
-    },
-    {
-        field: 'terms_accepted',
-        label: 'Terms of Service',
-        description:
-            'I agree to the Terms of Service. I understand that this evaluation is informational and does not constitute medical advice. A licensed physician will review my case.',
-        required: true,
-    },
-    {
-        field: 'photo_use_consent',
-        label: 'AI Photo Analysis Consent',
-        description:
-            'I consent to my photos being analysed by artificial intelligence to assist in generating my evaluation report. Photos are encrypted and accessible only to clinic staff.',
-        required: true,
-    },
-];
-
-const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit, onBack }) => {
+const ConsentSubmit: FC<Props> = ({ state, dispatch, t, turnstileSiteKey, onSubmit, onBack }) => {
     const { consent, contact, turnstileToken } = state;
 
     const allConsented =
@@ -53,34 +28,41 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
         dispatch({ type: 'SET_CONSENT', field, value: !current });
     };
 
+    // Build consent items dynamically using translation keys
+    const CONSENTS: { field: keyof ConsentFormData; labelKey: TranslationKey; descKey: TranslationKey; required: boolean }[] = [
+        { field: 'hipaa_acknowledged', labelKey: 'consent.hipaa_label', descKey: 'consent.hipaa_text', required: true },
+        { field: 'terms_accepted',     labelKey: 'consent.terms_label', descKey: 'consent.terms_text',  required: true },
+        { field: 'photo_use_consent',  labelKey: 'consent.photo_label', descKey: 'consent.photo_text',  required: true },
+        { field: 'opt_in_sms',         labelKey: 'consent.sms_label',   descKey: 'consent.sms_text',    required: false },
+    ];
+
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[var(--intake-fg)]">Review & confirm</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{t('consent.title')}</h2>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
-                Please review your details and grant the required consents to complete your
-                evaluation submission.
+                {t('consent.subtitle')}
             </p>
 
             {/* Summary card */}
             <div className="mt-6 rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] overflow-hidden">
                 <div className="px-5 py-3 border-b border-[var(--intake-border-xs)]">
                     <p className="text-xs font-semibold uppercase tracking-widest text-[#0E9E8E]">
-                        Your submission
+                        {t('consent.summary_heading')}
                     </p>
                 </div>
 
                 <dl className="divide-y divide-white/5">
-                    <SummaryRow label="Procedure" value={state.selectedProcedure?.label ?? '—'} />
-                    <SummaryRow label="Name" value={contact.name || '—'} />
-                    <SummaryRow label="Email" value={contact.email || '—'} />
-                    {contact.phone && <SummaryRow label="Phone" value={contact.phone} />}
+                    <SummaryRow label={t('consent.summary.procedure')} value={state.selectedProcedure?.label ?? '—'} />
+                    <SummaryRow label={t('consent.summary.name')} value={contact.name || '—'} />
+                    <SummaryRow label={t('consent.summary.email')} value={contact.email || '—'} />
+                    {contact.phone && <SummaryRow label={t('consent.summary.phone')} value={contact.phone} />}
                     <SummaryRow
-                        label="Photos uploaded"
-                        value={`${state.photos.filter((p) => !p.uploading && !p.error).length} photo(s)`}
+                        label={t('consent.summary.photos')}
+                        value={`${state.photos.filter((p) => !p.uploading && !p.error).length}`}
                     />
                     <SummaryRow
-                        label="Quiz answers"
-                        value={`${Object.keys(state.quizAnswers).length} question(s)`}
+                        label={t('consent.summary.quiz')}
+                        value={`${Object.keys(state.quizAnswers).length}`}
                     />
                 </dl>
             </div>
@@ -88,10 +70,12 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
             {/* Consent checkboxes */}
             <div className="mt-6 space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--intake-muted)]">
-                    Required consents
+                    {t('consent.required_heading')}
                 </p>
 
-                {CONSENTS.map(({ field, label, description }) => {
+                {CONSENTS.map(({ field, labelKey, descKey, required }) => {
+                    const label = t(labelKey);
+                    const description = t(descKey);
                     const checked = consent[field] as boolean;
 
                     return (
@@ -131,7 +115,11 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                                     'text-sm font-semibold',
                                     checked ? 'text-[var(--intake-fg)]' : 'text-[var(--intake-muted)]',
                                 ].join(' ')}>
-                                    {label} <span className="text-[#0E9E8E]">*</span>
+                                    {label}{' '}
+                                    {required
+                                        ? <span className="text-[#0E9E8E]">*</span>
+                                        : <span className="text-[10px] font-normal text-[var(--intake-muted)] uppercase tracking-wide ml-1">{t('consent.optional_badge')}</span>
+                                    }
                                 </p>
                                 <p className="mt-1 text-xs text-[var(--intake-muted)] leading-relaxed">
                                     {description}
@@ -166,7 +154,7 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                     disabled={state.loading}
                     className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors disabled:opacity-40"
                 >
-                    ← Back
+                    {t('nav.back')}
                 </button>
 
                 <button
@@ -186,16 +174,16 @@ const ConsentSubmit: FC<Props> = ({ state, dispatch, turnstileSiteKey, onSubmit,
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                             </svg>
-                            Submitting…
+                            {t('consent.submitting')}
                         </span>
                     ) : (
-                        'Submit My Evaluation ✓'
+                        t('consent.submit_cta')
                     )}
                 </button>
             </div>
 
             <p className="mt-4 text-center text-[11px] text-[var(--intake-muted-faint)]">
-                By submitting, you confirm that all information provided is accurate and truthful.
+                {t('consent.disclaimer')}
             </p>
         </div>
     );
