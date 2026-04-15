@@ -52,8 +52,7 @@ class DailyService
                     'enable_screenshare' => false,
                     'start_video_off' => false,
                     'start_audio_off' => false,
-                    // HIPAA: disable cloud recording by default
-                    'enable_recording' => 'none',
+                    // HIPAA: cloud recording is disabled by default
                     'max_participants' => 2,
                 ],
             ]);
