@@ -136,6 +136,11 @@ class Evaluation extends Model
         return $this->hasMany(MagicLink::class);
     }
 
+    public function consultations(): HasMany
+    {
+        return $this->hasMany(Consultation::class);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     public function isAiComplete(): bool

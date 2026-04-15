@@ -80,6 +80,7 @@ interface Props {
     evaluation:  Evaluation;
     auditEntries?: AuditEntry[];
     portal_url?: string;
+    video_consultations_enabled?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -783,9 +784,282 @@ function MagicLinkCard({ portalUrl }: { portalUrl?: string }) {
     );
 }
 
+// ── Video Consultation Panel ──────────────────────────────────────────────────
+
+interface ConsultationItem {
+    id: string;
+    scheduled_at: string;
+    duration_minutes: number;
+    status: string;
+    daily_room_url: string;
+    token: string;
+    notes: string | null;
+    patient_join_url?: string;
+}
+
+interface ScheduleFormFields {
+    scheduled_at: string;
+    duration_minutes: number;
+    notes: string;
+}
+
+function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
+    const [consultations, setConsultations] = useState<ConsultationItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
+
+    const [form, setForm] = useState<ScheduleFormFields>({
+        scheduled_at: '',
+        duration_minutes: 30,
+        notes: '',
+    });
+
+    const csrfToken = () =>
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+
+    const fetchConsultations = async () => {
+        try {
+            const res = await fetch(`/evaluations/${evaluationId}/consultations`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                setConsultations(await res.json());
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchConsultations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [evaluationId]);
+
+    const handleSchedule = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setFormError(null);
+
+        try {
+            const res = await fetch(`/evaluations/${evaluationId}/consultations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                },
+                body: JSON.stringify(form),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setFormError(data.message ?? 'Failed to schedule consultation.');
+                return;
+            }
+
+            setConsultations((prev) => [data, ...prev]);
+            setShowForm(false);
+            setForm({ scheduled_at: '', duration_minutes: 30, notes: '' });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleCancel = async (id: string) => {
+        if (!confirm('Cancel this consultation? The patient will need to be notified separately.')) {
+            return;
+        }
+
+        setCancellingId(id);
+
+        try {
+            const res = await fetch(`/consultations/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                },
+            });
+
+            if (res.ok) {
+                setConsultations((prev) =>
+                    prev.map((c) => c.id === id ? { ...c, status: 'cancelled' } : c),
+                );
+            }
+        } finally {
+            setCancellingId(null);
+        }
+    };
+
+    const copyJoinLink = async (consultation: ConsultationItem) => {
+        const url = consultation.patient_join_url
+            ?? `${window.location.origin}/consult/${consultation.token}`;
+        await navigator.clipboard.writeText(url);
+        setCopiedId(consultation.id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const STATUS_COLORS: Record<string, string> = {
+        scheduled:  'text-blue-400 bg-blue-400/10',
+        active:     'text-emerald-400 bg-emerald-400/10',
+        completed:  'text-zinc-400 bg-zinc-400/10',
+        cancelled:  'text-red-400 bg-red-400/10',
+    };
+
+    return (
+        <SectionCard title="Video Consultation">
+            {loading ? (
+                <div className="flex items-center justify-center py-6">
+                    <div className="size-5 animate-spin rounded-full border-2 border-[#0E9E8E] border-t-transparent" />
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {consultations.length === 0 && !showForm && (
+                        <p className="text-xs text-muted-foreground italic">
+                            No video consultations scheduled yet.
+                        </p>
+                    )}
+
+                    {/* Existing consultations */}
+                    {consultations.map((c) => (
+                        <div
+                            key={c.id}
+                            className="rounded-lg border border-sidebar-border/50 bg-background/50 p-3 space-y-2"
+                        >
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-foreground">
+                                    {new Intl.DateTimeFormat('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                    }).format(new Date(c.scheduled_at))}
+                                    <span className="ml-1 text-muted-foreground">({c.duration_minutes}m)</span>
+                                </span>
+                                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${STATUS_COLORS[c.status] ?? ''}`}>
+                                    {c.status}
+                                </span>
+                            </div>
+
+                            {c.notes && (
+                                <p className="text-xs text-muted-foreground">{c.notes}</p>
+                            )}
+
+                            <div className="flex gap-2">
+                                {c.status !== 'cancelled' && c.status !== 'completed' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => copyJoinLink(c)}
+                                            className="flex-1 rounded border border-[#C9A84C]/40 px-2 py-1 text-[10px] text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors"
+                                        >
+                                            {copiedId === c.id ? '✓ Copied' : '⎘ Patient link'}
+                                        </button>
+                                        <a
+                                            href={c.daily_room_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 rounded border border-[#0E9E8E]/40 px-2 py-1 text-[10px] text-center text-[#0E9E8E] hover:bg-[#0E9E8E]/10 transition-colors"
+                                        >
+                                            Join as Staff
+                                        </a>
+                                        <button
+                                            type="button"
+                                            disabled={cancellingId === c.id}
+                                            onClick={() => handleCancel(c.id)}
+                                            className="rounded border border-red-500/30 px-2 py-1 text-[10px] text-red-400 hover:bg-red-400/10 disabled:opacity-40 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Schedule form */}
+                    {showForm ? (
+                        <form onSubmit={handleSchedule} className="space-y-3 pt-1">
+                            <div className="grid gap-1">
+                                <label className="text-xs text-muted-foreground">Date &amp; Time</label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={form.scheduled_at}
+                                    onChange={(e) => setForm((f) => ({ ...f, scheduled_at: e.target.value }))}
+                                    className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="grid gap-1">
+                                <label className="text-xs text-muted-foreground">Duration</label>
+                                <select
+                                    value={form.duration_minutes}
+                                    onChange={(e) => setForm((f) => ({ ...f, duration_minutes: Number(e.target.value) }))}
+                                    className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
+                                >
+                                    {[15, 30, 45, 60].map((m) => (
+                                        <option key={m} value={m}>{m} minutes</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid gap-1">
+                                <label className="text-xs text-muted-foreground">Notes (optional)</label>
+                                <textarea
+                                    value={form.notes}
+                                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                                    rows={2}
+                                    placeholder="What to discuss…"
+                                    className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
+                                />
+                            </div>
+
+                            {formError && (
+                                <p className="text-xs text-red-400">{formError}</p>
+                            )}
+
+                            <div className="flex gap-2">
+                                <Button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="flex-1 bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-xs h-8"
+                                >
+                                    {submitting ? 'Scheduling…' : 'Schedule & Send Invite'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowForm(false)}
+                                    className="flex-1 text-xs h-8 border-sidebar-border/50 text-foreground"
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </form>
+                    ) : (
+                        <Button
+                            onClick={() => setShowForm(true)}
+                            variant="outline"
+                            className="w-full text-sm border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
+                        >
+                            + Schedule Consultation
+                        </Button>
+                    )}
+                </div>
+            )}
+        </SectionCard>
+    );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function EvaluationShow({ evaluation, auditEntries, portal_url }: Props) {
+export default function EvaluationShow({ evaluation, auditEntries, portal_url, video_consultations_enabled }: Props) {
     return (
         <>
             <Head title={`Evaluation — ${formatProcedure(evaluation.procedure_slug)}`} />
@@ -857,6 +1131,9 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url }:
                             breakdown={evaluation.score_breakdown ?? null}
                         />
                         <MagicLinkCard portalUrl={portal_url} />
+                        {video_consultations_enabled && (
+                            <ConsultationPanel evaluationId={evaluation.id} />
+                        )}
                         <SimulationViewer evaluation={evaluation} />
                         <CoordinatorPanel evaluation={evaluation} />
                     </div>

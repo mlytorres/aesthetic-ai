@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\QuizAdminController;
 use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Clinic\BillingController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\IntegrationController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Clinic\WebhookDeliveryController;
 use App\Http\Controllers\ClinicAccessRequestController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\ClinicalBriefController;
+use App\Http\Controllers\Dashboard\ConsultationController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\EvaluationController as DashboardEvaluationController;
 use App\Http\Controllers\Dashboard\EvaluationExportController;
@@ -52,6 +54,11 @@ Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])
 Route::middleware(['tenant'])->group(function (): void {
     Route::get('/magic/{token}', MagicLinkController::class)->name('magic-link.use');
 });
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+Route::get('/login/google', [SocialiteController::class, 'redirect'])->name('login.google');
+Route::get('/login/google/callback', [SocialiteController::class, 'callback'])->name('login.google.callback');
 
 // ─── Clinic dashboard (authenticated staff) ───────────────────────────────────
 // 'tenant' runs after 'auth' so TenantMiddleware can fall back to the
@@ -126,7 +133,21 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
         Route::get('/{evaluation}/simulation', [SimulationController::class, 'show'])
             ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
             ->name('simulation.show');
+
+        // ── Video Consultations — owner, admin, coordinator, surgeon ──────────
+        Route::get('/{evaluation}/consultations', [ConsultationController::class, 'index'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
+            ->name('consultations.index');
+
+        Route::post('/{evaluation}/consultations', [ConsultationController::class, 'store'])
+            ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+            ->name('consultations.store');
     });
+
+    // ── Cancel a consultation (outside {evaluation} prefix — uses consultation id) ──
+    Route::delete('/consultations/{consultation}', [ConsultationController::class, 'cancel'])
+        ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
+        ->name('consultations.cancel');
 
     // ── Clinic settings, team & integrations — owner and admin only ───────
     Route::prefix('clinic')->name('clinic.')
@@ -205,6 +226,11 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
         ->name('patient.portal');
 });
 
+// ─── Video Consultation — public patient join page ────────────────────────────
+// No auth — gated by a UUID token. Tenant resolved from consultation record.
+
+Route::get('/consult/{token}', [ConsultationController::class, 'join'])->name('consult.join');
+
 // ─── Super-admin panel ────────────────────────────────────────────────────────
 // Accessible to platform operators (tenant_id = null users) only.
 // No 'tenant' middleware — super-admins don't belong to a clinic.
@@ -223,6 +249,7 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
         Route::patch('/{id}', [TenantAdminController::class, 'update'])->name('update');
         Route::delete('/{tenant}', [TenantAdminController::class, 'deactivate'])->name('deactivate');
         Route::post('/{id}/restore', [TenantAdminController::class, 'restore'])->name('restore');
+        Route::patch('/{id}/features', [TenantAdminController::class, 'updateFeatures'])->name('features.update');
         Route::post('/{tenant}/users', [TenantAdminController::class, 'addUser'])->name('users.store');
         Route::post('/{tenant}/users/{user}/resend-invite', [TenantAdminController::class, 'resendInvite'])->name('users.resend');
     });

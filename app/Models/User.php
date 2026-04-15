@@ -28,8 +28,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * enforced at the controller/policy layer using explicit where('tenant_id', …)
  * or a local scope — not a global scope on this model.
  */
-#[Fillable(['tenant_id', 'name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable(['tenant_id', 'name', 'email', 'password', 'role', 'google_id', 'google_token'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'google_id', 'google_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -52,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'google_token' => 'encrypted',
         ];
     }
 

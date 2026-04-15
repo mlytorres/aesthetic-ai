@@ -141,4 +141,22 @@ class Tenant extends Model
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
     }
+
+    /**
+     * Whether video consultations are enabled for this tenant.
+     * True when explicitly toggled on in settings, OR the tenant is on the Pro plan.
+     */
+    public function hasVideoConsultations(): bool
+    {
+        if ($this->plan?->slug === 'pro') {
+            return true;
+        }
+
+        return (bool) ($this->settings['video_consultations_enabled'] ?? false);
+    }
+
+    public function consultations(): HasMany
+    {
+        return $this->hasMany(Consultation::class);
+    }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EvaluationResource;
 use App\Models\AuditLogEntry;
@@ -45,9 +46,9 @@ class EvaluationController extends Controller
             ->when($status !== 'active', fn ($q) => $q->where('status', $status))
             ->when($search, function ($q, $search) {
                 $q->whereHas('patient', function ($pq) use ($search) {
-                    $pq->where('name', 'ilike', '%' . $search . '%')
-                       ->orWhere('email', 'ilike', '%' . $search . '%')
-                       ->orWhere('phone', 'ilike', '%' . $search . '%');
+                    $pq->where('name', 'ilike', '%'.$search.'%')
+                        ->orWhere('email', 'ilike', '%'.$search.'%')
+                        ->orWhere('phone', 'ilike', '%'.$search.'%');
                 });
             })
             ->when($priority, fn ($q, $priority) => $q->where('priority', $priority))
@@ -102,6 +103,7 @@ class EvaluationController extends Controller
         return Inertia::render('evaluations/show', [
             'evaluation' => (new EvaluationResource($evaluation))->resolve(),
             'portal_url' => route('intake.patient.portal', ['token' => $evaluation->secure_token]),
+            'video_consultations_enabled' => TenantContext::get()->hasVideoConsultations(),
 
             // Deferred: audit timeline loads after the main page renders.
             'auditEntries' => Inertia::defer(fn () => AuditLogEntry::where('subject_type', 'Evaluation')

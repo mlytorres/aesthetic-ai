@@ -32,12 +32,12 @@ class TenantAdminController extends Controller
 
         return Inertia::render('admin/tenants/index', [
             'tenants' => $tenants->map(fn (Tenant $t) => [
-                'id'         => $t->id,
-                'slug'       => $t->slug,
-                'name'       => $t->name,
-                'plan'       => $t->plan?->name,
+                'id' => $t->id,
+                'slug' => $t->slug,
+                'name' => $t->name,
+                'plan' => $t->plan?->name,
                 'users_count' => $t->users_count,
-                'active'     => $t->deleted_at === null,
+                'active' => $t->deleted_at === null,
                 'created_at' => $t->created_at?->toDateString(),
             ]),
         ]);
@@ -58,17 +58,19 @@ class TenantAdminController extends Controller
 
         return Inertia::render('admin/tenants/show', [
             'tenant' => [
-                'id'       => $tenant->id,
-                'slug'     => $tenant->slug,
-                'name'     => $tenant->name,
-                'plan_id'  => $tenant->plan_id,
-                'plan'     => $tenant->plan?->name,
+                'id' => $tenant->id,
+                'slug' => $tenant->slug,
+                'name' => $tenant->name,
+                'plan_id' => $tenant->plan_id,
+                'plan' => $tenant->plan?->name,
+                'plan_slug' => $tenant->plan?->slug,
                 'settings' => $tenant->settings,
-                'active'   => $tenant->deleted_at === null,
+                'has_video_consultations' => $tenant->hasVideoConsultations(),
+                'active' => $tenant->deleted_at === null,
                 'created_at' => $tenant->created_at?->toDateString(),
             ],
-            'users'  => $users,
-            'plans'  => $plans,
+            'users' => $users,
+            'plans' => $plans,
             'availableRoles' => [
                 ['value' => User::ROLE_OWNER,       'label' => 'Owner'],
                 ['value' => User::ROLE_ADMIN,        'label' => 'Admin'],
@@ -93,20 +95,20 @@ class TenantAdminController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'             => ['required', 'string', 'max:255'],
-            'slug'             => ['required', 'string', 'max:63', 'alpha_dash', 'unique:tenants,slug'],
-            'plan_id'          => ['required', 'uuid', 'exists:plans,id'],
-            'owner_name'       => ['required', 'string', 'max:255'],
-            'owner_email'      => ['required', 'email', 'unique:users,email'],
-            'procedures'       => ['nullable', 'array'],
-            'procedures.*'     => ['string'],
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:63', 'alpha_dash', 'unique:tenants,slug'],
+            'plan_id' => ['required', 'uuid', 'exists:plans,id'],
+            'owner_name' => ['required', 'string', 'max:255'],
+            'owner_email' => ['required', 'email', 'unique:users,email'],
+            'procedures' => ['nullable', 'array'],
+            'procedures.*' => ['string'],
         ]);
 
         // Create tenant
         $tenant = Tenant::create([
-            'slug'     => $validated['slug'],
-            'name'     => $validated['name'],
-            'plan_id'  => $validated['plan_id'],
+            'slug' => $validated['slug'],
+            'name' => $validated['name'],
+            'plan_id' => $validated['plan_id'],
             'settings' => [
                 'procedures_enabled' => $validated['procedures'] ?? ['rhinoplasty'],
             ],
@@ -117,10 +119,10 @@ class TenantAdminController extends Controller
 
         $owner = User::create([
             'tenant_id' => $tenant->id,
-            'name'      => $validated['owner_name'],
-            'email'     => $validated['owner_email'],
-            'password'  => Hash::make($temporaryPassword),
-            'role'      => User::ROLE_OWNER,
+            'name' => $validated['owner_name'],
+            'email' => $validated['owner_email'],
+            'password' => Hash::make($temporaryPassword),
+            'role' => User::ROLE_OWNER,
         ]);
 
         // Send invitation email with credentials
@@ -141,9 +143,9 @@ class TenantAdminController extends Controller
     {
         $tenant = Tenant::withTrashed()->findOrFail($id);
         $validated = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'plan_id' => ['required', 'uuid', 'exists:plans,id'],
-            'slug'    => ['required', 'string', 'max:63', 'alpha_dash', Rule::unique('tenants', 'slug')->ignore($tenant->id)],
+            'slug' => ['required', 'string', 'max:63', 'alpha_dash', Rule::unique('tenants', 'slug')->ignore($tenant->id)],
         ]);
 
         $tenant->update($validated);
@@ -168,14 +170,32 @@ class TenantAdminController extends Controller
         return back()->with('flash.success', "\"{$tenant->name}\" has been reactivated.");
     }
 
+    // ─── Feature Flags ────────────────────────────────────────────────────────
+
+    public function updateFeatures(Request $request, string $id): RedirectResponse
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+
+        $validated = $request->validate([
+            'video_consultations_enabled' => ['required', 'boolean'],
+        ]);
+
+        $settings = $tenant->settings ?? [];
+        $settings['video_consultations_enabled'] = $validated['video_consultations_enabled'];
+
+        $tenant->update(['settings' => $settings]);
+
+        return back()->with('flash.success', 'Feature flags updated.');
+    }
+
     // ─── Add User to Tenant ───────────────────────────────────────────────────
 
     public function addUser(Request $request, Tenant $tenant): RedirectResponse
     {
         $validated = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'role'  => ['required', Rule::in([
+            'role' => ['required', Rule::in([
                 User::ROLE_OWNER,
                 User::ROLE_ADMIN,
                 User::ROLE_COORDINATOR,
@@ -188,10 +208,10 @@ class TenantAdminController extends Controller
 
         $user = User::create([
             'tenant_id' => $tenant->id,
-            'name'      => $validated['name'],
-            'email'     => $validated['email'],
-            'password'  => Hash::make($temporaryPassword),
-            'role'      => $validated['role'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($temporaryPassword),
+            'role' => $validated['role'],
         ]);
 
         Mail::to($user->email)->send(new UserInviteMail(

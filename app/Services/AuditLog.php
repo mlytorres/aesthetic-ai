@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Log;
  *   coordinator.logged_in / coordinator.logged_out
  *   api_token.used
  *   webhook.delivered / webhook.failed
+ *   audit_log.viewed             ← PHI access
  */
 class AuditLog
 {
@@ -39,9 +40,9 @@ class AuditLog
     /**
      * Record an audit event (HTTP request context — use in controllers).
      *
-     * @param string $action     Dot-separated namespace, e.g. 'evaluation.photos.viewed'
-     * @param Model|null $subject  The entity being accessed or modified
-     * @param array<string, mixed> $metadata  Additional safe context — NEVER include PHI
+     * @param  string  $action  Dot-separated namespace, e.g. 'evaluation.photos.viewed'
+     * @param  Model|null  $subject  The entity being accessed or modified
+     * @param  array<string, mixed>  $metadata  Additional safe context — NEVER include PHI
      */
     public function record(
         string $action,
@@ -50,20 +51,20 @@ class AuditLog
     ): void {
         try {
             AuditLogEntry::create([
-                'tenant_id'    => TenantContext::isSet() ? TenantContext::id() : null,
-                'user_id'      => Auth::id(),
-                'action'       => $action,
+                'tenant_id' => TenantContext::isSet() ? TenantContext::id() : ($subject && isset($subject->tenant_id) ? $subject->tenant_id : null),
+                'user_id' => Auth::id(),
+                'action' => $action,
                 'subject_type' => $subject ? class_basename($subject) : null,
-                'subject_id'   => $subject?->getKey(),
-                'metadata'     => $metadata,
-                'ip_address'   => $this->request->ip(),
-                'user_agent'   => $this->request->userAgent(),
+                'subject_id' => $subject?->getKey(),
+                'metadata' => $metadata,
+                'ip_address' => $this->request->ip(),
+                'user_agent' => $this->request->userAgent(),
             ]);
         } catch (\Throwable $e) {
             // Never let audit log failure block the primary request.
             // But always log the failure itself.
             Log::critical('AuditLog write failed', [
-                'action'    => $action,
+                'action' => $action,
                 'exception' => $e->getMessage(),
             ]);
         }
@@ -76,9 +77,7 @@ class AuditLog
      * are set to system identifiers rather than null (which would look like
      * a missing log entry in HIPAA audits).
      *
-     * @param string $action
-     * @param Model|null $subject
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     public function recordSystem(
         string $action,
@@ -95,18 +94,18 @@ class AuditLog
             }
 
             AuditLogEntry::create([
-                'tenant_id'    => $tenantId,
-                'user_id'      => null,   // system action, no user
-                'action'       => $action,
+                'tenant_id' => $tenantId,
+                'user_id' => null,   // system action, no user
+                'action' => $action,
                 'subject_type' => $subject ? class_basename($subject) : null,
-                'subject_id'   => $subject?->getKey(),
-                'metadata'     => array_merge($metadata, ['_source' => 'queue_job']),
-                'ip_address'   => '127.0.0.1',
-                'user_agent'   => 'SymetriHealth/QueueWorker',
+                'subject_id' => $subject?->getKey(),
+                'metadata' => array_merge($metadata, ['_source' => 'queue_job']),
+                'ip_address' => '127.0.0.1',
+                'user_agent' => 'SymetriHealth/QueueWorker',
             ]);
         } catch (\Throwable $e) {
             Log::critical('AuditLog::recordSystem write failed', [
-                'action'    => $action,
+                'action' => $action,
                 'exception' => $e->getMessage(),
             ]);
         }
