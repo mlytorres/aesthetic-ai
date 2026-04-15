@@ -41,7 +41,17 @@ Coordinators often help patients secure third-party financing (like CareCredit o
 **With AestheticAI:**
 Because the platform provides anatomical lead scoring, AI recommendations, and organized surgical goals upfront, the coordinator knows exactly what procedures the patient is pre-qualified for. They can begin assembling accurate quotes and financing options efficiently, knowing the clinical data supports the proposed surgical plan.
 
-## 5. Stress-Free Compliance
+## 5. Frictionless Video Consultations
+
+Coordinators often struggle with the logistics of "the next step"—shifting from a phone call to a face-to-face meeting.
+
+**With AestheticAI:**
+The coordinator can schedule a secure video consultation in seconds.
+- **Automated Invites:** The system handles the logistics, sending the patient a private join link via SMS or email.
+- **No-Download Access:** Patients join directly from their mobile browser or computer with one click—no app downloads, no account setup, and no tech-support calls for the coordinator.
+- **Seamless Handoff:** The coordinator can prepare the room, ensure the surgeon's entrance is smooth, and manage the schedule without leaving the AestheticAI dashboard.
+
+## 6. Stress-Free Compliance
 
 Coordinators are often the ones caught in the crossfire of HIPAA compliance—accidentally receiving patient photos on their personal phones or dealing with insecure email attachments.
 

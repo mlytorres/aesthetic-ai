@@ -41,7 +41,17 @@ The aesthetic industry is highly competitive. Patients evaluate not just the sur
 **With AestheticAI:**
 Utilizing advanced AI simulation technology elevates the practice's brand from a standard medical office to a cutting-edge aesthetic destination. When patients experience the luxury, mobile-first intake process and view their AI-morphed simulations, their confidence in the surgeon's modern expertise skyrockets. The clinic is positioned as an elite, premium authority.
 
-## 5. Risk Mitigation & HIPAA Shielding
+## 5. Secure, HIPAA-Compliant Video Consultations
+
+Face-to-face time is critical, but traditional video tools (Zoom, FaceTime) can be administrative nightmares for surgeons, often lacking medical context or failing HIPAA standards.
+
+**With AestheticAI:**
+Surgeons can join secure, HIPAA-eligible video consultations directly from the dashboard.
+- **Briefed Entrance:** Before joining, the surgeon has the patient's Lead Score, photos, and AI simulation open in a split-screen view.
+- **One-Click Staff Join:** Surgeons access the room with an encrypted "Owner" token, ensuring they have full control over the session.
+- **Privacy First:** All video traffic is Peer-to-Peer and encrypted, with rooms that auto-expire precisely when the session ends.
+
+## 6. Risk Mitigation & HIPAA Shielding
 
 Protecting Protected Health Information (PHI) is a massive liability. Clinics face devastating fines if staff are found passing patient photos via iMessage, WhatsApp, or unsecured email to get a surgeon's opinion.
 

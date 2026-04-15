@@ -44,7 +44,17 @@ If the patient's BMI is above the clinic's safety threshold, the sales rep is pr
 
 Objections vanish because the sales team is armed with clinical context from the very first hello.
 
-## 4. Zero HIPAA Liability
+## 4. The "Virtual Closer" (Integrated Video)
+
+A standard phone call lacks the emotional connection needed for high-ticket closures, but an in-person visit takes too long for a lead to move through the funnel.
+
+**With AestheticAI:**
+Sales reps can bridge that gap by inviting the patient to an **Instant Video Consultation**.
+- **Visual Collaboration:** The rep can guide the patient through their AI simulation in real-time, handling objections while looking the patient in the eye.
+- **High-Touch Experience:** Providing a white-label, secure video environment reinforces the practice's premium brand and justifies premium pricing.
+- **Higher Show Rates:** Because the video call is integrated into the patient's existing Portal, the friction to join is near zero, leading to significantly higher engagement than standard Zoom links.
+
+## 5. Zero HIPAA Liability
 
 Sales reps notoriously hate compliance barriers. They frequently resort to texting patient photos to themselves using personal iPhones or sending them via standard insecure email—both of which are massive HIPAA violations carrying fines upward of $50,000 per incident.
 

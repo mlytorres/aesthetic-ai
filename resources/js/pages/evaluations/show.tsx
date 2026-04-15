@@ -501,7 +501,7 @@ return;
                         <img
                             src={sim.simulation_url}
                             alt="AI simulation result"
-                            className="w-full aspect-square rounded-lg border border-sidebar-border/50 object-cover object-top"
+                            className="w-full aspect-square rounded-lg border border-sidebar-border/50 object-cover object-center"
                         />
                     ) : (
                         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-background py-8 px-4">
