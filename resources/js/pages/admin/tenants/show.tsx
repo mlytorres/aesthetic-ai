@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, LogIn, Mail, UserPlus } from 'lucide-react';
+import { ArrowLeft, LogIn, Mail, UserPlus, Video } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -22,7 +22,9 @@ interface TenantData {
 	name: string;
 	plan_id: string;
 	plan: string | null;
+	plan_slug: string | null;
 	settings: Record<string, unknown>;
+	has_video_consultations: boolean;
 	active: boolean;
 	created_at: string;
 }
@@ -76,6 +78,16 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 		slug:    tenant.slug,
 		plan_id: tenant.plan_id,
 	});
+
+	// Feature flags form
+	const featuresForm = useForm({
+		video_consultations_enabled: Boolean(tenant.settings?.video_consultations_enabled) || false,
+	});
+
+	const handleFeaturesSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		featuresForm.patch(`/admin/tenants/${tenant.id}/features`);
+	};
 
 	// Add user form
 	const addUserForm = useForm<AddUserForm>({
@@ -288,6 +300,50 @@ export default function TenantShow({ tenant, users, plans, availableRoles }: Pro
 									className="w-full border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
 								>
 									{addUserForm.processing ? 'Adding...' : 'Add & Send Invite'}
+								</Button>
+							</form>
+						</div>
+
+						{/* Feature Flags */}
+						<div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+							<h3 className="mb-1 flex items-center gap-2 text-base font-semibold text-foreground">
+								<Video className="h-4 w-4 text-[#0E9E8E]" />
+								Feature Flags
+							</h3>
+							<p className="mb-4 text-sm text-muted-foreground">
+								Manually enable premium features for this clinic.
+							</p>
+
+							<form onSubmit={handleFeaturesSubmit} className="space-y-4">
+								<label className="flex items-center justify-between rounded-lg border border-sidebar-border/50 bg-background/50 px-4 py-3 cursor-pointer">
+									<div>
+										<p className="text-sm font-medium text-foreground">Video Consultations</p>
+										<p className="text-xs text-muted-foreground">
+											{tenant.plan_slug === 'pro'
+												? 'Included in Pro plan'
+												: 'Enable Daily.co video scheduling for this clinic'}
+										</p>
+									</div>
+									<input
+										type="checkbox"
+										checked={featuresForm.data.video_consultations_enabled}
+										disabled={tenant.plan_slug === 'pro'}
+										onChange={(e) => featuresForm.setData('video_consultations_enabled', e.target.checked)}
+										className="h-4 w-4 rounded accent-[#0E9E8E] disabled:opacity-50"
+									/>
+								</label>
+
+								{tenant.has_video_consultations && tenant.plan_slug !== 'pro' && (
+									<p className="text-xs text-[#0E9E8E]">✓ Video consultations currently enabled</p>
+								)}
+
+								<Button
+									type="submit"
+									disabled={featuresForm.processing || tenant.plan_slug === 'pro'}
+									variant="outline"
+									className="w-full border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
+								>
+									{featuresForm.processing ? 'Saving...' : 'Save Feature Flags'}
 								</Button>
 							</form>
 						</div>

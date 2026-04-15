@@ -35,8 +35,6 @@ return [
         ],
     ],
 
-
-
     // AWS Rekognition — face detection and landmark extraction for AI Vision pipeline.
     // Uses the same IAM credentials as S3 (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
     // Bucket and Rekognition must be in the same region.
@@ -58,5 +56,17 @@ return [
         'sid' => env('TWILIO_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),
         'from' => env('TWILIO_FROM'),
+    ],
+
+    // Daily.co — HIPAA-eligible video consultations
+    'daily' => [
+        'api_key' => env('DAILY_API_KEY'),
+        // Room URLs are returned directly by the API — no domain config needed.
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => '/login/google/callback',
     ],
 ];

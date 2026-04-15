@@ -38,6 +38,7 @@
 **Sprint 9 — Billing, Notifications, Webhooks, Security:** ✅ **Complete**
 **Sprint 10 — White-Label, SMS, Multilingual & Usage Alerts:** ✅ **Complete**
 **Sprint 11 — Procedure-Specific Photos, Quiz Expansion & Quiz Editor:** ✅ **Complete**
+**Sprint 12 — Telemedicine Video Consultations:** ✅ **Complete**
 
 ---
 
@@ -408,6 +409,46 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ---
 
+---
+
+### P1 Sprint 12 — Telemedicine Video Consultations ✅ COMPLETE
+
+**Feature Flag & Admin Control:**
+- [x] `Tenant::hasVideoConsultations()` — true when plan slug is `pro` OR `settings.video_consultations_enabled` is explicitly set
+- [x] Admin feature flag toggle — `/admin/tenants/{id}/features` (`PATCH`) updates `settings.video_consultations_enabled`
+- [x] Feature Flags card in super-admin tenant detail page — checkbox UI, disables/shows "Included in Pro plan" when plan is pro
+
+**Daily.co Integration:**
+- [x] `DailyService` — `createRoom()`, `deleteRoom()`, `createMeetingToken()` via Daily.co REST API
+- [x] Private rooms with `exp` (auto-expire), `eject_at_room_exp`, cloud recording disabled (HIPAA)
+- [x] `services.daily.api_key` + `services.daily.domain` config entries; `DAILY_API_KEY` + `DAILY_DOMAIN` env vars
+
+**Data Layer:**
+- [x] `consultations` migration — `id` (UUID), `tenant_id`, `evaluation_id`, `coordinator_id`, `scheduled_at`, `duration_minutes`, `daily_room_name`, `daily_room_url`, `token` (UUID, public join), `status` (scheduled/active/completed/cancelled), `notes`, `cancelled_at`
+- [x] `Consultation` model — `HasTenantScope` + `HasUuids`; `isCancellable()` helper; relationships to `Tenant`, `Evaluation`, `User`
+- [x] `Evaluation::consultations()` + `Tenant::consultations()` `HasMany` relationships
+
+**API:**
+- [x] `GET /evaluations/{evaluation}/consultations` — list consultations (all clinical roles)
+- [x] `POST /evaluations/{evaluation}/consultations` — schedule new consultation, creates Daily.co room, dispatches invite job (owner/admin/coordinator)
+- [x] `DELETE /consultations/{consultation}` — cancel + delete Daily.co room (owner/admin/coordinator)
+- [x] `GET /consult/{token}` — public patient join page, no auth, gated by UUID token
+
+**Notifications:**
+- [x] `ScheduleConsultationMail` — email invite with join URL, date/time, clinic branding (`from_name` white-label)
+- [x] `SendConsultationInviteJob` — dispatches email; if patient opted into SMS, also sends Twilio message with join link + date; runs on `notifications` queue
+- [x] `emails/consultation-invite.blade.php` — luxury dark email template with join CTA button
+
+**Frontend:**
+- [x] `ConsultationPanel` React component in `evaluations/show.tsx` — lists consultations, schedule form (datetime, duration, notes), "Join as Staff" link, "Copy patient link" button, cancel button; only rendered when `video_consultations_enabled === true`
+- [x] `resources/js/pages/consult/join.tsx` — patient-facing join page; pre-join waiting screen with appointment details; "Join" button enabled 15 min before scheduled time; Daily.co iframe embed with meeting token; no layout (standalone page)
+- [x] `resources/js/pages/consult/cancelled.tsx` — shown when consultation is cancelled
+
+**Tests:**
+- [x] `ConsultationTest.php` — 10 tests: feature flag (Pro auto-enable, manual toggle, admin PATCH), scheduling (403 when disabled, 201 + queue when enabled, DB record), cancel, viewer blocked; `DailyService` mocked
+
+---
+
 ## Phase 2 — Foundation
 
 **Theme:** Multi-procedure, multi-tenant, revenue model live.
@@ -544,7 +585,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 ## Backlog (Future Consideration)
 
 - Mobile native apps (iOS + Android) for photo capture
-- Telemedicine integration (video consultation scheduling)
+- ~~Telemedicine integration (video consultation scheduling)~~ ✅ Done (Sprint 12) — Daily.co video rooms, feature-flagged per tenant
 - Insurance eligibility pre-check (for reconstructive procedures)
 - ~~Multilingual support (Spanish — critical for Miami market)~~ ✅ Done (Sprint 10)
 - Additional languages: Portuguese, French, Mandarin
@@ -576,6 +617,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 | ✅ | Patient report email portal link — "Visit Your Patient Portal" button in beauty roadmap email | Sprint 11 | Done |
 | ✅ | 2FA redirect — `TwoFactorLoginResponse` override (super-admin → `/admin`, tenant → subdomain) | Auth | Done |
 | ✅ | Impersonation — super-admin session switch + amber banner + stop button | Sprint 7 | Done |
+| ✅ | Telemedicine — Daily.co video consultations, feature-flagged (Pro plan auto / manual admin toggle), invite email + SMS, patient join page | Sprint 12 | Done |
 | ✅ | AI Simulation — procedure-specific photo selection via `Procedure::simulationPhotoType()` | Sprint 11 | Done |
 | ✅ | White-label branding (logo, brand color, email sender, custom domain) | Phase 4 | Done |
 | ✅ | SMS confirmations via Twilio (patient opt-in) | Phase 2 | Done |

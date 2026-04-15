@@ -31,7 +31,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(TenantContext::class);
 
         // AuditLog captures request IP/user-agent; SecureFileService uses the tenant context.
-        // Both must be request-scoped under Octane.
         $this->app->scoped(AuditLog::class);
         $this->app->scoped(SecureFileService::class);
     }
