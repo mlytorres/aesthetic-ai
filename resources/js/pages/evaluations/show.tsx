@@ -305,6 +305,8 @@ return `${hrs}h ago`;
 }
 
 function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
+    const [showAll, setShowAll] = useState(false);
+
     if (entries.length === 0) {
         return (
             <SectionCard title="Activity Log">
@@ -313,42 +315,59 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
         );
     }
 
+    const displayedEntries = showAll ? entries : entries.slice(0, 10);
+    const hasMore = entries.length > 10;
+
     return (
-        <SectionCard title="Activity Log">
-            <ol className="relative border-l border-border">
-                {entries.map((entry) => (
-                    <li key={entry.id} className="mb-5 ml-4 last:mb-0">
-                        {/* Timeline dot */}
-                        <div className="absolute -left-1.5 mt-1.5 size-3 rounded-full border border-[#0A0A0F] bg-[#2A2A35]" />
+        <SectionCard title={`Activity Log (${entries.length})`}>
+            <div className={`relative ${showAll ? 'max-h-[600px]' : 'max-h-[400px]'} overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-sidebar-border`}>
+                <ol className="relative ml-1.5 border-l border-border">
+                    {displayedEntries.map((entry) => (
+                        <li key={entry.id} className="mb-5 ml-4 last:mb-0">
+                            {/* Timeline dot */}
+                            <div className="absolute -left-1.5 mt-1.5 size-3 rounded-full border border-[#0A0A0F] bg-[#2A2A35]" />
 
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                            <p className="text-sm font-medium text-foreground">
-                                {actionLabel(entry.action)}
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                                <p className="text-sm font-medium text-foreground">
+                                    {actionLabel(entry.action)}
+                                </p>
+                                <time className="shrink-0 text-xs text-muted-foreground" dateTime={entry.created_at}>
+                                    {timeAgo(entry.created_at)}
+                                </time>
+                            </div>
+
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                {entry.user_name}
+                                {entry.user_role && (
+                                    <span className="ml-1 capitalize opacity-60">· {entry.user_role}</span>
+                                )}
+                                {entry.ip_address && (
+                                    <span className="ml-1 font-mono opacity-40"> · {entry.ip_address}</span>
+                                )}
                             </p>
-                            <time className="shrink-0 text-xs text-muted-foreground" dateTime={entry.created_at}>
-                                {timeAgo(entry.created_at)}
-                            </time>
-                        </div>
 
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                            {entry.user_name}
-                            {entry.user_role && (
-                                <span className="ml-1 capitalize opacity-60">· {entry.user_role}</span>
+                            {/* Metadata badge for status changes */}
+                            {entry.metadata?.new_status != null && (
+                                <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
+                                    → {String(entry.metadata.new_status).replace('_', ' ')}
+                                </span>
                             )}
-                            {entry.ip_address && (
-                                <span className="ml-1 font-mono opacity-40"> · {entry.ip_address}</span>
-                            )}
-                        </p>
+                        </li>
+                    ))}
+                </ol>
+            </div>
 
-                        {/* Metadata badge for status changes */}
-                        {entry.metadata?.new_status != null && (
-                            <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
-                                → {String(entry.metadata.new_status).replace('_', ' ')}
-                            </span>
-                        )}
-                    </li>
-                ))}
-            </ol>
+            {hasMore && (
+                <div className="mt-4 border-t border-sidebar-border/30 pt-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowAll(!showAll)}
+                        className="text-xs font-medium text-[#0E9E8E] hover:text-[#0E9E8E]/80 transition-colors"
+                    >
+                        {showAll ? 'Show less' : `See all ${entries.length} activities`}
+                    </button>
+                </div>
+            )}
         </SectionCard>
     );
 }
