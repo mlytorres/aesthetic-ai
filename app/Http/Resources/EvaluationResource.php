@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Models\Evaluation;
 use App\Models\User;
+use App\Services\LeadScoringService;
 use App\Services\SecureFileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,6 +26,13 @@ class EvaluationResource extends JsonResource
             'status' => $this->status,
             'lead_score' => $this->lead_score,
             'priority' => $this->priority,
+            'score_breakdown' => $this->when(
+                ! empty($this->analysis_data) && ! empty($this->quiz_answers),
+                fn () => app(LeadScoringService::class)->breakdown(
+                    (array) ($this->analysis_data['proportions'] ?? []),
+                    (array) $this->quiz_answers,
+                )
+            ),
             'secure_token' => $this->secure_token,
             'coordinator_notes' => $this->coordinator_notes,
             'follow_up_at' => $this->follow_up_at?->toIso8601String(),

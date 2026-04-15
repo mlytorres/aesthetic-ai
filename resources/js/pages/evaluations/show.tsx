@@ -31,12 +31,28 @@ interface Photo {
     signed_url: string;
 }
 
+interface ScoreBreakdownFactor {
+    label: string;
+    earned: number;
+    max: number;
+}
+
+interface ScoreBreakdown {
+    timeline: ScoreBreakdownFactor;
+    budget: ScoreBreakdownFactor;
+    ai_harmony: ScoreBreakdownFactor;
+    photo_quality: ScoreBreakdownFactor;
+    concerns: ScoreBreakdownFactor;
+    referral: ScoreBreakdownFactor;
+}
+
 interface Evaluation {
     id: string;
     procedure_slug: string;
     status: string;
     lead_score: number | null;
     priority: string;
+    score_breakdown: ScoreBreakdown | null;
     coordinator_notes: string | null;
     follow_up_at: string | null;
     completed_at: string | null;
@@ -648,6 +664,98 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
     );
 }
 
+// ── Lead score breakdown ──────────────────────────────────────────────────────
+
+const PRIORITY_BADGE: Record<string, string> = {
+    urgent:   'bg-red-500/15 text-red-400 border-red-500/30',
+    high:     'bg-orange-500/15 text-orange-400 border-orange-500/30',
+    medium:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    standard: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+};
+
+function ScoreBreakdownCard({ score, priority, breakdown }: {
+    score: number | null;
+    priority: string;
+    breakdown: ScoreBreakdown | null;
+}) {
+    if (score === null) {
+        return (
+            <SectionCard title="Lead Score">
+                <p className="text-sm text-muted-foreground italic">Scoring pending analysis.</p>
+            </SectionCard>
+        );
+    }
+
+    const pct = Math.min(100, Math.max(0, score));
+    const scoreColor = pct >= 75 ? '#0E9E8E' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
+
+    const factors: (keyof ScoreBreakdown)[] = [
+        'timeline', 'budget', 'ai_harmony', 'photo_quality', 'concerns', 'referral',
+    ];
+
+    return (
+        <SectionCard title="Lead Score">
+            {/* Score ring + priority */}
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    {/* Circular gauge */}
+                    <div className="relative flex size-14 items-center justify-center">
+                        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">
+                            <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor"
+                                className="text-white/10" strokeWidth="4" />
+                            <circle cx="28" cy="28" r="22" fill="none"
+                                stroke={scoreColor} strokeWidth="4"
+                                strokeDasharray={`${2 * Math.PI * 22}`}
+                                strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct / 100)}`}
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: scoreColor }}>
+                            {score}
+                        </span>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Score / 100</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {pct >= 75 ? 'Strong lead' : pct >= 50 ? 'Moderate lead' : 'Low engagement'}
+                        </p>
+                    </div>
+                </div>
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[priority] ?? ''}`}>
+                    {priority}
+                </span>
+            </div>
+
+            {/* Factor bars */}
+            {breakdown && (
+                <div className="space-y-2.5">
+                    {factors.map((key) => {
+                        const factor = breakdown[key];
+                        const factorPct = Math.round((factor.earned / factor.max) * 100);
+                        const barColor = factorPct >= 75 ? '#0E9E8E' : factorPct >= 50 ? '#60a5fa' : '#9B9B8E';
+                        return (
+                            <div key={key}>
+                                <div className="mb-1 flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground">{factor.label}</span>
+                                    <span className="text-xs tabular-nums text-foreground">
+                                        {factor.earned}<span className="text-muted-foreground">/{factor.max}</span>
+                                    </span>
+                                </div>
+                                <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="h-full rounded-full transition-all"
+                                        style={{ width: `${factorPct}%`, backgroundColor: barColor }}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </SectionCard>
+    );
+}
+
 function MagicLinkCard({ portalUrl }: { portalUrl?: string }) {
     const [copied, setCopied] = useState(false);
 
@@ -706,14 +814,14 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url }:
                             <p className="text-xs text-muted-foreground">Lead Score</p>
                             <p className="text-lg font-semibold text-[#0E9E8E]">
                                 {evaluation.lead_score ?? '—'}
+                                {evaluation.lead_score !== null && (
+                                    <span className="ml-1 text-xs font-normal text-muted-foreground">/100</span>
+                                )}
                             </p>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Priority</p>
-                            <p className="text-sm font-medium capitalize text-foreground">
-                                {evaluation.priority}
-                            </p>
-                        </div>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[evaluation.priority] ?? ''}`}>
+                            {evaluation.priority}
+                        </span>
                         {/* Clinical Brief PDF — plain <a> so the browser handles the download natively */}
                         <a
                             href={brief.url(evaluation.id)}
@@ -743,6 +851,11 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url }:
 
                     {/* Right — coordinator actions (1/3) */}
                     <div className="lg:col-span-1 space-y-6">
+                        <ScoreBreakdownCard
+                            score={evaluation.lead_score}
+                            priority={evaluation.priority}
+                            breakdown={evaluation.score_breakdown ?? null}
+                        />
                         <MagicLinkCard portalUrl={portal_url} />
                         <SimulationViewer evaluation={evaluation} />
                         <CoordinatorPanel evaluation={evaluation} />

@@ -16,12 +16,28 @@ interface Patient {
     phone: string | null;
 }
 
+interface ScoreBreakdownFactor {
+    label: string;
+    earned: number;
+    max: number;
+}
+
+interface ScoreBreakdown {
+    timeline: ScoreBreakdownFactor;
+    budget: ScoreBreakdownFactor;
+    ai_harmony: ScoreBreakdownFactor;
+    photo_quality: ScoreBreakdownFactor;
+    concerns: ScoreBreakdownFactor;
+    referral: ScoreBreakdownFactor;
+}
+
 interface Evaluation {
     id: string;
     procedure_slug: string;
     status: string;
     lead_score: number | null;
     priority: string;
+    score_breakdown: ScoreBreakdown | null;
     photos_count: number;
     created_at: string;
     completed_at: string | null;
@@ -100,16 +116,26 @@ function formatDate(iso: string): string {
     }).format(new Date(iso));
 }
 
-function LeadScoreBar({ score }: { score: number | null }) {
+const BREAKDOWN_KEYS: (keyof ScoreBreakdown)[] = [
+    'timeline', 'budget', 'ai_harmony', 'photo_quality', 'concerns', 'referral',
+];
+
+function LeadScoreBar({ score, breakdown }: { score: number | null; breakdown?: ScoreBreakdown | null }) {
+    const [visible, setVisible] = useState(false);
+
     if (score === null) {
-return <span className="text-muted-foreground text-xs">—</span>;
-}
+        return <span className="text-muted-foreground text-xs">—</span>;
+    }
 
     const pct = Math.min(100, Math.max(0, score));
     const color = pct >= 75 ? '#0E9E8E' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
 
     return (
-        <div className="flex items-center gap-2">
+        <div
+            className="relative inline-flex items-center gap-2"
+            onMouseEnter={() => setVisible(true)}
+            onMouseLeave={() => setVisible(false)}
+        >
             <div className="h-1.5 w-16 rounded-full bg-white/10 overflow-hidden">
                 <div
                     className="h-full rounded-full transition-all"
@@ -117,6 +143,36 @@ return <span className="text-muted-foreground text-xs">—</span>;
                 />
             </div>
             <span className="text-xs tabular-nums" style={{ color }}>{score}</span>
+
+            {breakdown && visible && (
+                <div className="absolute bottom-full left-0 mb-2 z-50 w-52 rounded-lg border border-sidebar-border/70 bg-card p-3 shadow-xl">
+                    <p className="mb-2 text-xs font-semibold text-foreground">Score Breakdown</p>
+                    <div className="space-y-2">
+                        {BREAKDOWN_KEYS.map((key) => {
+                            const f = breakdown[key];
+                            const fpct = Math.round((f.earned / f.max) * 100);
+                            const barColor = fpct >= 75 ? '#0E9E8E' : fpct >= 50 ? '#60a5fa' : '#9B9B8E';
+                            return (
+                                <div key={key}>
+                                    <div className="mb-0.5 flex items-center justify-between">
+                                        <span className="text-[10px] text-muted-foreground">{f.label}</span>
+                                        <span className="text-[10px] tabular-nums text-foreground">
+                                            {f.earned}<span className="text-muted-foreground">/{f.max}</span>
+                                        </span>
+                                    </div>
+                                    <div className="h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+                                        <div className="h-full rounded-full" style={{ width: `${fpct}%`, backgroundColor: barColor }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-2 border-t border-sidebar-border/50 pt-2 flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total</span>
+                        <span className="text-xs font-semibold tabular-nums" style={{ color }}>{score}/100</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -318,7 +374,7 @@ export default function EvaluationsIndex({ evaluations, filters, statusCounts }:
 
                                         {/* Lead score */}
                                         <td className="px-4 py-3">
-                                            <LeadScoreBar score={ev.lead_score} />
+                                            <LeadScoreBar score={ev.lead_score} breakdown={ev.score_breakdown} />
                                         </td>
 
                                         {/* Status */}

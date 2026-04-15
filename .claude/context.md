@@ -85,9 +85,13 @@ resources/js/
 tenants           -- Clinics (each is one tenant)
 patients          -- PHI: encrypted email/phone
 evaluations       -- Core entity: quiz + AI results + lead score
-photos            -- S3 keys only, served via signed URLs
+photos            -- S3 keys only, served via signed URLs; type is one of 12 semantic values
 audit_log_entries -- Immutable, no soft deletes
 webhooks          -- Per-tenant CRM integration config
+
+-- Global (no tenant_id) — shared platform config
+procedures        -- slug PK; photo_protocol JSONB stores PhotoSlot[] with type/label/guide_label
+quiz_definitions  -- UNIQUE(procedure_slug, is_active); at most 1 active + 1 archived per procedure
 ```
 
 ---
@@ -110,10 +114,27 @@ ProcedureRegistry::isBodyProcedure($slug)   // Routes to body AI pipeline
 ProcedureRegistry::isFaceProcedure($slug)   // Routes to facial AI pipeline
 ProcedureRegistry::isHighRevenue($slug)     // Forces min PRIORITY_HIGH in lead scoring
 ProcedureRegistry::allSlugs()              // All 26 registered procedure slugs
+
+// Procedure model helpers
+$procedure->simulationPhotoType()           // Returns 'type' of first required photo slot
+$procedure->activeQuiz()                    // Returns active QuizDefinition or null
 ```
 
 ### Octane Safety
 `TenantContext`, `AuditLog`, and `SecureFileService` are bound as `scoped()` in `AppServiceProvider` — they reset between requests. Never change to `singleton()` as it causes tenant bleed across requests in long-running Octane workers.
+
+### Quiz Versioning — Three-Step Constraint Pattern
+The `quiz_definitions` table has `UNIQUE(procedure_slug, is_active)`. To replace the active quiz you must free the archived slot first:
+```php
+// Always in this order — any other order causes a constraint violation
+QuizDefinition::where('procedure_slug', $slug)->where('is_active', false)->delete();
+$existing->update(['is_active' => false]);
+QuizDefinition::create(['procedure_slug' => $slug, 'is_active' => true, ...]);
+```
+See `QuizAdminController::update()` and `::activate()` for the canonical implementation.
+
+### Photo Slots — Not Plain Strings
+`photo_protocol` on `Procedure` stores `{type, required, guide_label}` objects. `ProcedureResource` transforms them to `{type, label, tip}` for the frontend. Never access `photo_protocol` directly in frontend code — always go through `ProcedureResource`. Valid `type` values: `front`, `left_profile`, `right_profile`, `back`, `left_side`, `right_side`, `abdomen_front`, `abdomen_side`, `chest_front`, `eyes_closed`, `arm_front`, `additional`.
 
 ### Dashboard Controllers — Tenant Binding Pattern
 Due to `TenantScope` + `SubstituteBindings` ordering, **never use implicit route model binding** in dashboard controllers. Always use `string $id` + manual `findOrFail()`:

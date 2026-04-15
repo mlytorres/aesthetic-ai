@@ -47,59 +47,8 @@ class LeadScoringService
         array $proportions,
         array $quizAnswers,
     ): array {
-        $score = 0;
-
-        // ── Timeline (30 pts) ─────────────────────────────────────────────────
-        $timeline = $quizAnswers['q_timeline'] ?? 'researching';
-        $score += match ($timeline) {
-            'asap' => 30,
-            '3_months' => 22,
-            '6_months' => 12,
-            'researching' => 3,
-            default => 5,
-        };
-
-        // ── Budget (25 pts) ───────────────────────────────────────────────────
-        $budget = $quizAnswers['q_budget'] ?? 'under_10k';
-        $score += match ($budget) {
-            'over_25k' => 25,
-            '15k_25k' => 20,
-            '10k_15k' => 13,
-            'under_10k' => 5,
-            default => 5,
-        };
-
-        // ── AI Harmony Score (20 pts) ─────────────────────────────────────────
-        $harmony = (int) ($proportions['overall_harmony'] ?? 50);
-        // Map 0–100 harmony → 0–20 points (scaled)
-        $score += (int) round($harmony * 0.20);
-
-        // ── Photo quality (10 pts) ────────────────────────────────────────────
-        // Average quality score across all photos, normalised to 0–10
-        $avgPhotoQuality = (int) ($proportions['_avg_photo_quality'] ?? 70);
-        $score += (int) round($avgPhotoQuality * 0.10);
-
-        // ── Concerns count (10 pts) ───────────────────────────────────────────
-        // More concerns = higher engagement / more complex case
-        $concerns = $quizAnswers['q_concerns'] ?? [];
-        $concernCount = is_array($concerns) ? count($concerns) : 0;
-        $score += match (true) {
-            $concernCount >= 4 => 10,
-            $concernCount >= 3 => 8,
-            $concernCount >= 2 => 6,
-            $concernCount >= 1 => 4,
-            default => 0,
-        };
-
-        // ── Referral source (5 pts) ───────────────────────────────────────────
-        $referral = $quizAnswers['q_referral'] ?? null;
-        $score += match ($referral) {
-            'referral' => 5,  // Word-of-mouth = high intent
-            'google' => 4,  // Active searcher
-            'instagram' => 3,  // Social discovery
-            'tiktok' => 2,
-            default => 1,
-        };
+        $components = $this->computeComponents($proportions, $quizAnswers);
+        $score      = array_sum(array_column($components, 'earned'));
 
         // ── Clamp to 0–100 ────────────────────────────────────────────────────
         $score = max(0, min(100, $score));
@@ -125,7 +74,9 @@ class LeadScoringService
         }
 
         // Force at least 'high' for serious budget + timeline combo
-        $seriousBudget = in_array($budget, ['15k_25k', 'over_25k'], true);
+        $budget         = $quizAnswers['q_budget'] ?? 'under_10k';
+        $timeline       = $quizAnswers['q_timeline'] ?? 'researching';
+        $seriousBudget  = in_array($budget, ['15k_25k', 'over_25k'], true);
         $urgentTimeline = in_array($timeline, ['asap', '3_months'], true);
 
         if ($seriousBudget && $urgentTimeline) {
@@ -135,13 +86,93 @@ class LeadScoringService
         return [$score, $priority];
     }
 
+    /**
+     * Return per-factor score breakdown for display purposes.
+     *
+     * @param  array<string, mixed>  $proportions  From analysis_data.proportions
+     * @param  array<string, mixed>  $quizAnswers  From evaluation.quiz_answers
+     * @return array<string, array{label: string, earned: int, max: int}>
+     */
+    public function breakdown(array $proportions, array $quizAnswers): array
+    {
+        return $this->computeComponents($proportions, $quizAnswers);
+    }
+
+    /**
+     * Compute individual scoring components.
+     *
+     * @param  array<string, mixed>  $proportions
+     * @param  array<string, mixed>  $quizAnswers
+     * @return array<string, array{label: string, earned: int, max: int}>
+     */
+    private function computeComponents(array $proportions, array $quizAnswers): array
+    {
+        // ── Timeline (30 pts) ─────────────────────────────────────────────────
+        $timeline        = $quizAnswers['q_timeline'] ?? 'researching';
+        $timelineEarned  = match ($timeline) {
+            'asap'        => 30,
+            '3_months'    => 22,
+            '6_months'    => 12,
+            'researching' => 3,
+            default       => 5,
+        };
+
+        // ── Budget (25 pts) ───────────────────────────────────────────────────
+        $budget        = $quizAnswers['q_budget'] ?? 'under_10k';
+        $budgetEarned  = match ($budget) {
+            'over_25k' => 25,
+            '15k_25k'  => 20,
+            '10k_15k'  => 13,
+            'under_10k' => 5,
+            default    => 5,
+        };
+
+        // ── AI Harmony Score (20 pts) ─────────────────────────────────────────
+        $harmony       = (int) ($proportions['overall_harmony'] ?? 50);
+        $harmonyEarned = (int) round($harmony * 0.20);
+
+        // ── Photo quality (10 pts) ────────────────────────────────────────────
+        $avgPhotoQuality = (int) ($proportions['_avg_photo_quality'] ?? 70);
+        $photoEarned     = (int) round($avgPhotoQuality * 0.10);
+
+        // ── Concerns count (10 pts) ───────────────────────────────────────────
+        $concerns      = $quizAnswers['q_concerns'] ?? [];
+        $concernCount  = is_array($concerns) ? count($concerns) : 0;
+        $concernsEarned = match (true) {
+            $concernCount >= 4 => 10,
+            $concernCount >= 3 => 8,
+            $concernCount >= 2 => 6,
+            $concernCount >= 1 => 4,
+            default            => 0,
+        };
+
+        // ── Referral source (5 pts) ───────────────────────────────────────────
+        $referral        = $quizAnswers['q_referral'] ?? null;
+        $referralEarned  = match ($referral) {
+            'referral'  => 5,   // Word-of-mouth = high intent
+            'google'    => 4,   // Active searcher
+            'instagram' => 3,   // Social discovery
+            'tiktok'    => 2,
+            default     => 1,
+        };
+
+        return [
+            'timeline'      => ['label' => 'Timeline Urgency',  'earned' => $timelineEarned,  'max' => 30],
+            'budget'        => ['label' => 'Budget Alignment',  'earned' => $budgetEarned,    'max' => 25],
+            'ai_harmony'    => ['label' => 'AI Harmony',        'earned' => $harmonyEarned,   'max' => 20],
+            'photo_quality' => ['label' => 'Photo Quality',     'earned' => $photoEarned,     'max' => 10],
+            'concerns'      => ['label' => 'Concern Depth',     'earned' => $concernsEarned,  'max' => 10],
+            'referral'      => ['label' => 'Referral Signal',   'earned' => $referralEarned,  'max' =>  5],
+        ];
+    }
+
     private function toPriority(int $score): string
     {
         return match (true) {
             $score >= 80 => Evaluation::PRIORITY_URGENT,
             $score >= 60 => Evaluation::PRIORITY_HIGH,
             $score >= 40 => Evaluation::PRIORITY_MEDIUM,
-            default => Evaluation::PRIORITY_STANDARD,
+            default      => Evaluation::PRIORITY_STANDARD,
         };
     }
 
@@ -153,9 +184,9 @@ class LeadScoringService
     {
         return match ($priority) {
             Evaluation::PRIORITY_STANDARD => Evaluation::PRIORITY_MEDIUM,
-            Evaluation::PRIORITY_MEDIUM => Evaluation::PRIORITY_HIGH,
-            Evaluation::PRIORITY_HIGH => Evaluation::PRIORITY_URGENT,
-            default => $priority,
+            Evaluation::PRIORITY_MEDIUM   => Evaluation::PRIORITY_HIGH,
+            Evaluation::PRIORITY_HIGH     => Evaluation::PRIORITY_URGENT,
+            default                       => $priority,
         };
     }
 
@@ -166,9 +197,9 @@ class LeadScoringService
     {
         $order = [
             Evaluation::PRIORITY_STANDARD => 0,
-            Evaluation::PRIORITY_MEDIUM => 1,
-            Evaluation::PRIORITY_HIGH => 2,
-            Evaluation::PRIORITY_URGENT => 3,
+            Evaluation::PRIORITY_MEDIUM   => 1,
+            Evaluation::PRIORITY_HIGH     => 2,
+            Evaluation::PRIORITY_URGENT   => 3,
         ];
 
         $currentRank = $order[$current] ?? 0;
