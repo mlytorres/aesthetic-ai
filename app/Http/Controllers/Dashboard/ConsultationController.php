@@ -23,8 +23,9 @@ class ConsultationController extends Controller
     /**
      * List consultations for an evaluation (JSON — used by the show page sidebar).
      */
-    public function index(Evaluation $evaluation): JsonResponse
+    public function index(string $evaluationId): JsonResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
         $this->authorizeEvaluation($evaluation);
 
         $consultations = $evaluation->consultations()
@@ -38,8 +39,9 @@ class ConsultationController extends Controller
     /**
      * Schedule a new video consultation for an evaluation.
      */
-    public function store(Request $request, Evaluation $evaluation): JsonResponse
+    public function store(Request $request, string $evaluationId): JsonResponse
     {
+        $evaluation = Evaluation::findOrFail($evaluationId);
         $this->authorizeEvaluation($evaluation);
 
         $tenant = TenantContext::get();
@@ -87,8 +89,9 @@ class ConsultationController extends Controller
     /**
      * Cancel a consultation. Deletes the Daily.co room.
      */
-    public function cancel(Request $request, Consultation $consultation): JsonResponse
+    public function cancel(Request $request, string $consultationId): JsonResponse
     {
+        $consultation = Consultation::findOrFail($consultationId);
         $this->authorizeConsultation($consultation);
 
         if (! $consultation->isCancellable()) {
