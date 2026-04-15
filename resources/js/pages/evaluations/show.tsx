@@ -845,6 +845,11 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
         setFormError(null);
 
         try {
+            const payload = { ...form };
+            if (payload.scheduled_at) {
+                payload.scheduled_at = new Date(payload.scheduled_at).toISOString();
+            }
+
             const res = await fetch(`/evaluations/${evaluationId}/consultations`, {
                 method: 'POST',
                 headers: {
@@ -852,7 +857,7 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
                     Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken(),
                 },
-                body: JSON.stringify(form),
+                body: JSON.stringify(payload),
             });
 
             const data = await res.json();
