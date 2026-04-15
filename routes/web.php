@@ -149,6 +149,11 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
         ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR]))
         ->name('consultations.cancel');
 
+    // ── Staff join consultation ──
+    Route::get('/consultations/{consultation}/staff-join', [ConsultationController::class, 'staffJoin'])
+        ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN, User::ROLE_COORDINATOR, User::ROLE_SURGEON]))
+        ->name('consultations.staff-join');
+
     // ── Clinic settings, team & integrations — owner and admin only ───────
     Route::prefix('clinic')->name('clinic.')
         ->middleware('role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN]))
@@ -227,9 +232,12 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
 });
 
 // ─── Video Consultation — public patient join page ────────────────────────────
-// No auth — gated by a UUID token. Tenant resolved from consultation record.
+// No auth — gated by a UUID token.
+// The tenant middleware maps the subdomain so models can load correctly.
 
-Route::get('/consult/{token}', [ConsultationController::class, 'join'])->name('consult.join');
+Route::get('/consult/{token}', [ConsultationController::class, 'join'])
+    ->middleware(['tenant'])
+    ->name('consult.join');
 
 // ─── Super-admin panel ────────────────────────────────────────────────────────
 // Accessible to platform operators (tenant_id = null users) only.

@@ -147,6 +147,26 @@ class ConsultationController extends Controller
         ]);
     }
 
+    /**
+     * Generate an owner token for clinic staff to join the room.
+     */
+    public function staffJoin(Request $request, string $consultationId)
+    {
+        $consultation = Consultation::findOrFail($consultationId);
+        $this->authorizeConsultation($consultation);
+
+        $expiresAt = now()->addHours(2)->timestamp;
+        
+        $token = $this->daily->createMeetingToken(
+            $consultation->daily_room_name,
+            $request->user()->name ?? 'Clinic Staff',
+            $expiresAt,
+            true // isOwner
+        );
+
+        return redirect()->away($consultation->daily_room_url . '?t=' . $token);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function authorizeEvaluation(Evaluation $evaluation): void

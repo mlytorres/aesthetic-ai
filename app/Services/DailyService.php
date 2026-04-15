@@ -106,7 +106,7 @@ class DailyService
      * @param  int  $expiresAt  Unix timestamp (must be <= room exp)
      * @return string The meeting token string
      */
-    public function createMeetingToken(string $roomName, string $participantName, int $expiresAt): string
+    public function createMeetingToken(string $roomName, string $participantName, int $expiresAt, bool $isOwner = false): string
     {
         if (empty($this->apiKey)) {
             throw new RuntimeException('DAILY_API_KEY is not configured.');
@@ -118,7 +118,7 @@ class DailyService
                     'room_name' => $roomName,
                     'user_name' => $participantName,
                     'exp' => $expiresAt,
-                    'is_owner' => false,
+                    'is_owner' => $isOwner,
                 ],
             ]);
 

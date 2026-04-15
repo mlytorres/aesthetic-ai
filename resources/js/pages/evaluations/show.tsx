@@ -12,6 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { brief, index, show, updateNotes, updateStatus } from '@/routes/evaluations';
+import { staffJoin } from '@/actions/App/Http/Controllers/Dashboard/ConsultationController';
 import { show as simulationShow, store as simulationStore } from '@/routes/evaluations/simulation';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -966,7 +967,7 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
                                             {copiedId === c.id ? '✓ Copied' : '⎘ Patient link'}
                                         </button>
                                         <a
-                                            href={c.daily_room_url}
+                                            href={staffJoin.url(c.id)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="flex-1 rounded border border-[#0E9E8E]/40 px-2 py-1 text-[10px] text-center text-[#0E9E8E] hover:bg-[#0E9E8E]/10 transition-colors"
