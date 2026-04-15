@@ -41,7 +41,7 @@ function resolveLayout(component: string) {
         return AuthLayout;
     }
 
-    if (component.startsWith('intake/') || component.startsWith('patient/') || component.startsWith('legal/') || component === 'welcome') {
+    if (component.startsWith('intake/') || component.startsWith('patient/') || component.startsWith('consult/') || component.startsWith('legal/') || component === 'welcome') {
         return null;
     }
 
