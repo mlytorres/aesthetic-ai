@@ -29,9 +29,14 @@ use App\Http\Controllers\Intake\PatientReportController;
 use App\Http\Controllers\Intake\PhotoController;
 use App\Http\Controllers\Intake\SimulationShareController;
 use App\Http\Controllers\Patient\PatientPortalController;
+use App\Http\Controllers\Intake\WidgetController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+
+// ─── JavaScript Embed Widget ────────────────────────────────────────────────
+// Dynamically generated JS loader for clinics to embed the intake wizard.
+Route::get('/widget.js', [WidgetController::class, 'show'])->name('widget.js');
 
 // ─── Public landing ───────────────────────────────────────────────────────────
 
@@ -205,6 +210,10 @@ Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function
     Route::post('/evaluations/{token}/quiz', [EvaluationController::class, 'quiz'])
         ->middleware(['throttle:intake.quiz'])
         ->name('evaluations.quiz');
+
+    Route::post('/evaluations/{token}/lead', [EvaluationController::class, 'lead'])
+        ->middleware(['throttle:intake.lead'])
+        ->name('evaluations.lead');
 
     Route::post('/evaluations/{token}/submit', [EvaluationController::class, 'submit'])
         ->middleware(['throttle:intake.evaluation.submit', 'plan.limits'])

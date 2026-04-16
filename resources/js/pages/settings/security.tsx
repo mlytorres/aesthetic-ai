@@ -63,7 +63,8 @@ export default function Security({
                 />
 
                 <Form
-                    action="/settings/password" method="put"
+                    action="/settings/password"
+                    method="put"
                     options={{
                         preserveScroll: true,
                     }}
@@ -203,7 +204,8 @@ export default function Security({
                                     </Button>
                                 ) : (
                                     <Form
-                                        action={enable.url()} method="post"
+                                        action={enable.url()}
+                                        method="post"
                                         onSuccess={() =>
                                             setShowSetupModal(true)
                                         }

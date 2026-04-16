@@ -31,14 +31,16 @@ function generateSlug(value: string): string {
 }
 
 export default function Register() {
-    const { data, setData, post, processing, errors } = useForm<RegisterFields>({
-        clinic_name: '',
-        slug: '',
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-    });
+    const { data, setData, post, processing, errors } = useForm<RegisterFields>(
+        {
+            clinic_name: '',
+            slug: '',
+            name: '',
+            email: '',
+            password: '',
+            password_confirmation: '',
+        },
+    );
 
     // Once the user manually edits the slug, stop auto-generating from clinic name
     const [slugEdited, setSlugEdited] = useState(false);
@@ -47,15 +49,21 @@ export default function Register() {
 
     function handleClinicNameChange(value: string) {
         setData('clinic_name', value);
+
         if (!slugEdited) {
             setData('slug', generateSlug(value));
         }
     }
 
     function handleSlugChange(value: string) {
-        const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 50);
+        const cleaned = value
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '')
+            .slice(0, 50);
         setData('slug', cleaned);
-        setSlugEdited(cleaned !== '' && cleaned !== generateSlug(data.clinic_name));
+        setSlugEdited(
+            cleaned !== '' && cleaned !== generateSlug(data.clinic_name),
+        );
     }
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -81,7 +89,9 @@ export default function Register() {
                             autoComplete="organization"
                             placeholder="Miami Aesthetic Center"
                             value={data.clinic_name}
-                            onChange={(e) => handleClinicNameChange(e.target.value)}
+                            onChange={(e) =>
+                                handleClinicNameChange(e.target.value)
+                            }
                         />
                         <InputError message={errors.clinic_name} />
                     </div>
@@ -98,7 +108,9 @@ export default function Register() {
                                 spellCheck={false}
                                 placeholder="miami-aesthetic"
                                 value={data.slug}
-                                onChange={(e) => handleSlugChange(e.target.value)}
+                                onChange={(e) =>
+                                    handleSlugChange(e.target.value)
+                                }
                                 className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
                             />
                             <span className="shrink-0 border-l bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -150,13 +162,17 @@ export default function Register() {
                             autoComplete="new-password"
                             placeholder="Min. 8 characters"
                             value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
+                            onChange={(e) =>
+                                setData('password', e.target.value)
+                            }
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
+                        <Label htmlFor="password_confirmation">
+                            Confirm password
+                        </Label>
                         <PasswordInput
                             id="password_confirmation"
                             required
@@ -164,7 +180,9 @@ export default function Register() {
                             autoComplete="new-password"
                             placeholder="Repeat password"
                             value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                            onChange={(e) =>
+                                setData('password_confirmation', e.target.value)
+                            }
                         />
                         <InputError message={errors.password_confirmation} />
                     </div>
@@ -201,7 +219,11 @@ export default function Register() {
 
                 <div className="text-center text-xs text-muted-foreground/60">
                     Multi-location practice or need custom onboarding?{' '}
-                    <TextLink href="/#request-demo" tabIndex={11} className="text-muted-foreground/60 underline-offset-2">
+                    <TextLink
+                        href="/#request-demo"
+                        tabIndex={11}
+                        className="text-muted-foreground/60 underline-offset-2"
+                    >
                         Request a demo
                     </TextLink>
                 </div>

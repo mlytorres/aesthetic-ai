@@ -161,4 +161,29 @@
         fab.onclick = openModal;
         document.body.appendChild(fab);
     }
+
+    // ─── Post-Message Communication ───────────────────────────────────────────
+    window.addEventListener('message', function(event) {
+        // Basic security: Check that message is from our expected domain
+        // In production, you might want to be more strict here
+        if (!event.data || typeof event.data !== 'object') return;
+
+        const { type, data } = event.data;
+
+        // Parent window event dispatcher
+        if (typeof window.onAestheticAIEvent === 'function') {
+            window.onAestheticAIEvent(event.data);
+        }
+
+        // Standard Behaviors
+        if (type === 'EVALUATION_COMPLETE') {
+            console.log("AestheticAI: Evaluation complete event received.");
+            // If we are in a modal, maybe we don't redirect but show a success message?
+            // success.tsx handles the redirect if booking_url is present.
+        }
+        
+        if (type === 'LEAD_CAPTURED') {
+            console.log("AestheticAI: Lead data captured.", event.data.email);
+        }
+    });
 })();

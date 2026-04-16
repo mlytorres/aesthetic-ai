@@ -43,7 +43,10 @@ class EvaluationController extends Controller
                 Evaluation::STATUS_DRAFT,
                 Evaluation::STATUS_FAILED,
             ]))
-            ->when($status !== 'active', fn ($q) => $q->where('status', $status))
+            ->when($status === 'abandoned', fn ($q) => $q->where('status', Evaluation::STATUS_DRAFT)
+                ->whereHas('patient', fn ($pq) => $pq->whereNotNull('email_hash'))
+            )
+            ->when(!in_array($status, ['active', 'abandoned']), fn ($q) => $q->where('status', $status))
             ->when($search, function ($q, $search) {
                 $q->whereHas('patient', function ($pq) use ($search) {
                     $pq->where('name', 'ilike', '%'.$search.'%')
@@ -82,6 +85,9 @@ class EvaluationController extends Controller
                 'complete' => Evaluation::where('status', Evaluation::STATUS_COMPLETE)->count(),
                 'contacted' => Evaluation::where('status', Evaluation::STATUS_CONTACTED)->count(),
                 'booked' => Evaluation::where('status', Evaluation::STATUS_BOOKED)->count(),
+                'abandoned' => Evaluation::where('status', Evaluation::STATUS_DRAFT)
+                    ->whereHas('patient', fn ($q) => $q->whereNotNull('email_hash'))
+                    ->count(),
             ],
         ]);
     }

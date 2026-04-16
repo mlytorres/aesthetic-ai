@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { useEffect } from 'react';
 
 // Initialise Echo once and reuse across the app.
 // Reverb uses the Pusher protocol, so we configure pusher-js as the transport.

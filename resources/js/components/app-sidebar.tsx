@@ -1,8 +1,21 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, BookOpen, Building2, ClipboardList, CreditCard, FolderGit2, LayoutGrid, ScrollText, Settings, ShieldCheck, Users, Webhook, HelpCircle } from 'lucide-react';
+import {
+    BarChart3,
+    BookOpen,
+    Building2,
+    ClipboardList,
+    CreditCard,
+    LayoutGrid,
+    ScrollText,
+    Settings,
+    ShieldCheck,
+    Users,
+    Webhook,
+    HelpCircle,
+} from 'lucide-react';
 import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
-import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
+import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -88,8 +101,15 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild className="h-14 hover:bg-transparent">
-                            <Link href={isSuperAdmin ? '/admin' : dashboard()} prefetch>
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="h-14 hover:bg-transparent"
+                        >
+                            <Link
+                                href={isSuperAdmin ? '/admin' : dashboard()}
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

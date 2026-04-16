@@ -9,13 +9,13 @@
 
 @theme {
     /* ── SymetriHealth Design Tokens ────────────────────────────────── */
-    --color-abyss:    #0A0A0F;   /* patient wizard background */
-    --color-surface:  #111118;   /* wizard card surface */
-    --color-teal:     #0E9E8E;   /* primary accent */
-    --color-teal-dim: #0C8A7C;   /* hover / pressed state */
-    --color-teal-lt:  #2DD4BF;   /* highlight / gradient end */
-    --color-cream:    #F5F0E8;   /* primary text on dark */
-    --color-mist:     #9B9B8E;   /* secondary text on dark */
+    --color-abyss: #0a0a0f; /* patient wizard background */
+    --color-surface: #111118; /* wizard card surface */
+    --color-teal: #0e9e8e; /* primary accent */
+    --color-teal-dim: #0c8a7c; /* hover / pressed state */
+    --color-teal-lt: #2dd4bf; /* highlight / gradient end */
+    --color-cream: #f5f0e8; /* primary text on dark */
+    --color-mist: #9b9b8e; /* secondary text on dark */
     /* ─────────────────────────────────────────────────────────────── */
 
     --font-sans:
@@ -117,39 +117,39 @@
        #F5F0E8 = cream (primary text)
        #9B9B8E = mist (secondary text)
     ─────────────────────────────────────────────────────────────── */
-    --background:              #0A0A0F;
-    --foreground:              #F5F0E8;
-    --card:                    #111118;
-    --card-foreground:         #F5F0E8;
-    --popover:                 #111118;
-    --popover-foreground:      #F5F0E8;
-    --primary:                 #0E9E8E;
-    --primary-foreground:      #0A0A0F;
-    --secondary:               #1A1A24;
-    --secondary-foreground:    #F5F0E8;
-    --muted:                   #1A1A24;
-    --muted-foreground:        #9B9B8E;
-    --accent:                  #1A1A24;
-    --accent-foreground:       #F5F0E8;
-    --destructive:             oklch(0.396 0.141 25.723);
-    --destructive-foreground:  oklch(0.637 0.237 25.331);
-    --border:                  rgba(255, 255, 255, 0.08);
-    --input:                   #1A1A24;
-    --ring:                    #0E9E8E;
-    --chart-1:                 #0E9E8E;
-    --chart-2:                 oklch(0.696 0.17 162.48);
-    --chart-3:                 oklch(0.769 0.188 70.08);
-    --chart-4:                 oklch(0.627 0.265 303.9);
-    --chart-5:                 oklch(0.645 0.246 16.439);
+    --background: #0a0a0f;
+    --foreground: #f5f0e8;
+    --card: #111118;
+    --card-foreground: #f5f0e8;
+    --popover: #111118;
+    --popover-foreground: #f5f0e8;
+    --primary: #0e9e8e;
+    --primary-foreground: #0a0a0f;
+    --secondary: #1a1a24;
+    --secondary-foreground: #f5f0e8;
+    --muted: #1a1a24;
+    --muted-foreground: #9b9b8e;
+    --accent: #1a1a24;
+    --accent-foreground: #f5f0e8;
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --border: rgba(255, 255, 255, 0.08);
+    --input: #1a1a24;
+    --ring: #0e9e8e;
+    --chart-1: #0e9e8e;
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
     /* sidebar = slightly lighter than abyss so content area has depth */
-    --sidebar:                 #0D0D14;
-    --sidebar-foreground:      #F5F0E8;
-    --sidebar-primary:         #0E9E8E;
-    --sidebar-primary-foreground: #0A0A0F;
-    --sidebar-accent:          #111118;
-    --sidebar-accent-foreground: #F5F0E8;
-    --sidebar-border:          rgba(255, 255, 255, 0.06);
-    --sidebar-ring:            #0E9E8E;
+    --sidebar: #0d0d14;
+    --sidebar-foreground: #f5f0e8;
+    --sidebar-primary: #0e9e8e;
+    --sidebar-primary-foreground: #0a0a0f;
+    --sidebar-accent: #111118;
+    --sidebar-accent-foreground: #f5f0e8;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #0e9e8e;
 }
 
 @layer base {
@@ -171,41 +171,42 @@
 /* brand_primary color set (white-label branding feature).                   */
 
 [data-intake-theme] {
-    --intake-accent: #0E9E8E;
+    --intake-accent: #0e9e8e;
+    --intake-font: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
-[data-intake-theme="luxury-dark"] {
-    --intake-bg:           #0A0A0F;
-    --intake-surface:      #111118;
-    --intake-fg:           #F5F0E8;
-    --intake-muted:        #9B9B8E;
-    --intake-muted-faint:  rgba(155, 155, 142, 0.50);
-    --intake-border-xs:    rgba(255, 255, 255, 0.05);
-    --intake-border:       rgba(255, 255, 255, 0.10);
+[data-intake-theme='luxury-dark'] {
+    --intake-bg: #0a0a0f;
+    --intake-surface: #111118;
+    --intake-fg: #f5f0e8;
+    --intake-muted: #9b9b8e;
+    --intake-muted-faint: rgba(155, 155, 142, 0.5);
+    --intake-border-xs: rgba(255, 255, 255, 0.05);
+    --intake-border: rgba(255, 255, 255, 0.1);
     --intake-border-hover: rgba(255, 255, 255, 0.22);
-    --intake-icon-on-teal: #0A0A0F;
+    --intake-icon-on-teal: #0a0a0f;
 }
 
-[data-intake-theme="luxury-light"] {
-    --intake-bg:           #FAF8F5;
-    --intake-surface:      #FFFFFF;
-    --intake-fg:           #1A1A24;
-    --intake-muted:        #6B6B60;
-    --intake-muted-faint:  rgba(107, 107, 96, 0.55);
-    --intake-border-xs:    rgba(0, 0, 0, 0.05);
-    --intake-border:       rgba(0, 0, 0, 0.10);
+[data-intake-theme='luxury-light'] {
+    --intake-bg: #faf8f5;
+    --intake-surface: #ffffff;
+    --intake-fg: #1a1a24;
+    --intake-muted: #6b6b60;
+    --intake-muted-faint: rgba(107, 107, 96, 0.55);
+    --intake-border-xs: rgba(0, 0, 0, 0.05);
+    --intake-border: rgba(0, 0, 0, 0.1);
     --intake-border-hover: rgba(0, 0, 0, 0.22);
-    --intake-icon-on-teal: #FFFFFF;
+    --intake-icon-on-teal: #ffffff;
 }
 
-[data-intake-theme="clinical"] {
-    --intake-bg:           #F5F7FA;
-    --intake-surface:      #FFFFFF;
-    --intake-fg:           #1A202C;
-    --intake-muted:        #64748B;
-    --intake-muted-faint:  rgba(100, 116, 139, 0.55);
-    --intake-border-xs:    rgba(0, 0, 0, 0.06);
-    --intake-border:       rgba(0, 0, 0, 0.12);
+[data-intake-theme='clinical'] {
+    --intake-bg: #f5f7fa;
+    --intake-surface: #ffffff;
+    --intake-fg: #1a202c;
+    --intake-muted: #64748b;
+    --intake-muted-faint: rgba(100, 116, 139, 0.55);
+    --intake-border-xs: rgba(0, 0, 0, 0.06);
+    --intake-border: rgba(0, 0, 0, 0.12);
     --intake-border-hover: rgba(0, 0, 0, 0.22);
-    --intake-icon-on-teal: #FFFFFF;
+    --intake-icon-on-teal: #ffffff;
 }

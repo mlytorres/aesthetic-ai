@@ -31,6 +31,7 @@ class ClinicController extends Controller
                 },
                 'logo_url' => $settings['logo_url'] ?? null,
                 'brand_primary' => $settings['brand_primary'] ?? null,
+                'brand_font' => $settings['brand_font'] ?? null,
                 'from_name' => $settings['from_name'] ?? null,
                 'custom_domain' => $settings['custom_domain'] ?? null,
                 'locale' => $settings['locale'] ?? 'en',
@@ -38,6 +39,7 @@ class ClinicController extends Controller
                 'coordinator_emails' => $settings['coordinator_emails'] ?? [],
                 'phone' => $settings['phone'] ?? null,
                 'booking_url' => $settings['booking_url'] ?? null,
+                'lead_capture_position' => $settings['lead_capture_position'] ?? 'end',
             ],
             'availableProcedures' => Procedure::where('active', true)
                 ->get(['slug', 'label', 'category'])
@@ -54,6 +56,7 @@ class ClinicController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'theme' => ['required', Rule::in(['luxury-dark', 'luxury-light', 'clinical'])],
             'brand_primary' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_font' => ['nullable', 'string', 'max:100'],
             'from_name' => ['nullable', 'string', 'max:80'],
             'custom_domain' => ['nullable', 'string', 'max:253', 'regex:/^[a-z0-9]([a-z0-9\-\.]+)?[a-z0-9]$/i'],
             'locale' => ['required', Rule::in(['en', 'es'])],
@@ -63,6 +66,7 @@ class ClinicController extends Controller
             'coordinator_emails.*' => ['email'],
             'phone' => ['nullable', 'string', 'max:30'],
             'booking_url' => ['nullable', 'url', 'max:500'],
+            'lead_capture_position' => ['required', Rule::in(['beginning', 'end'])],
         ]);
 
         $tenant->update([
@@ -70,6 +74,7 @@ class ClinicController extends Controller
             'settings' => array_merge($tenant->settings ?? [], [
                 'theme' => $validated['theme'],
                 'brand_primary' => $validated['brand_primary'] ?: null,
+                'brand_font' => $validated['brand_font'] ?: null,
                 'from_name' => $validated['from_name'] ?: null,
                 'custom_domain' => $validated['custom_domain'] ?: null,
                 'locale' => $validated['locale'],
@@ -77,6 +82,7 @@ class ClinicController extends Controller
                 'coordinator_emails' => $validated['coordinator_emails'] ?? [],
                 'phone' => $validated['phone'] ?: null,
                 'booking_url' => $validated['booking_url'] ?: null,
+                'lead_capture_position' => $validated['lead_capture_position'],
                 'clinic_configured' => true,
             ]),
         ]);

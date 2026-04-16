@@ -13,7 +13,9 @@ const STORAGE_KEY = 'appearance';
 const DEFAULT: Appearance = 'dark';
 
 function getSystemTheme(): ResolvedAppearance {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
 }
 
 function applyTheme(resolved: ResolvedAppearance): void {
@@ -35,13 +37,15 @@ export function initializeTheme(): void {
         return;
     }
 
-    const stored = (localStorage.getItem(STORAGE_KEY) as Appearance | null) ?? DEFAULT;
+    const stored =
+        (localStorage.getItem(STORAGE_KEY) as Appearance | null) ?? DEFAULT;
     applyTheme(resolve(stored));
 }
 
 export function useAppearance(): UseAppearanceReturn {
     const [appearance, setAppearance] = useState<Appearance>(
-        () => (localStorage.getItem(STORAGE_KEY) as Appearance | null) ?? DEFAULT,
+        () =>
+            (localStorage.getItem(STORAGE_KEY) as Appearance | null) ?? DEFAULT,
     );
 
     const resolvedAppearance = resolve(appearance);

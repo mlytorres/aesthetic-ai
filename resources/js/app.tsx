@@ -41,7 +41,13 @@ function resolveLayout(component: string) {
         return AuthLayout;
     }
 
-    if (component.startsWith('intake/') || component.startsWith('patient/') || component.startsWith('consult/') || component.startsWith('legal/') || component === 'welcome') {
+    if (
+        component.startsWith('intake/') ||
+        component.startsWith('patient/') ||
+        component.startsWith('consult/') ||
+        component.startsWith('legal/') ||
+        component === 'welcome'
+    ) {
         return null;
     }
 
@@ -54,7 +60,6 @@ createInertiaApp({
     layout: resolveLayout,
 
     resolve: (name) => {
-
         const pages = import.meta.glob('./pages/**/*.tsx') as any;
 
         return resolvePageComponent(`./pages/${name}.tsx`, pages);

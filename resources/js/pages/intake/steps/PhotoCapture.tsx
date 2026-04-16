@@ -1,10 +1,19 @@
 import { useRef, useState } from 'react';
-import type {FC, ChangeEvent} from 'react';
-import type {PhotoSlot, PhotoType, UploadedPhoto, WizardState, WizardAction} from '@/types/intake';
-import { WebcamCapture } from './WebcamCapture';
+import type { FC, ChangeEvent } from 'react';
 import type { TranslationKey } from '@/i18n/translations';
+import type {
+    PhotoSlot,
+    PhotoType,
+    UploadedPhoto,
+    WizardState,
+    WizardAction,
+} from '@/types/intake';
+import { WebcamCapture } from './WebcamCapture';
 
-type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
+type TFn = (
+    key: TranslationKey,
+    vars?: Record<string, string | number>,
+) => string;
 
 interface Props {
     requiredSlots: PhotoSlot[];
@@ -45,27 +54,40 @@ const PhotoCapture: FC<Props> = ({
     onBack,
 }) => {
     const allRequired = requiredSlots.every((slot) =>
-        state.photos.some((p) => p.type === slot.type && !p.uploading && !p.error),
+        state.photos.some(
+            (p) => p.type === slot.type && !p.uploading && !p.error,
+        ),
     );
 
     const tips = category === 'body' ? BODY_TIPS : FACE_TIPS;
     const remainingCount = requiredSlots.filter(
-        (slot) => !state.photos.some((p) => p.type === slot.type && !p.uploading && !p.error),
+        (slot) =>
+            !state.photos.some(
+                (p) => p.type === slot.type && !p.uploading && !p.error,
+            ),
     ).length;
 
     return (
         <div className="py-6">
-            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{t('photos.title')}</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">
+                {t('photos.title')}
+            </h2>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
-                Clear, well-lit photos help our AI provide an accurate evaluation. No filters.
+                Clear, well-lit photos help our AI provide an accurate
+                evaluation. No filters.
             </p>
 
             {/* Quality tips — procedure-aware */}
             <div className="mt-4 rounded-xl border border-[#0E9E8E]/20 bg-[#0E9E8E]/5 px-4 py-3">
-                <p className="text-xs font-semibold text-[#0E9E8E] mb-1">📸 Photo tips</p>
+                <p className="mb-1 text-xs font-semibold text-[#0E9E8E]">
+                    📸 Photo tips
+                </p>
                 <ul className="space-y-0.5">
                     {tips.map((tip) => (
-                        <li key={tip} className="text-xs text-[var(--intake-muted)]">
+                        <li
+                            key={tip}
+                            className="text-xs text-[var(--intake-muted)]"
+                        >
                             · {tip}
                         </li>
                     ))}
@@ -74,7 +96,7 @@ const PhotoCapture: FC<Props> = ({
 
             {/* Required photos */}
             <div className="mt-6 space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#0E9E8E]">
+                <p className="text-[11px] font-semibold tracking-widest text-[#0E9E8E] uppercase">
                     Required
                 </p>
                 {requiredSlots.map((slot) => (
@@ -82,7 +104,9 @@ const PhotoCapture: FC<Props> = ({
                         key={slot.type}
                         slot={slot}
                         required
-                        uploaded={state.photos.find((p) => p.type === slot.type)}
+                        uploaded={state.photos.find(
+                            (p) => p.type === slot.type,
+                        )}
                         onUpload={onUpload}
                         dispatch={dispatch}
                     />
@@ -92,7 +116,7 @@ const PhotoCapture: FC<Props> = ({
             {/* Optional photos */}
             {optionalSlots.length > 0 && (
                 <div className="mt-6 space-y-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
+                    <p className="text-[11px] font-semibold tracking-widest text-white/30 uppercase">
                         Optional
                     </p>
                     {optionalSlots.map((slot) => (
@@ -100,7 +124,9 @@ const PhotoCapture: FC<Props> = ({
                             key={slot.type}
                             slot={slot}
                             required={false}
-                            uploaded={state.photos.find((p) => p.type === slot.type)}
+                            uploaded={state.photos.find(
+                                (p) => p.type === slot.type,
+                            )}
                             onUpload={onUpload}
                             dispatch={dispatch}
                         />
@@ -109,7 +135,7 @@ const PhotoCapture: FC<Props> = ({
             )}
 
             {state.error && (
-                <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 border border-red-500/20">
+                <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                     {state.error}
                 </p>
             )}
@@ -118,7 +144,7 @@ const PhotoCapture: FC<Props> = ({
                 <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
+                    className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] transition-colors hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)]"
                 >
                     {t('nav.back')}
                 </button>
@@ -135,8 +161,7 @@ const PhotoCapture: FC<Props> = ({
                 >
                     {allRequired
                         ? t('nav.continue')
-                        : t('photos.continue_cta', { count: remainingCount })
-                    }
+                        : t('photos.continue_cta', { count: remainingCount })}
                 </button>
             </div>
         </div>
@@ -154,26 +179,38 @@ interface PhotoSlotCardProps {
 }
 
 const SLOT_ICONS: Partial<Record<PhotoType, string>> = {
-    front:         '😐',
-    left_profile:  '👤',
+    front: '😐',
+    left_profile: '👤',
     right_profile: '👤',
-    back:          '🔄',
-    left_side:     '👤',
-    right_side:    '👤',
+    back: '🔄',
+    left_side: '👤',
+    right_side: '👤',
     abdomen_front: '🩺',
-    abdomen_side:  '🩺',
-    chest_front:   '🩺',
-    eyes_closed:   '👁️',
-    additional:    '📷',
+    abdomen_side: '🩺',
+    chest_front: '🩺',
+    eyes_closed: '👁️',
+    additional: '📷',
 };
 
-const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpload, dispatch }) => {
+const PhotoSlotCard: FC<PhotoSlotCardProps> = ({
+    slot,
+    required,
+    uploaded,
+    onUpload,
+    dispatch,
+}) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isStreaming, setIsStreaming] = useState(false);
 
-    const handleChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const handleChange = async (
+        e: ChangeEvent<HTMLInputElement>,
+    ): Promise<void> => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
+
         await onUpload(file, slot.type);
         e.target.value = '';
     };
@@ -191,8 +228,8 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                 uploaded?.error
                     ? 'border-red-500/30 bg-red-500/5'
                     : uploaded && !uploaded.uploading
-                    ? 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5'
-                    : 'border-[var(--intake-border)] bg-[var(--intake-surface)]',
+                      ? 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5'
+                      : 'border-[var(--intake-border)] bg-[var(--intake-surface)]',
             ].join(' ')}
         >
             {/* Preview / icon */}
@@ -205,9 +242,24 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                     />
                 ) : uploaded?.uploading ? (
                     <div className="flex h-full w-full items-center justify-center">
-                        <svg className="h-5 w-5 animate-spin text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        <svg
+                            className="h-5 w-5 animate-spin text-[#0E9E8E]"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                            />
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            />
                         </svg>
                     </div>
                 ) : (
@@ -217,24 +269,26 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                 )}
 
                 {/* Quality badge */}
-                {uploaded && !uploaded.uploading && uploaded.quality_score > 0 && (
-                    <div
-                        className={[
-                            'absolute bottom-0.5 right-0.5 rounded px-1 py-0.5 text-[9px] font-bold',
-                            uploaded.quality_score >= 70
-                                ? 'bg-emerald-500 text-white'
-                                : uploaded.quality_score >= 40
-                                ? 'bg-amber-500 text-white'
-                                : 'bg-red-500 text-white',
-                        ].join(' ')}
-                    >
-                        {uploaded.quality_score}
-                    </div>
-                )}
+                {uploaded &&
+                    !uploaded.uploading &&
+                    uploaded.quality_score > 0 && (
+                        <div
+                            className={[
+                                'absolute right-0.5 bottom-0.5 rounded px-1 py-0.5 text-[9px] font-bold',
+                                uploaded.quality_score >= 70
+                                    ? 'bg-emerald-500 text-white'
+                                    : uploaded.quality_score >= 40
+                                      ? 'bg-amber-500 text-white'
+                                      : 'bg-red-500 text-white',
+                            ].join(' ')}
+                        >
+                            {uploaded.quality_score}
+                        </div>
+                    )}
             </div>
 
             {/* Info */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-[var(--intake-fg)]">
                     {slot.label}
                     {required && !uploaded && (
@@ -242,23 +296,25 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                     )}
                 </p>
                 {uploaded?.error ? (
-                    <p className="text-xs text-red-400 mt-0.5">{uploaded.error}</p>
+                    <p className="mt-0.5 text-xs text-red-400">
+                        {uploaded.error}
+                    </p>
                 ) : uploaded && !uploaded.uploading ? (
-                    <p className="text-xs text-[#0E9E8E] mt-0.5">Uploaded ✓</p>
+                    <p className="mt-0.5 text-xs text-[#0E9E8E]">Uploaded ✓</p>
                 ) : (
-                    <p className="text-xs text-[var(--intake-muted)] mt-0.5 line-clamp-2">
+                    <p className="mt-0.5 line-clamp-2 text-xs text-[var(--intake-muted)]">
                         {slot.tip}
                     </p>
                 )}
             </div>
 
             {/* Action */}
-            <div className="shrink-0 flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
                 {uploaded && !uploaded.uploading ? (
                     <button
                         type="button"
                         onClick={handleRemove}
-                        className="rounded-lg border border-[var(--intake-border)] px-3 py-1.5 text-xs font-medium text-[var(--intake-muted)] hover:border-red-500/40 hover:text-red-400 transition-colors"
+                        className="rounded-lg border border-[var(--intake-border)] px-3 py-1.5 text-xs font-medium text-[var(--intake-muted)] transition-colors hover:border-red-500/40 hover:text-red-400"
                     >
                         Remove
                     </button>
@@ -277,7 +333,7 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                             type="button"
                             onClick={() => inputRef.current?.click()}
                             disabled={uploaded?.uploading}
-                            className="rounded-lg border border-[var(--intake-border-hover)] px-3 py-1.5 text-xs font-medium text-[var(--intake-fg)] hover:border-[var(--intake-border-hover)] transition-colors disabled:opacity-40"
+                            className="rounded-lg border border-[var(--intake-border-hover)] px-3 py-1.5 text-xs font-medium text-[var(--intake-fg)] transition-colors hover:border-[var(--intake-border-hover)] disabled:opacity-40"
                         >
                             {uploaded?.uploading ? 'Uploading…' : 'Upload'}
                         </button>
@@ -285,7 +341,7 @@ const PhotoSlotCard: FC<PhotoSlotCardProps> = ({ slot, required, uploaded, onUpl
                             <button
                                 type="button"
                                 onClick={() => setIsStreaming(true)}
-                                className="rounded-lg border border-[#0E9E8E]/50 px-3 py-1.5 text-xs font-medium text-[#0E9E8E] hover:bg-[#0E9E8E]/10 transition-colors hidden sm:block"
+                                className="hidden rounded-lg border border-[#0E9E8E]/50 px-3 py-1.5 text-xs font-medium text-[#0E9E8E] transition-colors hover:bg-[#0E9E8E]/10 sm:block"
                             >
                                 Camera
                             </button>

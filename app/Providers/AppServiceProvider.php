@@ -79,6 +79,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by($token.'|'.$request->ip());
         });
 
+        RateLimiter::for('intake.lead', function (Request $request): Limit {
+            $token = $request->route('token') ?? $request->ip();
+
+            return Limit::perMinute(10)->by($token.'|'.$request->ip());
+        });
+
         RateLimiter::for('access-requests', function (Request $request): Limit {
             return Limit::perHour(5)->by($request->ip());
         });

@@ -36,7 +36,9 @@ export function useSessionTimeout(): UseSessionTimeoutReturn {
     }, []);
 
     const [showWarning, setShowWarning] = useState(false);
-    const [remainingSeconds, setRemainingSeconds] = useState(WARN_BEFORE / 1000);
+    const [remainingSeconds, setRemainingSeconds] = useState(
+        WARN_BEFORE / 1000,
+    );
     const loggedOutRef = useRef(false);
 
     // Provide a stable callback for activity registration
@@ -57,11 +59,22 @@ export function useSessionTimeout(): UseSessionTimeoutReturn {
 
     // Listen to user events system-wide
     useEffect(() => {
-        const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart', 'click'];
-        events.forEach((event) => window.addEventListener(event, handleActivity, { passive: true }));
+        const events = [
+            'mousemove',
+            'mousedown',
+            'keypress',
+            'scroll',
+            'touchstart',
+            'click',
+        ];
+        events.forEach((event) =>
+            window.addEventListener(event, handleActivity, { passive: true }),
+        );
 
         return () => {
-            events.forEach((event) => window.removeEventListener(event, handleActivity));
+            events.forEach((event) =>
+                window.removeEventListener(event, handleActivity),
+            );
         };
     }, [handleActivity]);
 
@@ -69,8 +82,8 @@ export function useSessionTimeout(): UseSessionTimeoutReturn {
     useEffect(() => {
         const interval = setInterval(() => {
             if (loggedOutRef.current || lastActivityRef.current === 0) {
-return;
-}
+                return;
+            }
 
             const idle = Date.now() - lastActivityRef.current;
 
@@ -97,8 +110,8 @@ return;
     // Live countdown timer while warning is shown
     useEffect(() => {
         if (!showWarning) {
-return;
-}
+            return;
+        }
 
         const countdown = setInterval(() => {
             setRemainingSeconds((prev) => {

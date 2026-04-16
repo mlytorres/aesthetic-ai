@@ -31,7 +31,7 @@ class SubmitEvaluationRequest extends FormRequest
             'consent.consented_at'       => ['required', 'date'],
 
             // Security
-            'turnstile_token'            => ['required', 'string'],
+            'turnstile_token'            => ['nullable', 'string'],
         ];
     }
 

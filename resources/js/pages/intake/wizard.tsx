@@ -1,15 +1,25 @@
 import { Head, router } from '@inertiajs/react';
-import { useReducer, useCallback  } from 'react';
-import type {FC} from 'react';
-import type {WizardState, WizardAction, WizardStep, Procedure, PhotoType, ClinicConfig, CreateEvaluationResponse, UploadPhotoResponse, ValidationErrorResponse} from '@/types/intake';
+import { useReducer, useCallback } from 'react';
+import type { FC } from 'react';
 import { useTranslation } from '@/i18n/useTranslation';
+import type {
+    WizardState,
+    WizardAction,
+    WizardStep,
+    Procedure,
+    PhotoType,
+    ClinicConfig,
+    CreateEvaluationResponse,
+    UploadPhotoResponse,
+    ValidationErrorResponse,
+} from '@/types/intake';
 
-import WizardShell    from './components/WizardShell';
-import ConsentSubmit   from './steps/ConsentSubmit';
-import ContactInfo     from './steps/ContactInfo';
-import PhotoCapture    from './steps/PhotoCapture';
+import WizardShell from './components/WizardShell';
+import ConsentSubmit from './steps/ConsentSubmit';
+import ContactInfo from './steps/ContactInfo';
+import PhotoCapture from './steps/PhotoCapture';
 import ProcedureSelect from './steps/ProcedureSelect';
-import QuizStep        from './steps/QuizStep';
+import QuizStep from './steps/QuizStep';
 
 // ─── Props from IntakeController@show ────────────────────────────────────────
 
@@ -22,51 +32,63 @@ interface Props {
 
 // ─── Step order ──────────────────────────────────────────────────────────────
 
-const STEP_ORDER: WizardStep[] = ['procedure', 'quiz', 'photos', 'contact', 'consent'];
+function getStepOrder(
+    position: 'beginning' | 'end' | undefined = 'end',
+): WizardStep[] {
+    if (position === 'beginning') {
+        return ['procedure', 'contact', 'quiz', 'photos', 'consent'];
+    }
 
-function nextStep(current: WizardStep): WizardStep {
-    const idx = STEP_ORDER.indexOf(current);
-
-    return STEP_ORDER[Math.min(idx + 1, STEP_ORDER.length - 1)] as WizardStep;
+    return ['procedure', 'quiz', 'photos', 'contact', 'consent'];
 }
 
-function prevStep(current: WizardStep): WizardStep {
-    const idx = STEP_ORDER.indexOf(current);
+function getNextStep(current: WizardStep, order: WizardStep[]): WizardStep {
+    const idx = order.indexOf(current);
 
-    return STEP_ORDER[Math.max(idx - 1, 0)] as WizardStep;
+    return order[Math.min(idx + 1, order.length - 1)] as WizardStep;
+}
+
+function getPrevStep(current: WizardStep, order: WizardStep[]): WizardStep {
+    const idx = order.indexOf(current);
+
+    return order[Math.max(idx - 1, 0)] as WizardStep;
 }
 
 // ─── Reducer ─────────────────────────────────────────────────────────────────
 
 const initialState: WizardState = {
-    step:              'procedure',
+    step: 'procedure',
     selectedProcedure: null,
-    evaluationToken:   null,
-    quizAnswers:       {},
-    quizSubmitted:     false,
-    photos:            [],
-    photosComplete:    false,
+    evaluationToken: null,
+    quizAnswers: {},
+    quizSubmitted: false,
+    photos: [],
+    photosComplete: false,
     contact: {
-        name:  '',
+        name: '',
         email: '',
         phone: '',
     },
     consent: {
         hipaa_acknowledged: false,
-        terms_accepted:     false,
-        photo_use_consent:  false,
-        opt_in_sms:         false,
-        consented_at:       '',
+        terms_accepted: false,
+        photo_use_consent: false,
+        opt_in_sms: false,
+        consented_at: '',
     },
     turnstileToken: null,
     loading: false,
-    error:   null,
+    error: null,
 };
 
 function reducer(state: WizardState, action: WizardAction): WizardState {
     switch (action.type) {
         case 'SELECT_PROCEDURE':
-            return { ...state, selectedProcedure: action.procedure, error: null };
+            return {
+                ...state,
+                selectedProcedure: action.procedure,
+                error: null,
+            };
 
         case 'EVALUATION_CREATED':
             return { ...state, evaluationToken: action.token };
@@ -74,7 +96,10 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
         case 'SET_QUIZ_ANSWER':
             return {
                 ...state,
-                quizAnswers: { ...state.quizAnswers, [action.key]: action.value },
+                quizAnswers: {
+                    ...state.quizAnswers,
+                    [action.key]: action.value,
+                },
                 error: null,
             };
 
@@ -82,17 +107,21 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
             return { ...state, quizSubmitted: true };
 
         case 'PHOTO_UPLOAD_START': {
-            const existing = state.photos.findIndex((p) => p.type === action.photoType);
+            const existing = state.photos.findIndex(
+                (p) => p.type === action.photoType,
+            );
             const placeholder = {
-                id:            0,
-                type:          action.photoType,
+                id: 0,
+                type: action.photoType,
                 quality_score: 0,
-                local_url:     action.localUrl,
-                uploading:     true,
+                local_url: action.localUrl,
+                uploading: true,
             };
             const photos =
                 existing >= 0
-                    ? state.photos.map((p, i) => (i === existing ? placeholder : p))
+                    ? state.photos.map((p, i) =>
+                          i === existing ? placeholder : p,
+                      )
                     : [...state.photos, placeholder];
 
             return { ...state, photos, error: null };
@@ -101,7 +130,11 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
         case 'PHOTO_UPLOAD_SUCCESS': {
             const photos = state.photos.map((p) =>
                 p.type === action.photoType
-                    ? { ...action.photo, local_url: p.local_url, uploading: false }
+                    ? {
+                          ...action.photo,
+                          local_url: p.local_url,
+                          uploading: false,
+                      }
                     : p,
             );
 
@@ -119,16 +152,27 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
         }
 
         case 'PHOTO_REMOVE':
-            return { ...state, photos: state.photos.filter((p) => p.type !== action.photoType) };
+            return {
+                ...state,
+                photos: state.photos.filter((p) => p.type !== action.photoType),
+            };
 
         case 'PHOTOS_COMPLETE':
             return { ...state, photosComplete: true };
 
         case 'SET_CONTACT':
-            return { ...state, contact: { ...state.contact, [action.field]: action.value }, error: null };
+            return {
+                ...state,
+                contact: { ...state.contact, [action.field]: action.value },
+                error: null,
+            };
 
         case 'SET_CONSENT':
-            return { ...state, consent: { ...state.consent, [action.field]: action.value }, error: null };
+            return {
+                ...state,
+                consent: { ...state.consent, [action.field]: action.value },
+                error: null,
+            };
 
         case 'SET_TURNSTILE_TOKEN':
             return { ...state, turnstileToken: action.token, error: null };
@@ -139,11 +183,25 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
         case 'SET_ERROR':
             return { ...state, loading: false, error: action.error };
 
-        case 'NEXT_STEP':
-            return { ...state, step: nextStep(state.step), error: null };
+        case 'NEXT_STEP': {
+            const order = action.order || []; // Fallback but should always be passed
 
-        case 'PREV_STEP':
-            return { ...state, step: prevStep(state.step), error: null };
+            return {
+                ...state,
+                step: getNextStep(state.step, order),
+                error: null,
+            };
+        }
+
+        case 'PREV_STEP': {
+            const order = action.order || [];
+
+            return {
+                ...state,
+                step: getPrevStep(state.step, order),
+                error: null,
+            };
+        }
 
         default:
             return state;
@@ -154,28 +212,30 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
 
 function getCsrfToken(): string {
     return (
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? ''
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+            ?.content ?? ''
     );
 }
 
 async function apiPost<T>(url: string, body: unknown): Promise<T> {
     const res = await fetch(url, {
-        method:  'POST',
+        method: 'POST',
         headers: {
-            'Content-Type':     'application/json',
-            Accept:             'application/json',
-            'X-CSRF-TOKEN':     getCsrfToken(),
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify(body),
     });
 
     if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as Partial<ValidationErrorResponse>;
-        const message =
-            err.errors
-                ? Object.values(err.errors).flat().join(' ')
-                : err.message ?? 'Something went wrong.';
+        const err = (await res
+            .json()
+            .catch(() => ({}))) as Partial<ValidationErrorResponse>;
+        const message = err.errors
+            ? Object.values(err.errors).flat().join(' ')
+            : (err.message ?? 'Something went wrong.');
 
         throw new Error(message);
     }
@@ -185,44 +245,62 @@ async function apiPost<T>(url: string, body: unknown): Promise<T> {
 
 // ─── Page component ───────────────────────────────────────────────────────────
 
-const WizardPage: FC<Props> = ({ clinic, procedures, hideHeader = false, turnstileSiteKey }) => {
+const WizardPage: FC<Props> = ({
+    clinic,
+    procedures,
+    hideHeader = false,
+    turnstileSiteKey,
+}) => {
     const [state, dispatch] = useReducer(reducer, initialState);
     const { t } = useTranslation(clinic.locale ?? 'en');
 
     // ── Step 1: select procedure → create evaluation ──────────────────────────
     const handleProcedureNext = useCallback(async (): Promise<void> => {
         if (!state.selectedProcedure) {
-return;
-}
+            return;
+        }
 
         dispatch({ type: 'SET_LOADING', loading: true });
         dispatch({ type: 'SET_ERROR', error: null });
 
         try {
-            const data = await apiPost<CreateEvaluationResponse>('/intake/evaluations', {
-                procedure_slug: state.selectedProcedure.slug,
-            });
+            const data = await apiPost<CreateEvaluationResponse>(
+                '/intake/evaluations',
+                {
+                    procedure_slug: state.selectedProcedure.slug,
+                },
+            );
 
             dispatch({ type: 'EVALUATION_CREATED', token: data.token });
             dispatch({ type: 'SET_LOADING', loading: false });
 
             // Skip quiz step if this procedure has no active quiz
             if (!state.selectedProcedure.quiz) {
-                dispatch({ type: 'NEXT_STEP' }); // → photos (skip quiz)
-                dispatch({ type: 'NEXT_STEP' });
+                // Skip 'quiz' if not present
+                const order = getStepOrder(clinic.lead_capture_position);
+                const next = getNextStep('procedure', order);
+
+                dispatch({ type: 'NEXT_STEP', order });
+
+                if (next === 'quiz') {
+                    dispatch({ type: 'NEXT_STEP', order });
+                }
             } else {
-                dispatch({ type: 'NEXT_STEP' }); // → quiz
+                dispatch({
+                    type: 'NEXT_STEP',
+                    order: getStepOrder(clinic.lead_capture_position),
+                });
             }
         } catch (e) {
             dispatch({ type: 'SET_ERROR', error: (e as Error).message });
         }
-    }, [state.selectedProcedure]);
+    }, [state.selectedProcedure, clinic.lead_capture_position]);
 
     // ── Step 2: submit quiz answers ───────────────────────────────────────────
     const handleQuizNext = useCallback(async (): Promise<void> => {
         if (!state.evaluationToken) {
-return;
-}
+            return;
+        }
 
         dispatch({ type: 'SET_LOADING', loading: true });
 
@@ -233,18 +311,25 @@ return;
 
             dispatch({ type: 'QUIZ_SUBMITTED' });
             dispatch({ type: 'SET_LOADING', loading: false });
-            dispatch({ type: 'NEXT_STEP' }); // → photos
+            dispatch({
+                type: 'NEXT_STEP',
+                order: getStepOrder(clinic.lead_capture_position),
+            });
         } catch (e) {
             dispatch({ type: 'SET_ERROR', error: (e as Error).message });
         }
-    }, [state.evaluationToken, state.quizAnswers]);
+    }, [
+        state.evaluationToken,
+        state.quizAnswers,
+        clinic.lead_capture_position,
+    ]);
 
     // ── Photo upload ──────────────────────────────────────────────────────────
     const handlePhotoUpload = useCallback(
         async (file: File, type: PhotoType): Promise<void> => {
             if (!state.evaluationToken) {
-return;
-}
+                return;
+            }
 
             const localUrl = URL.createObjectURL(file);
             dispatch({ type: 'PHOTO_UPLOAD_START', photoType: type, localUrl });
@@ -258,10 +343,10 @@ return;
                 const res = await fetch(
                     `/intake/evaluations/${state.evaluationToken}/photos`,
                     {
-                        method:  'POST',
+                        method: 'POST',
                         headers: {
-                            Accept:             'application/json',
-                            'X-CSRF-TOKEN':     getCsrfToken(),
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                         body: formData,
@@ -269,11 +354,17 @@ return;
                 );
 
                 if (!res.ok) {
-                    const err = (await res.json().catch(() => ({}))) as Partial<ValidationErrorResponse>;
+                    const err = (await res
+                        .json()
+                        .catch(() => ({}))) as Partial<ValidationErrorResponse>;
                     const msg = err.errors
                         ? Object.values(err.errors).flat().join(' ')
-                        : err.message ?? 'Upload failed.';
-                    dispatch({ type: 'PHOTO_UPLOAD_ERROR', photoType: type, error: msg });
+                        : (err.message ?? 'Upload failed.');
+                    dispatch({
+                        type: 'PHOTO_UPLOAD_ERROR',
+                        photoType: type,
+                        error: msg,
+                    });
 
                     return;
                 }
@@ -283,10 +374,10 @@ return;
                     type: 'PHOTO_UPLOAD_SUCCESS',
                     photoType: type,
                     photo: {
-                        id:            data.id,
-                        type:          data.type,
+                        id: data.id,
+                        type: data.type,
                         quality_score: data.quality_score,
-                        signed_url:    data.signed_url,
+                        signed_url: data.signed_url,
                     },
                 });
             } catch (e) {
@@ -303,47 +394,102 @@ return;
     // ── Step 3 → 4: photos done ───────────────────────────────────────────────
     const handlePhotosNext = useCallback((): void => {
         dispatch({ type: 'PHOTOS_COMPLETE' });
-        dispatch({ type: 'NEXT_STEP' }); // → contact
-    }, []);
+        dispatch({
+            type: 'NEXT_STEP',
+            order: getStepOrder(clinic.lead_capture_position),
+        });
+    }, [clinic.lead_capture_position]);
 
     // ── Step 4 → 5: contact done ──────────────────────────────────────────────
-    const handleContactNext = useCallback((): void => {
-        dispatch({ type: 'NEXT_STEP' }); // → consent
-    }, []);
+    const handleContactNext = useCallback(async (): Promise<void> => {
+        const order = getStepOrder(clinic.lead_capture_position);
+
+        // If capture is at the beginning, we must submit the lead info to the backend now.
+        if (
+            clinic.lead_capture_position === 'beginning' &&
+            state.evaluationToken
+        ) {
+            dispatch({ type: 'SET_LOADING', loading: true });
+            dispatch({ type: 'SET_ERROR', error: null });
+
+            try {
+                await apiPost(
+                    `/intake/evaluations/${state.evaluationToken}/lead`,
+                    {
+                        patient: state.contact,
+                        turnstile_token: state.turnstileToken,
+                    },
+                );
+
+                dispatch({ type: 'SET_LOADING', loading: false });
+                dispatch({ type: 'SET_TURNSTILE_TOKEN', token: null });
+                dispatch({ type: 'NEXT_STEP', order });
+
+                // 📢 Notify parent window if we are in an iframe
+                if (window.self !== window.top) {
+                    window.parent.postMessage(
+                        {
+                            type: 'LEAD_CAPTURED',
+                            name: state.contact.name,
+                            email: state.contact.email,
+                        },
+                        '*',
+                    );
+                }
+            } catch (e) {
+                dispatch({ type: 'SET_ERROR', error: (e as Error).message });
+            }
+        } else {
+            dispatch({ type: 'NEXT_STEP', order });
+        }
+    }, [
+        state.contact,
+        state.turnstileToken,
+        state.evaluationToken,
+        clinic.lead_capture_position,
+    ]);
 
     // ── Final submit ──────────────────────────────────────────────────────────
     const handleSubmit = useCallback(async (): Promise<void> => {
         if (!state.evaluationToken) {
-return;
-}
+            return;
+        }
 
         // Stamp consent timestamp at submission time (not stored in reducer — used inline)
         const consentedAt = new Date().toISOString();
         dispatch({ type: 'SET_LOADING', loading: true });
 
         try {
-            await apiPost(`/intake/evaluations/${state.evaluationToken}/submit`, {
-                patient: {
-                    name:  state.contact.name,
-                    email: state.contact.email,
-                    phone: state.contact.phone || undefined,
+            await apiPost(
+                `/intake/evaluations/${state.evaluationToken}/submit`,
+                {
+                    // Only send patient info if we HAVEN'T sent it yet (lead_capture_position === 'end')
+                    patient:
+                        clinic.lead_capture_position === 'end'
+                            ? {
+                                  name: state.contact.name,
+                                  email: state.contact.email,
+                                  phone: state.contact.phone || undefined,
+                              }
+                            : undefined,
+                    consent: {
+                        hipaa_acknowledged: state.consent.hipaa_acknowledged,
+                        terms_accepted: state.consent.terms_accepted,
+                        photo_use_consent: state.consent.photo_use_consent,
+                        opt_in_sms: state.consent.opt_in_sms,
+                        consented_at: consentedAt,
+                    },
+                    // Turnstile required at end only if not verified at beginning
+                    turnstile_token: state.turnstileToken,
                 },
-                consent: {
-                    hipaa_acknowledged: state.consent.hipaa_acknowledged,
-                    terms_accepted:     state.consent.terms_accepted,
-                    photo_use_consent:  state.consent.photo_use_consent,
-                    opt_in_sms:         state.consent.opt_in_sms,
-                    consented_at:       consentedAt,
-                },
-                turnstile_token: state.turnstileToken,
-            });
+            );
 
             // Inertia visit to success page (full page transition)
             router.visit('/intake/success');
         } catch (e) {
             dispatch({ type: 'SET_ERROR', error: (e as Error).message });
         }
-    }, [state]);
+    }, [state, clinic.lead_capture_position]);
 
     // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -359,6 +505,7 @@ return;
                 clinicLogo={clinic.logo}
                 theme={clinic.theme}
                 brandPrimary={clinic.brand_primary}
+                brandFont={clinic.brand_font}
                 currentStep={state.step}
                 hideHeader={hideHeader}
                 t={t}
@@ -370,8 +517,8 @@ return;
                         dispatch={dispatch}
                         t={t}
                         onNext={() => {
- void handleProcedureNext();
-}}
+                            void handleProcedureNext();
+                        }}
                     />
                 )}
 
@@ -382,9 +529,16 @@ return;
                         dispatch={dispatch}
                         t={t}
                         onNext={() => {
- void handleQuizNext();
-}}
-                        onBack={() => dispatch({ type: 'PREV_STEP' })}
+                            void handleQuizNext();
+                        }}
+                        onBack={() =>
+                            dispatch({
+                                type: 'PREV_STEP',
+                                order: getStepOrder(
+                                    clinic.lead_capture_position,
+                                ),
+                            })
+                        }
                     />
                 )}
 
@@ -398,7 +552,14 @@ return;
                         t={t}
                         onUpload={handlePhotoUpload}
                         onNext={handlePhotosNext}
-                        onBack={() => dispatch({ type: 'PREV_STEP' })}
+                        onBack={() =>
+                            dispatch({
+                                type: 'PREV_STEP',
+                                order: getStepOrder(
+                                    clinic.lead_capture_position,
+                                ),
+                            })
+                        }
                     />
                 )}
 
@@ -407,8 +568,19 @@ return;
                         state={state}
                         dispatch={dispatch}
                         t={t}
+                        turnstileSiteKey={turnstileSiteKey}
+                        leadCapturePosition={
+                            clinic.lead_capture_position ?? 'end'
+                        }
                         onNext={handleContactNext}
-                        onBack={() => dispatch({ type: 'PREV_STEP' })}
+                        onBack={() =>
+                            dispatch({
+                                type: 'PREV_STEP',
+                                order: getStepOrder(
+                                    clinic.lead_capture_position,
+                                ),
+                            })
+                        }
                     />
                 )}
 
@@ -418,10 +590,20 @@ return;
                         dispatch={dispatch}
                         t={t}
                         turnstileSiteKey={turnstileSiteKey}
+                        leadCapturePosition={
+                            clinic.lead_capture_position ?? 'end'
+                        }
                         onSubmit={() => {
- void handleSubmit();
-}}
-                        onBack={() => dispatch({ type: 'PREV_STEP' })}
+                            void handleSubmit();
+                        }}
+                        onBack={() =>
+                            dispatch({
+                                type: 'PREV_STEP',
+                                order: getStepOrder(
+                                    clinic.lead_capture_position,
+                                ),
+                            })
+                        }
                     />
                 )}
             </WizardShell>

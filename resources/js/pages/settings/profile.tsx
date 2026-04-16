@@ -32,7 +32,8 @@ export default function Profile({
                 />
 
                 <Form
-                    action="/settings/profile" method="patch"
+                    action="/settings/profile"
+                    method="patch"
                     options={{
                         preserveScroll: true,
                     }}

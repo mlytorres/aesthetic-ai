@@ -1,9 +1,12 @@
-import { useState  } from 'react';
-import type {FC} from 'react';
-import type {QuizQuestion, WizardState, WizardAction} from '@/types/intake';
+import { useState } from 'react';
+import type { FC } from 'react';
 import type { TranslationKey } from '@/i18n/translations';
+import type { QuizQuestion, WizardState, WizardAction } from '@/types/intake';
 
-type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
+type TFn = (
+    key: TranslationKey,
+    vars?: Record<string, string | number>,
+) => string;
 
 interface Props {
     questions: QuizQuestion[];
@@ -14,7 +17,14 @@ interface Props {
     onBack: () => void;
 }
 
-const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) => {
+const QuizStep: FC<Props> = ({
+    questions,
+    state,
+    dispatch,
+    t,
+    onNext,
+    onBack,
+}) => {
     const [activeIndex, setActiveIndex] = useState(0);
 
     const question = questions[activeIndex];
@@ -53,7 +63,9 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) 
 
         // ── Single-choice option-level branching ──────────────────────────────
         if (question.type === 'single' && question.options) {
-            const selected = question.options.find((o) => o.value === currentAnswer);
+            const selected = question.options.find(
+                (o) => o.value === currentAnswer,
+            );
 
             if (selected?.skipToEnd) {
                 setActiveIndex(questions.length); // jump to completion screen
@@ -82,7 +94,8 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) 
     const canAdvance =
         !question.required ||
         (question.type === 'multi'
-            ? Array.isArray(currentAnswer) && (currentAnswer as string[]).length > 0
+            ? Array.isArray(currentAnswer) &&
+              (currentAnswer as string[]).length > 0
             : currentAnswer !== null && currentAnswer !== '');
 
     return (
@@ -92,24 +105,36 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) 
                 <span className="text-xs font-medium text-[var(--intake-muted)]">
                     Question {activeIndex + 1} of {questions.length}
                 </span>
-                <div className="h-1 flex-1 mx-4 rounded-full bg-white/10 overflow-hidden">
+                <div className="mx-4 h-1 flex-1 overflow-hidden rounded-full bg-white/10">
                     <div
                         className="h-full rounded-full bg-[#0E9E8E] transition-all duration-500"
-                        style={{ width: `${((activeIndex + 1) / questions.length) * 100}%` }}
+                        style={{
+                            width: `${((activeIndex + 1) / questions.length) * 100}%`,
+                        }}
                     />
                 </div>
             </div>
 
             {/* Question */}
-            <h2 className="text-xl font-bold text-[var(--intake-fg)]">{question.label}</h2>
+            <h2 className="text-xl font-bold text-[var(--intake-fg)]">
+                {question.label}
+            </h2>
 
             <div className="mt-6">
                 {question.type === 'single' && question.options && (
                     <SingleChoice
                         options={question.options}
-                        value={typeof currentAnswer === 'string' ? currentAnswer : ''}
+                        value={
+                            typeof currentAnswer === 'string'
+                                ? currentAnswer
+                                : ''
+                        }
                         onChange={(v) =>
-                            dispatch({ type: 'SET_QUIZ_ANSWER', key: question.key, value: v })
+                            dispatch({
+                                type: 'SET_QUIZ_ANSWER',
+                                key: question.key,
+                                value: v,
+                            })
                         }
                     />
                 )}
@@ -117,28 +142,46 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) 
                 {question.type === 'multi' && question.options && (
                     <MultiChoice
                         options={question.options}
-                        value={Array.isArray(currentAnswer) ? currentAnswer : []}
+                        value={
+                            Array.isArray(currentAnswer) ? currentAnswer : []
+                        }
                         onChange={(v) =>
-                            dispatch({ type: 'SET_QUIZ_ANSWER', key: question.key, value: v })
+                            dispatch({
+                                type: 'SET_QUIZ_ANSWER',
+                                key: question.key,
+                                value: v,
+                            })
                         }
                     />
                 )}
 
                 {question.type === 'boolean' && (
                     <BooleanChoice
-                        value={typeof currentAnswer === 'boolean' ? currentAnswer : null}
+                        value={
+                            typeof currentAnswer === 'boolean'
+                                ? currentAnswer
+                                : null
+                        }
                         onChange={(v) =>
-                            dispatch({ type: 'SET_QUIZ_ANSWER', key: question.key, value: v })
+                            dispatch({
+                                type: 'SET_QUIZ_ANSWER',
+                                key: question.key,
+                                value: v,
+                            })
                         }
                     />
                 )}
 
                 {question.type === 'text' && (
                     <textarea
-                        className="mt-2 w-full rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 focus:border-[#0E9E8E]/60 focus:outline-none focus:ring-1 focus:ring-[#0E9E8E]/30 transition-colors resize-none"
+                        className="mt-2 w-full resize-none rounded-xl border border-[var(--intake-border)] bg-[var(--intake-surface)] px-4 py-3 text-sm text-[var(--intake-fg)] placeholder-white/25 transition-colors focus:border-[#0E9E8E]/60 focus:ring-1 focus:ring-[#0E9E8E]/30 focus:outline-none"
                         rows={4}
                         placeholder={question.placeholder ?? 'Your answer…'}
-                        value={typeof currentAnswer === 'string' ? currentAnswer : ''}
+                        value={
+                            typeof currentAnswer === 'string'
+                                ? currentAnswer
+                                : ''
+                        }
                         onChange={(e) =>
                             dispatch({
                                 type: 'SET_QUIZ_ANSWER',
@@ -151,7 +194,7 @@ const QuizStep: FC<Props> = ({ questions, state, dispatch, t, onNext, onBack }) 
             </div>
 
             {state.error && (
-                <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 border border-red-500/20">
+                <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                     {state.error}
                 </p>
             )}
@@ -230,12 +273,16 @@ interface MultiChoiceProps {
 
 const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
     const toggle = (v: string): void => {
-        onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+        onChange(
+            value.includes(v) ? value.filter((x) => x !== v) : [...value, v],
+        );
     };
 
     return (
         <div className="space-y-2">
-            <p className="mb-3 text-xs text-[var(--intake-muted)]">Select all that apply</p>
+            <p className="mb-3 text-xs text-[var(--intake-muted)]">
+                Select all that apply
+            </p>
             {options.map((opt) => {
                 const isSelected = value.includes(opt.value);
 
@@ -254,11 +301,17 @@ const MultiChoice: FC<MultiChoiceProps> = ({ options, value, onChange }) => {
                         <span
                             className={[
                                 'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-                                isSelected ? 'border-[#0E9E8E] bg-[#0E9E8E]' : 'border-white/30',
+                                isSelected
+                                    ? 'border-[#0E9E8E] bg-[#0E9E8E]'
+                                    : 'border-white/30',
                             ].join(' ')}
                         >
                             {isSelected && (
-                                <svg className="h-2.5 w-2.5 text-[var(--intake-icon-on-teal)]" viewBox="0 0 10 10" fill="none">
+                                <svg
+                                    className="h-2.5 w-2.5 text-[var(--intake-icon-on-teal)]"
+                                    viewBox="0 0 10 10"
+                                    fill="none"
+                                >
                                     <path
                                         d="M1.5 5l2.5 2.5 4.5-4.5"
                                         stroke="currentColor"
@@ -316,10 +369,21 @@ interface QuizCompleteProps {
     onBack: () => void;
 }
 
-const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, t, onSubmit, onBack }) => (
+const QuizComplete: FC<QuizCompleteProps> = ({
+    total,
+    loading,
+    error,
+    t,
+    onSubmit,
+    onBack,
+}) => (
     <div className="py-6 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#0E9E8E]/15 ring-1 ring-[#0E9E8E]/30">
-            <svg className="h-8 w-8 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
+            <svg
+                className="h-8 w-8 text-[#0E9E8E]"
+                viewBox="0 0 24 24"
+                fill="none"
+            >
                 <path
                     d="M5 13l4 4L19 7"
                     stroke="currentColor"
@@ -338,7 +402,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, t, onSubmi
         </p>
 
         {error && (
-            <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 border border-red-500/20">
+            <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
             </p>
         )}
@@ -347,7 +411,7 @@ const QuizComplete: FC<QuizCompleteProps> = ({ total, loading, error, t, onSubmi
             <button
                 type="button"
                 onClick={onBack}
-                className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)] transition-colors"
+                className="flex-1 rounded-xl border border-[var(--intake-border)] bg-transparent px-6 py-3.5 text-sm font-medium text-[var(--intake-muted)] transition-colors hover:border-[var(--intake-border-hover)] hover:text-[var(--intake-fg)]"
             >
                 {t('nav.back')}
             </button>

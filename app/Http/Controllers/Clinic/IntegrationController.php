@@ -45,7 +45,11 @@ class IntegrationController extends Controller
             'tenant' => [
                 'id' => $tenant->id,
                 'webhook_url' => $tenant->webhook_url,
-                'webhook_secret' => $tenant->webhook_secret, // Automatically decrypted by Eloquent cast
+                'webhook_secret' => $tenant->webhook_secret,
+                'theme' => $tenant->settings['theme'] ?? 'luxury-dark',
+                'brand_primary' => $tenant->settings['brand_primary'] ?? '#0E9E8E',
+                'brand_font' => $tenant->settings['brand_font'] ?? 'system-ui, sans-serif',
+                'locale' => $tenant->settings['locale'] ?? 'en',
             ],
             'tenantDomain' => $tenantDomain,
             'widgetUrl' => $appUrl.'/widget/v1/loader.js',

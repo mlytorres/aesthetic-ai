@@ -491,6 +491,8 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [x] Generic webhook system (signed `X-AestheticAI-Signature` HMAC-SHA256 payload)
 - [x] Webhook delivery log + retry UI in dashboard (`/clinic/webhooks`) — expandable response bodies, HTTP status, latency, attempt count
 - [x] Test webhook endpoint — synchronous connectivity check from integrations page (shows status code + latency inline)
+- [x] **Lead Capture Strategy** — Configurable volume vs. quality capture; dynamic wizard reordering based on clinic setting
+- [x] **Abandoned Lead Dashboard** — Visibility into leads that provided contact info but didn't finish the evaluation
 - [ ] HubSpot native integration (contact creation + property sync)
 - [ ] Nextech webhook (lead creation)
 
@@ -554,6 +556,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [x] Brand primary color override (CSS variable, full intake wizard)
 - [x] Custom email sender name (From name in patient emails)
 - [x] Custom domain field with CNAME setup instructions
+- [x] **Embeddable JS Widget** — Dynamic loader (`/widget.js`) with postMessage completion notification and parent redirect
 - [ ] Full rebranding: custom email domain (actual SMTP / DNS provisioning)
 - [ ] Reseller program for medical marketing agencies
 - [ ] Reseller dashboard: manage multiple clinic accounts
@@ -630,8 +633,10 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 | ✅ | Intake rate limiting (named limiters + 24h email cooldown) | Security | Done |
 | ✅ | Intake theme system (luxury-dark, luxury-light, clinical) | Phase 2 | Done |
 | ✅ | GitHub Actions CI (Pest + tsc + Pint + ESLint) | Infra | Done |
-| ✅ | Shareable secure link for simulation result | Phase 3 | Done |
-| ✅ | Full procedure library (26 procedures via ProcedureRegistry) | Phase 2 | Done |
+| ✅ | Google Auth — Socialite integration, encrypted tokens, unique ID mapping | Auth | Done |
+| ✅ | Lead Capture Strategy — Configurable Volume vs. Quality first capture, abandoned lead tracking | P2 | Done |
+| ✅ | Embeddable Widget — Dynamic JS loader, postMessage events, parent redirect support | P4 | Done |
+| ✅ | Procedure-specific photo protocols — 12 semantic `PhotoType` values, `PhotoSlot` with label+tip, procedure-aware `PhotoCapture.tsx` | Sprint 11 | Done |
 
 ---
 

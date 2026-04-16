@@ -1,12 +1,12 @@
-import type {FC} from 'react';
-import type {WizardStep} from '@/types/intake';
+import type { FC } from 'react';
+import type { WizardStep } from '@/types/intake';
 
 const STEPS: { key: WizardStep; label: string }[] = [
     { key: 'procedure', label: 'Procedure' },
-    { key: 'quiz',      label: 'About You' },
-    { key: 'photos',    label: 'Photos' },
-    { key: 'contact',   label: 'Contact' },
-    { key: 'consent',   label: 'Confirm' },
+    { key: 'quiz', label: 'About You' },
+    { key: 'photos', label: 'Photos' },
+    { key: 'contact', label: 'Contact' },
+    { key: 'consent', label: 'Confirm' },
 ];
 
 interface Props {
@@ -35,24 +35,31 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                 />
 
                 {STEPS.map((step, index) => {
-                    const isDone    = index < currentIndex;
+                    const isDone = index < currentIndex;
                     const isCurrent = index === currentIndex;
 
                     return (
-                        <div key={step.key} className="relative flex flex-col items-center gap-2">
+                        <div
+                            key={step.key}
+                            className="relative flex flex-col items-center gap-2"
+                        >
                             {/* Dot */}
                             <div
                                 className={[
-                                    'flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-300 z-10',
+                                    'z-10 flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-300',
                                     isDone
                                         ? 'border-[#0E9E8E] bg-[#0E9E8E]'
                                         : isCurrent
-                                        ? 'border-[#0E9E8E] bg-[var(--intake-surface)]'
-                                        : 'border-[var(--intake-border-hover)] bg-[var(--intake-surface)]',
+                                          ? 'border-[#0E9E8E] bg-[var(--intake-surface)]'
+                                          : 'border-[var(--intake-border-hover)] bg-[var(--intake-surface)]',
                                 ].join(' ')}
                             >
                                 {isDone ? (
-                                    <svg className="h-3.5 w-3.5 text-[var(--intake-icon-on-teal)]" viewBox="0 0 12 12" fill="none">
+                                    <svg
+                                        className="h-3.5 w-3.5 text-[var(--intake-icon-on-teal)]"
+                                        viewBox="0 0 12 12"
+                                        fill="none"
+                                    >
                                         <path
                                             d="M2 6l3 3 5-5"
                                             stroke="currentColor"
@@ -65,7 +72,9 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                     <span
                                         className={[
                                             'text-[10px] font-semibold',
-                                            isCurrent ? 'text-[#0E9E8E]' : 'text-white/30',
+                                            isCurrent
+                                                ? 'text-[#0E9E8E]'
+                                                : 'text-white/30',
                                         ].join(' ')}
                                     >
                                         {index + 1}
@@ -80,8 +89,8 @@ const ProgressBar: FC<Props> = ({ currentStep }) => {
                                     isCurrent
                                         ? 'text-[var(--intake-fg)]'
                                         : isDone
-                                        ? 'text-[#0E9E8E]'
-                                        : 'text-white/30',
+                                          ? 'text-[#0E9E8E]'
+                                          : 'text-white/30',
                                 ].join(' ')}
                             >
                                 {step.label}

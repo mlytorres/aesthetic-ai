@@ -1,13 +1,20 @@
 import { Head, router } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Clock, RefreshCw, Webhook, ChevronDown } from 'lucide-react';
+import {
+    AlertCircle,
+    CheckCircle2,
+    Clock,
+    RefreshCw,
+    Webhook,
+    ChevronDown,
+} from 'lucide-react';
 import { useState } from 'react';
+import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import {
     index as webhooksIndex,
     retry as webhooksRetry,
 } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
-import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import Heading from '@/components/heading';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +80,8 @@ const STATUS_CONFIG = {
     pending: {
         label: 'Pending',
         icon: Clock,
-        className: 'text-muted-foreground bg-muted-foreground/10 border-muted-foreground/20',
+        className:
+            'text-muted-foreground bg-muted-foreground/10 border-muted-foreground/20',
     },
 };
 
@@ -115,7 +123,7 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
     };
 
     const toggleExpand = (id: string) => {
-        setExpandedId(prev => prev === id ? null : id);
+        setExpandedId((prev) => (prev === id ? null : id));
     };
 
     return (
@@ -148,18 +156,37 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                 {/* Stats row */}
                 <div className="grid grid-cols-3 gap-4">
                     {[
-                        { label: 'Delivered', value: stats.delivered, color: 'text-emerald-400' },
-                        { label: 'Failed', value: stats.failed, color: 'text-red-400' },
-                        { label: 'Pending / Retrying', value: stats.pending, color: 'text-amber-400' },
+                        {
+                            label: 'Delivered',
+                            value: stats.delivered,
+                            color: 'text-emerald-400',
+                        },
+                        {
+                            label: 'Failed',
+                            value: stats.failed,
+                            color: 'text-red-400',
+                        },
+                        {
+                            label: 'Pending / Retrying',
+                            value: stats.pending,
+                            color: 'text-amber-400',
+                        },
                     ].map(({ label, value, color }) => (
                         <div
                             key={label}
                             className="rounded-lg border border-sidebar-border/50 bg-card p-5"
                         >
-                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                 {label}
                             </p>
-                            <p className={cn('mt-1 text-2xl font-semibold', color)}>{value}</p>
+                            <p
+                                className={cn(
+                                    'mt-1 text-2xl font-semibold',
+                                    color,
+                                )}
+                            >
+                                {value}
+                            </p>
                         </div>
                     ))}
                 </div>
@@ -169,10 +196,12 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                     {deliveries.data.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 py-16 text-center">
                             <Webhook className="h-8 w-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">No webhook deliveries yet.</p>
+                            <p className="text-sm text-muted-foreground">
+                                No webhook deliveries yet.
+                            </p>
                             <p className="text-xs text-muted-foreground/60">
-                                Events are fired when an evaluation completes AI analysis or a
-                                coordinator updates the status.
+                                Events are fired when an evaluation completes AI
+                                analysis or a coordinator updates the status.
                             </p>
                         </div>
                     ) : (
@@ -180,22 +209,22 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-sidebar-border/50">
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             Event
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             Status
                                         </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             Procedure
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             HTTP
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             Attempts
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                             Time
                                         </th>
                                         <th className="px-4 py-3" />
@@ -207,93 +236,186 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                                             <tr
                                                 key={delivery.id}
                                                 className="cursor-pointer transition-colors hover:bg-background/50"
-                                                onClick={() => toggleExpand(delivery.id)}
+                                                onClick={() =>
+                                                    toggleExpand(delivery.id)
+                                                }
                                             >
                                                 <td className="px-4 py-3 font-mono text-xs text-[#0E9E8E]">
-                                                    {formatEvent(delivery.event)}
+                                                    {formatEvent(
+                                                        delivery.event,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <StatusBadge status={delivery.status} />
+                                                    <StatusBadge
+                                                        status={delivery.status}
+                                                    />
                                                 </td>
                                                 <td className="px-4 py-3 text-muted-foreground">
-                                                    {delivery.evaluation?.procedure ?? '—'}
+                                                    {delivery.evaluation
+                                                        ?.procedure ?? '—'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     {delivery.last_response ? (
                                                         <span
                                                             className={cn(
                                                                 'font-mono text-xs',
-                                                                delivery.last_response.status_code >= 200 &&
-                                                                    delivery.last_response.status_code < 300
+                                                                delivery
+                                                                    .last_response
+                                                                    .status_code >=
+                                                                    200 &&
+                                                                    delivery
+                                                                        .last_response
+                                                                        .status_code <
+                                                                        300
                                                                     ? 'text-emerald-400'
                                                                     : 'text-red-400',
                                                             )}
                                                         >
-                                                            {delivery.last_response.status_code}
+                                                            {
+                                                                delivery
+                                                                    .last_response
+                                                                    .status_code
+                                                            }
                                                             <span className="ml-1 text-muted-foreground">
-                                                                ({delivery.last_response.latency_ms}ms)
+                                                                (
+                                                                {
+                                                                    delivery
+                                                                        .last_response
+                                                                        .latency_ms
+                                                                }
+                                                                ms)
                                                             </span>
                                                         </span>
                                                     ) : (
-                                                        <span className="text-muted-foreground/40">—</span>
+                                                        <span className="text-muted-foreground/40">
+                                                            —
+                                                        </span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-muted-foreground">
                                                     {delivery.attempt_count}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-xs text-muted-foreground">
-                                                    {formatTime(delivery.created_at)}
+                                                    {formatTime(
+                                                        delivery.created_at,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                                                        {delivery.status === 'failed' && (
+                                                    <div
+                                                        className="flex items-center justify-end gap-2"
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                    >
+                                                        {delivery.status ===
+                                                            'failed' && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                onClick={() => handleRetry(delivery)}
+                                                                onClick={() =>
+                                                                    handleRetry(
+                                                                        delivery,
+                                                                    )
+                                                                }
                                                                 className="h-7 gap-1.5 border-sidebar-border/50 text-xs text-foreground hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                                                             >
                                                                 <RefreshCw className="h-3 w-3" />
                                                                 Retry
                                                             </Button>
                                                         )}
-                                                        <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground/50 transition-transform', expandedId === delivery.id && 'rotate-180')} />
+                                                        <ChevronDown
+                                                            className={cn(
+                                                                'h-3.5 w-3.5 text-muted-foreground/50 transition-transform',
+                                                                expandedId ===
+                                                                    delivery.id &&
+                                                                    'rotate-180',
+                                                            )}
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>
                                             {expandedId === delivery.id && (
-                                                <tr key={`${delivery.id}-detail`} className="bg-muted/20">
-                                                    <td colSpan={7} className="px-4 py-3">
+                                                <tr
+                                                    key={`${delivery.id}-detail`}
+                                                    className="bg-muted/20"
+                                                >
+                                                    <td
+                                                        colSpan={7}
+                                                        className="px-4 py-3"
+                                                    >
                                                         <div className="space-y-3 text-xs">
                                                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                                                 <div>
-                                                                    <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Delivery ID</p>
-                                                                    <p className="font-mono text-foreground break-all">{delivery.id}</p>
+                                                                    <p className="mb-0.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                                                                        Delivery
+                                                                        ID
+                                                                    </p>
+                                                                    <p className="font-mono break-all text-foreground">
+                                                                        {
+                                                                            delivery.id
+                                                                        }
+                                                                    </p>
                                                                 </div>
                                                                 {delivery.evaluation && (
                                                                     <div>
-                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Evaluation Token</p>
-                                                                        <p className="font-mono text-foreground">{delivery.evaluation.token?.slice(0, 16)}…</p>
+                                                                        <p className="mb-0.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                                                                            Evaluation
+                                                                            Token
+                                                                        </p>
+                                                                        <p className="font-mono text-foreground">
+                                                                            {delivery.evaluation.token?.slice(
+                                                                                0,
+                                                                                16,
+                                                                            )}
+                                                                            …
+                                                                        </p>
                                                                     </div>
                                                                 )}
-                                                                {delivery.last_response?.attempted_at && (
+                                                                {delivery
+                                                                    .last_response
+                                                                    ?.attempted_at && (
                                                                     <div>
-                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Last Attempt</p>
-                                                                        <p className="text-foreground">{formatTime(delivery.last_response.attempted_at)}</p>
+                                                                        <p className="mb-0.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                                                                            Last
+                                                                            Attempt
+                                                                        </p>
+                                                                        <p className="text-foreground">
+                                                                            {formatTime(
+                                                                                delivery
+                                                                                    .last_response
+                                                                                    .attempted_at,
+                                                                            )}
+                                                                        </p>
                                                                     </div>
                                                                 )}
                                                                 {delivery.delivered_at && (
                                                                     <div>
-                                                                        <p className="mb-0.5 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Delivered At</p>
-                                                                        <p className="text-foreground">{formatTime(delivery.delivered_at)}</p>
+                                                                        <p className="mb-0.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                                                                            Delivered
+                                                                            At
+                                                                        </p>
+                                                                        <p className="text-foreground">
+                                                                            {formatTime(
+                                                                                delivery.delivered_at,
+                                                                            )}
+                                                                        </p>
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            {delivery.last_response?.body && (
+                                                            {delivery
+                                                                .last_response
+                                                                ?.body && (
                                                                 <div>
-                                                                    <p className="mb-1 font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Response Body</p>
-                                                                    <pre className="rounded border border-border bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
-                                                                        {delivery.last_response.body}
+                                                                    <p className="mb-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                                                                        Response
+                                                                        Body
+                                                                    </p>
+                                                                    <pre className="overflow-x-auto rounded border border-border bg-background px-3 py-2 font-mono text-[11px] break-all whitespace-pre-wrap text-muted-foreground">
+                                                                        {
+                                                                            delivery
+                                                                                .last_response
+                                                                                .body
+                                                                        }
                                                                     </pre>
                                                                 </div>
                                                             )}
@@ -312,20 +434,31 @@ export default function WebhooksPage({ deliveries, webhookUrl, stats }: Props) {
                     {deliveries.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-sidebar-border/50 px-4 py-3">
                             <p className="text-xs text-muted-foreground">
-                                Page {deliveries.current_page} of {deliveries.last_page} &middot;{' '}
+                                Page {deliveries.current_page} of{' '}
+                                {deliveries.last_page} &middot;{' '}
                                 {deliveries.total} total
                             </p>
                             <div className="flex gap-2">
                                 {deliveries.links
-                                    .filter((l) => l.label !== '&laquo; Previous' && l.label !== 'Next &raquo;')
+                                    .filter(
+                                        (l) =>
+                                            l.label !== '&laquo; Previous' &&
+                                            l.label !== 'Next &raquo;',
+                                    )
                                     .slice(0, 7)
                                     .map((link) => (
                                         <Button
                                             key={link.label}
                                             size="sm"
-                                            variant={link.active ? 'default' : 'outline'}
+                                            variant={
+                                                link.active
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
                                             disabled={!link.url}
-                                            onClick={() => link.url && router.get(link.url)}
+                                            onClick={() =>
+                                                link.url && router.get(link.url)
+                                            }
                                             className={cn(
                                                 'h-7 w-7 p-0 text-xs',
                                                 link.active &&

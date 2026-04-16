@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Intake\CreateEvaluationRequest;
 use App\Http\Requests\Intake\SaveQuizRequest;
 use App\Http\Requests\Intake\SubmitEvaluationRequest;
+use App\Http\Requests\Intake\UpdateLeadRequest;
 use App\Jobs\AI\CalculateBodyProportionsJob;
 use App\Jobs\AI\CalculateProportionsJob;
 use App\Jobs\AI\ExtractBodyLandmarksJob;
@@ -87,6 +88,61 @@ class EvaluationController extends Controller
 
         return response()->json(['status' => 'saved']);
     }
+    
+    /**
+     * Step 2 (Optional/Early) — update patient contact info as soon as it's entered.
+     * Use this when lead_capture_position is 'beginning'.
+     */
+    public function lead(UpdateLeadRequest $request, string $token): JsonResponse
+    {
+        $evaluation = $this->findByToken($token);
+        $validated = $request->validated();
+
+        $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret'   => config('services.turnstile.secret_key'),
+            'response' => $validated['turnstile_token'],
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (!$turnstileResponse->json('success')) {
+            abort(403, 'Security validation failed.');
+        }
+
+        $emailHash = Patient::hashEmail($validated['patient']['email']);
+        $tenantId = TenantContext::get()->id;
+
+        // Check for cooldown duplication now (early prevention)
+        $recentDuplicate = Evaluation::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('procedure_slug', $evaluation->procedure_slug)
+            ->whereNotIn('status', [Evaluation::STATUS_DRAFT, Evaluation::STATUS_FAILED])
+            ->whereHas('patient', fn($q) => $q->where('email_hash', $emailHash))
+            ->where('created_at', '>=', now()->subHours(24))
+            ->where('id', '!=', $evaluation->id)
+            ->exists();
+
+        if ($recentDuplicate) {
+            return response()->json([
+                'message' => 'You have already submitted an evaluation for this procedure recently.',
+            ], 429);
+        }
+
+        // Update the patient record with real PHI
+        $patient = Patient::find($evaluation->patient_id);
+        $patient->update([
+            'name_encrypted'  => $validated['patient']['name'],
+            'email_encrypted' => $validated['patient']['email'],
+            'phone_encrypted' => $validated['patient']['phone'] ?? null,
+            'email_hash'      => $emailHash,
+            'name_hash'       => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
+        ]);
+
+        $evaluation->update([
+            'funnel_step' => max($evaluation->funnel_step, Evaluation::FUNNEL_PROCEDURE),
+        ]);
+
+        return response()->json(['status' => 'lead_captured']);
+    }
 
     /**
      * Final step — attach patient contact info, record consent, and dispatch AI pipeline.
@@ -105,21 +161,26 @@ class EvaluationController extends Controller
         $evaluation = $this->findByToken($token);
         $validated = $request->validated();
 
-        $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-            'secret' => config('services.turnstile.secret_key'),
-            'response' => $validated['turnstile_token'],
-            'remoteip' => $request->ip(),
-        ]);
+        $turnstileToken = $validated['turnstile_token'] ?? null;
 
-        if (! $turnstileResponse->json('success')) {
-            abort(403, 'Security validation failed. Please refresh the page and try again.');
+        if ($turnstileToken) {
+            $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => config('services.turnstile.secret_key'),
+                'response' => $turnstileToken,
+                'remoteip' => $request->ip(),
+            ]);
+
+            if (! $turnstileResponse->json('success')) {
+                abort(403, 'Security validation failed. Please refresh the page and try again.');
+            }
         }
 
         // ── Per-email+procedure+tenant cooldown (24 h) ────────────────────────
         // Prevent the same email address from submitting the same procedure at
         // the same clinic more than once per day — bot loops and accidental
         // double-submits included.
-        $emailHash = Patient::hashEmail($validated['patient']['email']);
+        $candidateEmail = $validated['patient']['email'] ?? Patient::find($evaluation->patient_id)->email; // if already set
+        $emailHash = Patient::hashEmail($candidateEmail);
         $tenantId = TenantContext::get()->id;
 
         $recentDuplicate = Evaluation::withoutGlobalScopes()
@@ -138,17 +199,25 @@ class EvaluationController extends Controller
         }
 
         // Create or find patient by email hash (deduplication)
-        $patient = Patient::findByEmail($validated['patient']['email'])
-            ?? Patient::find($evaluation->patient_id);
+        // If we collected it early, we already have a real email_hash.
+        $email = $validated['patient']['email'] ?? null;
+        $patient = null;
 
-        // Update the patient record with real PHI (encrypted by model casts)
-        $patient->update([
-            'name_encrypted' => $validated['patient']['name'],
-            'email_encrypted' => $validated['patient']['email'],
-            'phone_encrypted' => $validated['patient']['phone'] ?? null,
-            'email_hash' => $emailHash,
-            'name_hash' => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
-        ]);
+        if ($email) {
+            $emailHash = Patient::hashEmail($email);
+            $patient = Patient::findByEmail($email) ?? Patient::find($evaluation->patient_id);
+            
+            $patient->update([
+                'name_encrypted' => $validated['patient']['name'],
+                'email_encrypted' => $validated['patient']['email'],
+                'phone_encrypted' => $validated['patient']['phone'] ?? null,
+                'email_hash' => $emailHash,
+                'name_hash' => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
+            ]);
+        } else {
+            // Already collected early — just get the current patient
+            $patient = Patient::find($evaluation->patient_id);
+        }
 
         // Finalize evaluation — attach consent metadata
         $evaluation->update([
@@ -227,7 +296,11 @@ class EvaluationController extends Controller
 
         return response()->json([
             'status' => 'submitted',
-            'portal_url' => route('intake.success', [], absolute: true),
+            'portal_url' => route('intake.success', [
+                'token' => $evaluation->secure_token,
+                'name' => $patient->name,
+                'email' => $patient->email,
+            ], absolute: true),
         ]);
     }
 

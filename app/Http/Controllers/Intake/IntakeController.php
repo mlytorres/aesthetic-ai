@@ -38,13 +38,15 @@ class IntakeController extends Controller
         return Inertia::render('intake/wizard', [
             'clinic' => [
                 'name' => $tenant->name,
-                'theme' => match ($settings['theme'] ?? 'luxury-dark') {
+                'theme' => $request->query('theme') ?? match ($settings['theme'] ?? 'luxury-dark') {
                     'clean-light' => 'luxury-light',
                     default => $settings['theme'] ?? 'luxury-dark',
                 },
                 'logo' => $settings['logo_url'] ?? null,
-                'brand_primary' => $settings['brand_primary'] ?? null,
-                'locale' => $settings['locale'] ?? 'en',
+                'brand_primary' => $request->query('color') ?? $settings['brand_primary'] ?? null,
+                'brand_font' => $request->query('font') ?? $settings['brand_font'] ?? null,
+                'locale' => $request->query('lang') ?? $settings['locale'] ?? 'en',
+                'lead_capture_position' => $settings['lead_capture_position'] ?? 'end',
             ],
             'hideHeader' => $request->query('hide_header') === 'true',
             'turnstileSiteKey' => config('services.turnstile.site_key'),
@@ -60,9 +62,22 @@ class IntakeController extends Controller
      */
     public function success(): Response
     {
+        $tenant = TenantContext::get();
+        $settings = $tenant->settings ?? [];
+
         return Inertia::render('intake/success', [
             'clinic' => [
-                'name' => TenantContext::get()->name,
+                'name' => $tenant->name,
+                'logo' => $settings['logo_url'] ?? null,
+                'booking_url' => $settings['booking_url'] ?? null,
+                'theme' => $settings['theme'] ?? 'luxury-dark',
+                'brand_primary' => $settings['brand_primary'] ?? null,
+                'brand_font' => $settings['brand_font'] ?? null,
+            ],
+            'evaluation' => [
+                'token' => request()->query('token'),
+                'name' => request()->query('name'),
+                'email' => request()->query('email'),
             ],
         ]);
     }

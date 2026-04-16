@@ -1,63 +1,66 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { index as billingIndex } from '@/routes/clinic/billing';
 import { dashboard } from '@/routes';
+import { index as billingIndex } from '@/routes/clinic/billing';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
-import { index as evaluationsIndex, show as evaluationShow } from '@/routes/evaluations';
+import {
+    index as evaluationsIndex,
+    show as evaluationShow,
+} from '@/routes/evaluations';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface DashboardStats {
-    new_today:        number;
-    pending_review:   number;
+    new_today: number;
+    pending_review: number;
     booked_this_week: number;
-    urgent:           number;
+    urgent: number;
 }
 
 interface RecentEvaluation {
-    id:             string;
+    id: string;
     procedure_slug: string;
-    status:         string;
-    priority:       string;
-    lead_score:     number | null;
-    created_at:     string;
-    patient_name:   string | null;
+    status: string;
+    priority: string;
+    lead_score: number | null;
+    created_at: string;
+    patient_name: string | null;
 }
 
 interface OnboardingStep {
-    key:   string;
+    key: string;
     label: string;
-    done:  boolean;
-    href:  string | null;
+    done: boolean;
+    href: string | null;
 }
 
 interface Onboarding {
     dismissed: boolean;
-    steps:     OnboardingStep[];
+    steps: OnboardingStep[];
 }
 
 interface Props {
-    stats:                DashboardStats;
-    recent_evaluations:   RecentEvaluation[];
-    clinic_name:          string;
+    stats: DashboardStats;
+    recent_evaluations: RecentEvaluation[];
+    clinic_name: string;
     trial_days_remaining: number | null;
-    onboarding:           Onboarding | null;
+    onboarding: Onboarding | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const PRIORITY_COLORS: Record<string, string> = {
-    urgent:   'text-red-400',
-    high:     'text-orange-400',
-    medium:   'text-yellow-400',
+    urgent: 'text-red-400',
+    high: 'text-orange-400',
+    medium: 'text-yellow-400',
     standard: 'text-zinc-400',
 };
 
 const STATUS_COLORS: Record<string, string> = {
     analyzing: 'bg-blue-500/15 text-blue-400',
-    complete:  'bg-emerald-500/15 text-emerald-400',
+    complete: 'bg-emerald-500/15 text-emerald-400',
     contacted: 'bg-purple-500/15 text-purple-400',
-    booked:    'bg-[#0E9E8E]/15 text-[#0E9E8E]',
+    booked: 'bg-[#0E9E8E]/15 text-[#0E9E8E]',
     submitted: 'bg-sky-500/15 text-sky-400',
 };
 
@@ -66,14 +69,14 @@ function timeAgo(iso: string): string {
     const mins = Math.floor(diff / 60000);
 
     if (mins < 60) {
-return `${mins}m ago`;
-}
+        return `${mins}m ago`;
+    }
 
     const hrs = Math.floor(mins / 60);
 
     if (hrs < 24) {
-return `${hrs}h ago`;
-}
+        return `${hrs}h ago`;
+    }
 
     return `${Math.floor(hrs / 24)}d ago`;
 }
@@ -85,25 +88,29 @@ function formatProcedure(slug: string): string {
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
 interface StatCardProps {
-    label:    string;
-    value:    number;
-    color:    string;
-    href?:    string;
-    urgent?:  boolean;
+    label: string;
+    value: number;
+    color: string;
+    href?: string;
+    urgent?: boolean;
 }
 
 function StatCard({ label, value, color, href, urgent }: StatCardProps) {
     const inner = (
-        <div className={[
-            'rounded-xl border bg-card px-5 py-4 transition-all',
-            urgent && value > 0
-                ? 'border-red-500/40 ring-1 ring-red-500/20'
-                : 'border-border hover:border-border',
-        ].join(' ')}>
+        <div
+            className={[
+                'rounded-xl border bg-card px-5 py-4 transition-all',
+                urgent && value > 0
+                    ? 'border-red-500/40 ring-1 ring-red-500/20'
+                    : 'border-border hover:border-border',
+            ].join(' ')}
+        >
             <p className="text-xs font-medium text-muted-foreground">{label}</p>
-            <p className={`mt-2 text-3xl font-bold tabular-nums ${color}`}>{value}</p>
+            <p className={`mt-2 text-3xl font-bold tabular-nums ${color}`}>
+                {value}
+            </p>
             {urgent && value > 0 && (
-                <p className="mt-1 text-[10px] font-semibold text-red-400 uppercase tracking-widest">
+                <p className="mt-1 text-[10px] font-semibold tracking-widest text-red-400 uppercase">
                     Call now
                 </p>
             )}
@@ -119,11 +126,19 @@ function StatCard({ label, value, color, href, urgent }: StatCardProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function Dashboard({ stats, recent_evaluations, clinic_name, trial_days_remaining, onboarding }: Props) {
+export default function Dashboard({
+    stats,
+    recent_evaluations,
+    clinic_name,
+    trial_days_remaining,
+    onboarding,
+}: Props) {
     const [copied, setCopied] = useState(false);
 
     const handleCopyIntakeLink = () => {
-        navigator.clipboard.writeText(`https://${window.location.hostname}/intake`);
+        navigator.clipboard.writeText(
+            `https://${window.location.hostname}/intake`,
+        );
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -133,41 +148,49 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
             <Head title="Dashboard" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-
                 {/* Trial banner */}
-                {trial_days_remaining !== null && (
-                    trial_days_remaining === 0 ? (
+                {trial_days_remaining !== null &&
+                    (trial_days_remaining === 0 ? (
                         <div className="flex items-center justify-between rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-3.5">
                             <div className="flex items-center gap-3">
                                 <span className="text-lg">🔒</span>
                                 <p className="text-sm font-semibold text-red-300">
-                                    Your free trial has ended — access is paused.
+                                    Your free trial has ended — access is
+                                    paused.
                                 </p>
                             </div>
                             <Link
                                 href={billingIndex.url()}
-                                className="shrink-0 rounded-lg bg-red-500 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-400 transition-colors"
+                                className="shrink-0 rounded-lg bg-red-500 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-400"
                             >
                                 Choose a plan →
                             </Link>
                         </div>
                     ) : (
-                        <div className={[
-                            'flex items-center justify-between rounded-xl border px-5 py-3.5',
-                            trial_days_remaining <= 3
-                                ? 'border-amber-500/40 bg-amber-500/10'
-                                : 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5',
-                        ].join(' ')}>
+                        <div
+                            className={[
+                                'flex items-center justify-between rounded-xl border px-5 py-3.5',
+                                trial_days_remaining <= 3
+                                    ? 'border-amber-500/40 bg-amber-500/10'
+                                    : 'border-[#0E9E8E]/30 bg-[#0E9E8E]/5',
+                            ].join(' ')}
+                        >
                             <div className="flex items-center gap-3">
                                 <span className="text-lg">🎁</span>
-                                <p className={[
-                                    'text-sm font-medium',
-                                    trial_days_remaining <= 3 ? 'text-amber-300' : 'text-muted-foreground',
-                                ].join(' ')}>
+                                <p
+                                    className={[
+                                        'text-sm font-medium',
+                                        trial_days_remaining <= 3
+                                            ? 'text-amber-300'
+                                            : 'text-muted-foreground',
+                                    ].join(' ')}
+                                >
                                     <span className="font-bold text-foreground">
-                                        {trial_days_remaining} day{trial_days_remaining !== 1 ? 's' : ''} left
-                                    </span>
-                                    {' '}in your free trial.
+                                        {trial_days_remaining} day
+                                        {trial_days_remaining !== 1 ? 's' : ''}{' '}
+                                        left
+                                    </span>{' '}
+                                    in your free trial.
                                 </p>
                             </div>
                             <Link
@@ -182,23 +205,26 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                 Choose a plan →
                             </Link>
                         </div>
-                    )
-                )}
+                    ))}
 
                 {/* Onboarding checklist */}
                 {onboarding && (
                     <div className="rounded-xl border border-border bg-card p-5">
                         <div className="mb-4 flex items-start justify-between">
                             <div>
-                                <p className="text-sm font-semibold text-foreground">Get started</p>
+                                <p className="text-sm font-semibold text-foreground">
+                                    Get started
+                                </p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
                                     Complete these steps to set up your clinic.
                                 </p>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => router.post('/onboarding/dismiss')}
-                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                onClick={() =>
+                                    router.post('/onboarding/dismiss')
+                                }
+                                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                             >
                                 Dismiss
                             </button>
@@ -210,15 +236,27 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                     key={step.key}
                                     className="flex items-center gap-3"
                                 >
-                                    <div className={[
-                                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
-                                        step.done
-                                            ? 'border-[#0E9E8E] bg-[#0E9E8E]/20'
-                                            : 'border-border bg-transparent',
-                                    ].join(' ')}>
+                                    <div
+                                        className={[
+                                            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                                            step.done
+                                                ? 'border-[#0E9E8E] bg-[#0E9E8E]/20'
+                                                : 'border-border bg-transparent',
+                                        ].join(' ')}
+                                    >
                                         {step.done && (
-                                            <svg className="h-3 w-3 text-[#0E9E8E]" viewBox="0 0 12 12" fill="none">
-                                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <svg
+                                                className="h-3 w-3 text-[#0E9E8E]"
+                                                viewBox="0 0 12 12"
+                                                fill="none"
+                                            >
+                                                <path
+                                                    d="M2 6l3 3 5-5"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.5"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
                                             </svg>
                                         )}
                                     </div>
@@ -231,10 +269,14 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                             {step.label}
                                         </Link>
                                     ) : (
-                                        <span className={[
-                                            'text-sm',
-                                            step.done ? 'text-muted-foreground line-through' : 'text-foreground',
-                                        ].join(' ')}>
+                                        <span
+                                            className={[
+                                                'text-sm',
+                                                step.done
+                                                    ? 'text-muted-foreground line-through'
+                                                    : 'text-foreground',
+                                            ].join(' ')}
+                                        >
                                             {step.label}
                                         </span>
                                     )}
@@ -247,12 +289,14 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold text-foreground">{clinic_name}</h1>
+                        <h1 className="text-xl font-semibold text-foreground">
+                            {clinic_name}
+                        </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground">
                             {new Intl.DateTimeFormat('en-US', {
                                 weekday: 'long',
-                                month:   'long',
-                                day:     'numeric',
+                                month: 'long',
+                                day: 'numeric',
                             }).format(new Date())}
                         </p>
                     </div>
@@ -260,18 +304,32 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleCopyIntakeLink}
-                            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-border transition-all active:scale-95"
+                            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:border-border active:scale-95"
                         >
                             {copied ? (
                                 <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 text-emerald-400"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                        />
                                     </svg>
                                     Copied!
                                 </>
                             ) : (
                                 <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 text-muted-foreground"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
                                         <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                                         <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
                                     </svg>
@@ -281,7 +339,7 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                         </button>
                         <Link
                             href={evaluationsIndex.url()}
-                            className="rounded-lg border border-[#0E9E8E]/30 bg-[#0E9E8E]/10 px-4 py-2 text-sm font-medium text-[#0E9E8E] hover:bg-[#0E9E8E]/20 transition-colors"
+                            className="rounded-lg border border-[#0E9E8E]/30 bg-[#0E9E8E]/10 px-4 py-2 text-sm font-medium text-[#0E9E8E] transition-colors hover:bg-[#0E9E8E]/20"
                         >
                             View all evaluations →
                         </Link>
@@ -294,7 +352,9 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                         label="Urgent leads"
                         value={stats.urgent}
                         color="text-red-400"
-                        href={evaluationsIndex.url({ query: { status: 'active' } })}
+                        href={evaluationsIndex.url({
+                            query: { status: 'active' },
+                        })}
                         urgent
                     />
                     <StatCard
@@ -307,37 +367,54 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                         label="Pending review"
                         value={stats.pending_review}
                         color="text-blue-400"
-                        href={evaluationsIndex.url({ query: { status: 'complete' } })}
+                        href={evaluationsIndex.url({
+                            query: { status: 'complete' },
+                        })}
                     />
                     <StatCard
                         label="Booked this week"
                         value={stats.booked_this_week}
                         color="text-emerald-400"
-                        href={evaluationsIndex.url({ query: { status: 'booked' } })}
+                        href={evaluationsIndex.url({
+                            query: { status: 'booked' },
+                        })}
                     />
                 </div>
 
                 {/* Recent evaluations */}
                 <div className="flex-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-semibold text-foreground">Recent evaluations</h2>
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Recent evaluations
+                        </h2>
                         <Link
                             href={evaluationsIndex.url()}
-                            className="text-xs text-muted-foreground hover:text-[#0E9E8E] transition-colors"
+                            className="text-xs text-muted-foreground transition-colors hover:text-[#0E9E8E]"
                         >
                             View all
                         </Link>
                     </div>
 
-                    <div className="rounded-xl border border-border bg-card overflow-hidden">
+                    <div className="overflow-hidden rounded-xl border border-border bg-card">
                         {recent_evaluations.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 text-center">
                                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
-                                    <svg className="h-6 w-6 text-muted-foreground" viewBox="0 0 24 24" fill="none">
-                                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                    <svg
+                                        className="h-6 w-6 text-muted-foreground"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                    >
+                                        <path
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                            stroke="currentColor"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                        />
                                     </svg>
                                 </div>
-                                <p className="text-sm font-medium text-foreground">No evaluations yet</p>
+                                <p className="text-sm font-medium text-foreground">
+                                    No evaluations yet
+                                </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     Patients submit via{' '}
                                     <span className="font-mono text-[#0E9E8E]">
@@ -351,41 +428,57 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                                     <li key={ev.id}>
                                         <Link
                                             href={evaluationShow.url(ev.id)}
-                                            className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors"
+                                            className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/20"
                                         >
                                             {/* Priority dot */}
-                                            <div className={[
-                                                'h-2 w-2 shrink-0 rounded-full',
-                                                ev.priority === 'urgent'   ? 'bg-red-400'    :
-                                                ev.priority === 'high'     ? 'bg-orange-400' :
-                                                ev.priority === 'medium'   ? 'bg-yellow-400' :
-                                                'bg-zinc-600',
-                                            ].join(' ')} />
+                                            <div
+                                                className={[
+                                                    'h-2 w-2 shrink-0 rounded-full',
+                                                    ev.priority === 'urgent'
+                                                        ? 'bg-red-400'
+                                                        : ev.priority === 'high'
+                                                          ? 'bg-orange-400'
+                                                          : ev.priority ===
+                                                              'medium'
+                                                            ? 'bg-yellow-400'
+                                                            : 'bg-zinc-600',
+                                                ].join(' ')}
+                                            />
 
                                             {/* Name + procedure */}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-foreground truncate">
-                                                    {ev.patient_name ?? 'Unknown Patient'}
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-medium text-foreground">
+                                                    {ev.patient_name ??
+                                                        'Unknown Patient'}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatProcedure(ev.procedure_slug)}
+                                                    {formatProcedure(
+                                                        ev.procedure_slug,
+                                                    )}
                                                 </p>
                                             </div>
 
                                             {/* Status badge */}
-                                            <span className={[
-                                                'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                                                STATUS_COLORS[ev.status] ?? 'bg-zinc-500/15 text-zinc-400',
-                                            ].join(' ')}>
+                                            <span
+                                                className={[
+                                                    'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                                                    STATUS_COLORS[ev.status] ??
+                                                        'bg-zinc-500/15 text-zinc-400',
+                                                ].join(' ')}
+                                            >
                                                 {ev.status.replace('_', ' ')}
                                             </span>
 
                                             {/* Score */}
                                             {ev.lead_score !== null && (
-                                                <span className={[
-                                                    'shrink-0 text-xs font-semibold tabular-nums',
-                                                    PRIORITY_COLORS[ev.priority] ?? 'text-zinc-400',
-                                                ].join(' ')}>
+                                                <span
+                                                    className={[
+                                                        'shrink-0 text-xs font-semibold tabular-nums',
+                                                        PRIORITY_COLORS[
+                                                            ev.priority
+                                                        ] ?? 'text-zinc-400',
+                                                    ].join(' ')}
+                                                >
                                                     {ev.lead_score}
                                                 </span>
                                             )}
@@ -405,48 +498,95 @@ export default function Dashboard({ stats, recent_evaluations, clinic_name, tria
                 {/* Quick actions */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <Link
-                        href={evaluationsIndex.url({ query: { status: 'active' } })}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
+                        href={evaluationsIndex.url({
+                            query: { status: 'active' },
+                        })}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:border-border hover:bg-muted/30"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0E9E8E]/10">
-                            <svg className="h-4 w-4 text-[#0E9E8E]" viewBox="0 0 24 24" fill="none">
-                                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            <svg
+                                className="h-4 w-4 text-[#0E9E8E]"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                />
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-foreground">Priority queue</p>
-                            <p className="text-xs text-muted-foreground">Active evaluations</p>
+                            <p className="text-sm font-medium text-foreground">
+                                Priority queue
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Active evaluations
+                            </p>
                         </div>
                     </Link>
 
                     <Link
-                        href={evaluationsIndex.url({ query: { status: 'complete' } })}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
+                        href={evaluationsIndex.url({
+                            query: { status: 'complete' },
+                        })}
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:border-border hover:bg-muted/30"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                            <svg className="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg
+                                className="h-4 w-4 text-emerald-400"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-foreground">AI complete</p>
-                            <p className="text-xs text-muted-foreground">Ready to review</p>
+                            <p className="text-sm font-medium text-foreground">
+                                AI complete
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Ready to review
+                            </p>
                         </div>
                     </Link>
 
                     <Link
                         href={clinicSettingsEdit.url()}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-border hover:bg-muted/30 transition-all"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-all hover:border-border hover:bg-muted/30"
                     >
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
-                            <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none">
-                                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" strokeWidth="1.5"/>
-                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="1.5"/>
+                            <svg
+                                className="h-4 w-4 text-muted-foreground"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                />
+                                <path
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                />
                             </svg>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-foreground">Clinic settings</p>
-                            <p className="text-xs text-muted-foreground">Configure your clinic</p>
+                            <p className="text-sm font-medium text-foreground">
+                                Clinic settings
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Configure your clinic
+                            </p>
                         </div>
                     </Link>
                 </div>

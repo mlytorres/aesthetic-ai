@@ -1,7 +1,23 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { RefreshCcw, Copy, Check, Send, Key, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import {
+    RefreshCcw,
+    Copy,
+    Check,
+    Send,
+    Key,
+    Plus,
+    Trash2,
+    Eye,
+    EyeOff,
+} from 'lucide-react';
 import { useState } from 'react';
-import { updateWebhook, rotateSecret, sendTest, createToken, revokeToken } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
+import {
+    updateWebhook,
+    rotateSecret,
+    sendTest,
+    createToken,
+    revokeToken,
+} from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -28,6 +44,10 @@ interface Props {
         id: string;
         webhook_url: string | null;
         webhook_secret: string;
+        theme: string;
+        brand_primary: string;
+        brand_font: string;
+        locale: string;
     };
     tenantDomain: string;
     widgetUrl: string;
@@ -35,14 +55,22 @@ interface Props {
     apiTokens: ApiTokenData[];
 }
 
-export default function Integrations({ tenant, tenantDomain, widgetUrl, availableProcedures, apiTokens }: Props) {
+export default function Integrations({
+    tenant,
+    tenantDomain,
+    widgetUrl,
+    availableProcedures,
+    apiTokens,
+}: Props) {
     const { data, setData, patch, processing, errors } = useForm({
         webhook_url: tenant.webhook_url || '',
     });
 
     const { post: rotatePost, processing: rotating } = useForm();
 
-    const [copiedContent, setCopiedContent] = useState<'script' | 'secret' | 'clinic-id' | string | null>(null);
+    const [copiedContent, setCopiedContent] = useState<
+        'script' | 'secret' | 'clinic-id' | string | null
+    >(null);
 
     const [testResult, setTestResult] = useState<{
         ok: boolean;
@@ -56,33 +84,60 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     const [newTokenName, setNewTokenName] = useState('');
     const [creatingToken, setCreatingToken] = useState(false);
     const [newTokenNameError, setNewTokenNameError] = useState('');
-    const [revealedToken, setRevealedToken] = useState<{ id: string; name: string; raw: string } | null>(null);
+    const [revealedToken, setRevealedToken] = useState<{
+        id: string;
+        name: string;
+        raw: string;
+    } | null>(null);
     const [tokenVisible, setTokenVisible] = useState(false);
     const [showNewTokenForm, setShowNewTokenForm] = useState(false);
 
     const handleSendTest = async () => {
         setTestResult(null);
         setTestSending(true);
+
         try {
-            const res = await fetch(sendTest.url(), { method: 'POST', headers: { 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '', 'Accept': 'application/json' } });
+            const res = await fetch(sendTest.url(), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN':
+                        (
+                            document.querySelector(
+                                'meta[name="csrf-token"]',
+                            ) as HTMLMetaElement
+                        )?.content ?? '',
+                    Accept: 'application/json',
+                },
+            });
             const json = await res.json();
             setTestResult(json);
         } catch (e) {
-            setTestResult({ ok: false, status_code: null, latency_ms: 0, body: String(e) });
+            setTestResult({
+                ok: false,
+                status_code: null,
+                latency_ms: 0,
+                body: String(e),
+            });
         } finally {
             setTestSending(false);
         }
     };
 
     // Widget Generator State
-    const [widgetTheme, setWidgetTheme] = useState('luxury-dark');
-    const [widgetLanguage, setWidgetLanguage] = useState('en');
+    const [widgetTheme, setWidgetTheme] = useState(tenant.theme);
+    const [widgetLanguage, setWidgetLanguage] = useState(tenant.locale);
     const [widgetProcedure, setWidgetProcedure] = useState<string>('none');
     const [widgetRenderMode, setWidgetRenderMode] = useState('inline');
-    const [widgetButtonLabel, setWidgetButtonLabel] = useState('Start Free Evaluation');
+    const [widgetButtonLabel, setWidgetButtonLabel] = useState(
+        'Start Free Evaluation',
+    );
     const [widgetHideHeader, setWidgetHideHeader] = useState('false');
-    const [widgetPrimaryColor, setWidgetPrimaryColor] = useState('#0E9E8E');
-    const [widgetFontFamily, setWidgetFontFamily] = useState('system-ui, sans-serif');
+    const [widgetPrimaryColor, setWidgetPrimaryColor] = useState(
+        tenant.brand_primary,
+    );
+    const [widgetFontFamily, setWidgetFontFamily] = useState(
+        tenant.brand_font,
+    );
 
     const handleCopy = (text: string, key: string) => {
         navigator.clipboard.writeText(text);
@@ -96,7 +151,11 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     };
 
     const handleRotateSecret = () => {
-        if (confirm('Are you certain? This will immediately invalidate existing integrations using the current secret.')) {
+        if (
+            confirm(
+                'Are you certain? This will immediately invalidate existing integrations using the current secret.',
+            )
+        ) {
             rotatePost(rotateSecret.url());
         }
     };
@@ -104,30 +163,47 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     const handleCreateToken = async () => {
         if (!newTokenName.trim()) {
             setNewTokenNameError('Token name is required.');
+
             return;
         }
+
         setNewTokenNameError('');
         setCreatingToken(true);
+
         try {
             const res = await fetch(createToken.url(), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '',
-                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN':
+                        (
+                            document.querySelector(
+                                'meta[name="csrf-token"]',
+                            ) as HTMLMetaElement
+                        )?.content ?? '',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify({ name: newTokenName.trim() }),
             });
             const json = await res.json();
+
             if (res.ok) {
-                setRevealedToken({ id: json.data.id, name: json.data.name, raw: json.data.raw_token });
+                setRevealedToken({
+                    id: json.data.id,
+                    name: json.data.name,
+                    raw: json.data.raw_token,
+                });
                 setTokenVisible(true);
                 setNewTokenName('');
                 setShowNewTokenForm(false);
                 // Reload page data so token list updates
                 router.reload({ only: ['apiTokens'] });
             } else {
-                setNewTokenNameError(json.errors?.name?.[0] ?? json.message ?? 'Failed to create token.');
+                setNewTokenNameError(
+                    json.errors?.name?.[0] ??
+                        json.message ??
+                        'Failed to create token.',
+                );
             }
         } finally {
             setCreatingToken(false);
@@ -135,10 +211,17 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
     };
 
     const handleRevokeToken = (token: ApiTokenData) => {
-        if (!confirm(`Revoke "${token.name}"? Any integrations using this token will stop working immediately.`)) {
+        if (
+            !confirm(
+                `Revoke "${token.name}"? Any integrations using this token will stop working immediately.`,
+            )
+        ) {
             return;
         }
-        router.delete(revokeToken.url({ apiToken: token.id }), { preserveScroll: true });
+
+        router.delete(revokeToken.url({ apiToken: token.id }), {
+            preserveScroll: true,
+        });
     };
 
     const generatedScript = `<!-- SymetriHealth Widget -->
@@ -167,127 +250,208 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
 
                 {/* Widget SDK Generator */}
                 <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-foreground">Embed SDK Widget</h3>
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">
+                        Embed SDK Widget
+                    </h3>
                     <p className="mb-6 text-sm text-muted-foreground">
-                        Configure the settings below to generate your personalized widget code.
-                        Paste this code directly into your website's HTML just before the closing <code>&lt;/body&gt;</code> tag.
+                        Configure the settings below to generate your
+                        personalized widget code. Paste this code directly into
+                        your website's HTML just before the closing{' '}
+                        <code>&lt;/body&gt;</code> tag.
                     </p>
 
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="space-y-5">
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Display Mode</Label>
-                                <Select value={widgetRenderMode} onValueChange={setWidgetRenderMode}>
-                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                                <Label className="text-foreground">
+                                    Display Mode
+                                </Label>
+                                <Select
+                                    value={widgetRenderMode}
+                                    onValueChange={setWidgetRenderMode}
+                                >
+                                    <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="inline">Inline (Direct Form)</SelectItem>
-                                        <SelectItem value="button-modal">Button Modal</SelectItem>
-                                        <SelectItem value="fab">Floating Action Button (Sticky)</SelectItem>
+                                        <SelectItem value="inline">
+                                            Inline (Direct Form)
+                                        </SelectItem>
+                                        <SelectItem value="button-modal">
+                                            Button Modal
+                                        </SelectItem>
+                                        <SelectItem value="fab">
+                                            Floating Action Button (Sticky)
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             {widgetRenderMode !== 'inline' && (
                                 <div className="grid gap-2">
-                                    <Label className="text-foreground">Button Label</Label>
+                                    <Label className="text-foreground">
+                                        Button Label
+                                    </Label>
                                     <Input
                                         type="text"
                                         value={widgetButtonLabel}
-                                        onChange={(e) => setWidgetButtonLabel(e.target.value)}
+                                        onChange={(e) =>
+                                            setWidgetButtonLabel(e.target.value)
+                                        }
                                         placeholder="Start Free Evaluation"
-                                        className="bg-background text-foreground border-sidebar-border/50"
+                                        className="border-sidebar-border/50 bg-background text-foreground"
                                     />
                                 </div>
                             )}
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Widget Theme</Label>
-                                <Select value={widgetTheme} onValueChange={setWidgetTheme}>
-                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                                <Label className="text-foreground">
+                                    Widget Theme
+                                </Label>
+                                <Select
+                                    value={widgetTheme}
+                                    onValueChange={setWidgetTheme}
+                                >
+                                    <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="luxury-dark">Luxury Dark</SelectItem>
-                                        <SelectItem value="luxury-light">Luxury Light</SelectItem>
-                                        <SelectItem value="clinical">Clinical</SelectItem>
-                                        <SelectItem value="bare">Bare (No CSS)</SelectItem>
+                                        <SelectItem value="luxury-dark">
+                                            Luxury Dark
+                                        </SelectItem>
+                                        <SelectItem value="luxury-light">
+                                            Luxury Light
+                                        </SelectItem>
+                                        <SelectItem value="clinical">
+                                            Clinical
+                                        </SelectItem>
+                                        <SelectItem value="bare">
+                                            Bare (No CSS)
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground">
-                                    Override for this embed only. Your global default is set in{' '}
-                                    <a href="/clinic/settings" className="underline underline-offset-2 hover:text-foreground transition-colors">
+                                    Override for this embed only. Your global
+                                    default is set in{' '}
+                                    <a
+                                        href="/clinic/settings"
+                                        className="underline underline-offset-2 transition-colors hover:text-foreground"
+                                    >
                                         Clinic Settings
-                                    </a>.
+                                    </a>
+                                    .
                                 </p>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Hide Widget Header?</Label>
-                                <Select value={widgetHideHeader} onValueChange={setWidgetHideHeader}>
-                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                                <Label className="text-foreground">
+                                    Hide Widget Header?
+                                </Label>
+                                <Select
+                                    value={widgetHideHeader}
+                                    onValueChange={setWidgetHideHeader}
+                                >
+                                    <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="false">No (Show Logo)</SelectItem>
-                                        <SelectItem value="true">Yes (Hide Logo)</SelectItem>
+                                        <SelectItem value="false">
+                                            No (Show Logo)
+                                        </SelectItem>
+                                        <SelectItem value="true">
+                                            Yes (Hide Logo)
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Primary Brand Color</Label>
+                                <Label className="text-foreground">
+                                    Primary Brand Color
+                                </Label>
                                 <div className="flex gap-2">
                                     <Input
                                         type="color"
                                         value={widgetPrimaryColor}
-                                        onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
-                                        className="h-10 w-14 cursor-pointer p-0.5 bg-background border-sidebar-border/50"
+                                        onChange={(e) =>
+                                            setWidgetPrimaryColor(
+                                                e.target.value.toUpperCase(),
+                                            )
+                                        }
+                                        className="h-10 w-14 cursor-pointer border-sidebar-border/50 bg-background p-0.5"
                                     />
                                     <Input
                                         type="text"
                                         value={widgetPrimaryColor}
-                                        onChange={(e) => setWidgetPrimaryColor(e.target.value.toUpperCase())}
-                                        className="bg-background text-foreground border-sidebar-border/50 uppercase font-mono"
+                                        onChange={(e) =>
+                                            setWidgetPrimaryColor(
+                                                e.target.value.toUpperCase(),
+                                            )
+                                        }
+                                        className="border-sidebar-border/50 bg-background font-mono text-foreground uppercase"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Custom Font Family</Label>
+                                <Label className="text-foreground">
+                                    Custom Font Family
+                                </Label>
                                 <Input
                                     type="text"
                                     value={widgetFontFamily}
-                                    onChange={(e) => setWidgetFontFamily(e.target.value)}
+                                    onChange={(e) =>
+                                        setWidgetFontFamily(e.target.value)
+                                    }
                                     placeholder="e.g. 'Proxima Nova', sans-serif"
-                                    className="bg-background text-foreground border-sidebar-border/50"
+                                    className="border-sidebar-border/50 bg-background text-foreground"
                                 />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Language</Label>
-                                <Select value={widgetLanguage} onValueChange={setWidgetLanguage}>
-                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                                <Label className="text-foreground">
+                                    Language
+                                </Label>
+                                <Select
+                                    value={widgetLanguage}
+                                    onValueChange={setWidgetLanguage}
+                                >
+                                    <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="es">Spanish</SelectItem>
+                                        <SelectItem value="en">
+                                            English
+                                        </SelectItem>
+                                        <SelectItem value="es">
+                                            Spanish
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label className="text-foreground">Default Procedure (Optional)</Label>
-                                <Select value={widgetProcedure} onValueChange={setWidgetProcedure}>
-                                    <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                                <Label className="text-foreground">
+                                    Default Procedure (Optional)
+                                </Label>
+                                <Select
+                                    value={widgetProcedure}
+                                    onValueChange={setWidgetProcedure}
+                                >
+                                    <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                         <SelectValue placeholder="Let patient choose" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">Let patient choose</SelectItem>
+                                        <SelectItem value="none">
+                                            Let patient choose
+                                        </SelectItem>
                                         {availableProcedures.map((proc) => (
-                                            <SelectItem key={proc.slug} value={proc.slug}>{proc.label}</SelectItem>
+                                            <SelectItem
+                                                key={proc.slug}
+                                                value={proc.slug}
+                                            >
+                                                {proc.label}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -295,59 +459,120 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-foreground">Generated Script</Label>
-                            <div className="relative rounded-md border border-border bg-background p-4 font-mono text-xs sm:text-sm text-foreground overflow-x-auto whitespace-pre">
+                            <Label className="text-foreground">
+                                Generated Script
+                            </Label>
+                            <div className="relative overflow-x-auto rounded-md border border-border bg-background p-4 font-mono text-xs whitespace-pre text-foreground sm:text-sm">
                                 <Button
                                     type="button"
                                     size="icon"
                                     variant="ghost"
-                                    onClick={() => handleCopy(generatedScript, 'script')}
-                                    className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-[#0E9E8E]"
+                                    onClick={() =>
+                                        handleCopy(generatedScript, 'script')
+                                    }
+                                    className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:bg-muted hover:text-[#0E9E8E]"
                                 >
-                                    {copiedContent === 'script' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                    {copiedContent === 'script' ? (
+                                        <Check className="h-4 w-4" />
+                                    ) : (
+                                        <Copy className="h-4 w-4" />
+                                    )}
                                 </Button>
                                 {generatedScript}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-3">
-                                <strong>Requirement:</strong> Ensure your site sends the
-                                <code> &lt;meta http-equiv="Permissions-Policy" content="camera=(self 'https://app.aestheticai.com')"&gt; </code> header so the widget can access the camera for photos.
+                            <p className="mt-3 text-xs text-muted-foreground">
+                                <strong>Requirement:</strong> Ensure your site
+                                sends the
+                                <code>
+                                    {' '}
+                                    &lt;meta http-equiv="Permissions-Policy"
+                                    content="camera=(self
+                                    'https://app.aestheticai.com')"&gt;{' '}
+                                </code>{' '}
+                                header so the widget can access the camera for
+                                photos.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="border-t border-border w-full mt-8 mb-8"></div>
+                {/* Widget Event API Documentation */}
+                <div className="mt-8 rounded-lg border border-sidebar-border/50 bg-card p-6">
+                    <h3 className="mb-4 text-base font-semibold text-foreground">
+                        Widget JS Event API
+                    </h3>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                        The widget emits <code>postMessage</code> events that
+                        your parent site can listen to for conversion tracking
+                        (Google Ads, Meta Pixel) or custom behaviors.
+                    </p>
+                    <div className="overflow-x-auto rounded-lg border border-sidebar-border/50 bg-[#0A0A0F] p-4 font-mono text-[11px] leading-relaxed text-emerald-400">
+                        <pre>
+                            {`window.onAestheticAIEvent = function(event) {
+  const { type, name, email } = event;
+  
+  if (type === 'LEAD_CAPTURED') {
+    // Trigger conversion event when lead info is captured
+    console.log("Lead captured:", email);
+  }
+  
+  if (type === 'EVALUATION_COMPLETE') {
+    // Trigger final conversion when analysis starts
+    console.log("Evaluation submitted by:", name);
+  }
+};`}
+                        </pre>
+                    </div>
+                </div>
+
+                <div className="mt-8 mb-8 w-full border-t border-border"></div>
 
                 {/* Outbound Webhook Settings */}
                 <form onSubmit={handleWebhookSave} className="space-y-6">
                     <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
-                        <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold text-foreground">CRM Webhook & Zapier</h3>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                    CRM Webhook & Zapier
+                                </h3>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Automatically trigger workflow actions in HubSpot, PatientNow, or Zapier when an evaluation is complete.
+                                    Automatically trigger workflow actions in
+                                    HubSpot, PatientNow, or Zapier when an
+                                    evaluation is complete.
                                 </p>
                             </div>
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 whitespace-nowrap"
+                                className="bg-[#0E9E8E] whitespace-nowrap text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
                             >
-                                {processing ? 'Saving...' : 'Save Configuration'}
+                                {processing
+                                    ? 'Saving...'
+                                    : 'Save Configuration'}
                             </Button>
                         </div>
 
                         <div className="grid gap-8 lg:grid-cols-2">
                             <div className="space-y-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="webhook" className="text-foreground">Target Webhook URL</Label>
+                                    <Label
+                                        htmlFor="webhook"
+                                        className="text-foreground"
+                                    >
+                                        Target Webhook URL
+                                    </Label>
                                     <Input
                                         id="webhook"
                                         type="url"
                                         value={data.webhook_url}
-                                        onChange={(e) => setData('webhook_url', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'webhook_url',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="https://hooks.zapier.com/hooks/catch/..."
-                                        className="bg-background text-foreground border-sidebar-border/50"
+                                        className="border-sidebar-border/50 bg-background text-foreground"
                                         disabled={processing}
                                     />
                                     <InputError message={errors.webhook_url} />
@@ -356,24 +581,35 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
 
                             <div className="space-y-4">
                                 <div className="grid gap-2">
-                                    <Label className="text-foreground">HMAC Signing Secret</Label>
+                                    <Label className="text-foreground">
+                                        HMAC Signing Secret
+                                    </Label>
                                     <div className="relative">
                                         <Input
                                             type="text"
                                             readOnly
                                             value={tenant.webhook_secret}
-                                            className="bg-background text-muted-foreground pr-20 font-mono text-xs border-sidebar-border/50"
+                                            className="border-sidebar-border/50 bg-background pr-20 font-mono text-xs text-muted-foreground"
                                         />
                                         <div className="absolute inset-y-0 right-1 flex items-center gap-1">
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleCopy(tenant.webhook_secret, 'secret')}
+                                                onClick={() =>
+                                                    handleCopy(
+                                                        tenant.webhook_secret,
+                                                        'secret',
+                                                    )
+                                                }
                                                 className="h-7 w-7 text-muted-foreground hover:text-[#0E9E8E]"
                                                 title="Copy secret"
                                             >
-                                                {copiedContent === 'secret' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                                {copiedContent === 'secret' ? (
+                                                    <Check className="h-3.5 w-3.5" />
+                                                ) : (
+                                                    <Copy className="h-3.5 w-3.5" />
+                                                )}
                                             </Button>
                                             <Button
                                                 type="button"
@@ -381,15 +617,21 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                                 size="icon"
                                                 onClick={handleRotateSecret}
                                                 disabled={rotating}
-                                                className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                                                className="h-7 w-7 text-red-400 hover:bg-red-950/30 hover:text-red-300"
                                                 title="Rotate secret"
                                             >
-                                                <RefreshCcw className={`h-3.5 w-3.5 ${rotating ? 'animate-spin' : ''}`} />
+                                                <RefreshCcw
+                                                    className={`h-3.5 w-3.5 ${rotating ? 'animate-spin' : ''}`}
+                                                />
                                             </Button>
                                         </div>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Use this secret to independently verify inbound <code>X-SymetriHealth-Signature</code> headers. Give it only to trusted developers.
+                                        Use this secret to independently verify
+                                        inbound{' '}
+                                        <code>X-SymetriHealth-Signature</code>{' '}
+                                        headers. Give it only to trusted
+                                        developers.
                                     </p>
                                 </div>
                             </div>
@@ -402,9 +644,16 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
                         <div className="flex items-start justify-between gap-4">
                             <div>
-                                <h3 className="text-sm font-semibold text-foreground">Test Your Endpoint</h3>
+                                <h3 className="text-sm font-semibold text-foreground">
+                                    Test Your Endpoint
+                                </h3>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Send a live <code>evaluation.test</code> payload to <span className="text-foreground">{data.webhook_url}</span> and see the response immediately.
+                                    Send a live <code>evaluation.test</code>{' '}
+                                    payload to{' '}
+                                    <span className="text-foreground">
+                                        {data.webhook_url}
+                                    </span>{' '}
+                                    and see the response immediately.
                                 </p>
                             </div>
                             <Button
@@ -414,44 +663,63 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                 disabled={testSending}
                                 className="shrink-0 gap-1.5 bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#2DD4BF]"
                             >
-                                <Send className={`h-3.5 w-3.5 ${testSending ? 'animate-pulse' : ''}`} />
+                                <Send
+                                    className={`h-3.5 w-3.5 ${testSending ? 'animate-pulse' : ''}`}
+                                />
                                 {testSending ? 'Sending…' : 'Send Test'}
                             </Button>
                         </div>
 
                         {testResult && (
-                            <div className={`mt-4 rounded-md border p-4 ${testResult.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className={`text-sm font-semibold ${testResult.ok ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {testResult.ok ? '✓ Delivered' : '✗ Failed'}
+                            <div
+                                className={`mt-4 rounded-md border p-4 ${testResult.ok ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-red-500/30 bg-red-500/5'}`}
+                            >
+                                <div className="mb-2 flex items-center gap-3">
+                                    <span
+                                        className={`text-sm font-semibold ${testResult.ok ? 'text-emerald-400' : 'text-red-400'}`}
+                                    >
+                                        {testResult.ok
+                                            ? '✓ Delivered'
+                                            : '✗ Failed'}
                                     </span>
                                     {testResult.status_code && (
                                         <span className="font-mono text-xs text-muted-foreground">
                                             HTTP {testResult.status_code}
                                         </span>
                                     )}
-                                    <span className="font-mono text-xs text-muted-foreground">{testResult.latency_ms}ms</span>
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                        {testResult.latency_ms}ms
+                                    </span>
                                 </div>
                                 {testResult.body && (
-                                    <pre className="text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">{testResult.body}</pre>
+                                    <pre className="overflow-x-auto text-xs break-all whitespace-pre-wrap text-muted-foreground">
+                                        {testResult.body}
+                                    </pre>
                                 )}
                             </div>
                         )}
                     </div>
                 )}
 
-                <div className="border-t border-border w-full mt-8 mb-8"></div>
+                <div className="mt-8 mb-8 w-full border-t border-border"></div>
 
                 {/* REST API Access */}
                 <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
-                    <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex items-start gap-3">
                             <Key className="mt-0.5 h-5 w-5 shrink-0 text-[#0E9E8E]" />
                             <div>
-                                <h3 className="text-lg font-semibold text-foreground">REST API Access</h3>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                    REST API Access
+                                </h3>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Use these credentials when configuring a Zapier step or any external system that needs to call{' '}
-                                    <code>GET /api/v1/evaluations/{'{'}token{'}'}</code> to fetch patient details.
+                                    Use these credentials when configuring a
+                                    Zapier step or any external system that
+                                    needs to call{' '}
+                                    <code>
+                                        GET /api/v1/evaluations/{'{'}token{'}'}
+                                    </code>{' '}
+                                    to fetch patient details.
                                 </p>
                             </div>
                         </div>
@@ -471,28 +739,38 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     {/* Clinic ID row */}
                     <div className="mb-6 grid gap-2">
                         <Label className="text-foreground">
-                            Clinic ID <span className="ml-1 text-xs font-normal text-muted-foreground">(X-Clinic-ID header)</span>
+                            Clinic ID{' '}
+                            <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                (X-Clinic-ID header)
+                            </span>
                         </Label>
                         <div className="relative">
                             <Input
                                 type="text"
                                 readOnly
                                 value={tenant.id}
-                                className="bg-background text-muted-foreground pr-10 font-mono text-xs border-sidebar-border/50"
+                                className="border-sidebar-border/50 bg-background pr-10 font-mono text-xs text-muted-foreground"
                             />
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleCopy(tenant.id, 'clinic-id')}
+                                onClick={() =>
+                                    handleCopy(tenant.id, 'clinic-id')
+                                }
                                 className="absolute inset-y-0 right-1 h-auto w-8 text-muted-foreground hover:text-[#0E9E8E]"
                                 title="Copy Clinic ID"
                             >
-                                {copiedContent === 'clinic-id' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copiedContent === 'clinic-id' ? (
+                                    <Check className="h-3.5 w-3.5" />
+                                ) : (
+                                    <Copy className="h-3.5 w-3.5" />
+                                )}
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Send this as the <code>X-Clinic-ID</code> header on every API request alongside your Bearer token.
+                            Send this as the <code>X-Clinic-ID</code> header on
+                            every API request alongside your Bearer token.
                         </p>
                     </div>
 
@@ -500,40 +778,65 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     {revealedToken && (
                         <div className="mb-6 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-4">
                             <p className="mb-2 text-sm font-semibold text-emerald-400">
-                                ✓ Token "{revealedToken.name}" created — copy it now, it won't be shown again.
+                                ✓ Token "{revealedToken.name}" created — copy it
+                                now, it won't be shown again.
                             </p>
                             <div className="relative">
                                 <Input
                                     type={tokenVisible ? 'text' : 'password'}
                                     readOnly
                                     value={revealedToken.raw}
-                                    className="bg-background pr-20 font-mono text-xs border-emerald-500/30 text-foreground"
+                                    className="border-emerald-500/30 bg-background pr-20 font-mono text-xs text-foreground"
                                 />
                                 <div className="absolute inset-y-0 right-1 flex items-center gap-1">
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => setTokenVisible((v) => !v)}
+                                        onClick={() =>
+                                            setTokenVisible((v) => !v)
+                                        }
                                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                        title={tokenVisible ? 'Hide token' : 'Show token'}
+                                        title={
+                                            tokenVisible
+                                                ? 'Hide token'
+                                                : 'Show token'
+                                        }
                                     >
-                                        {tokenVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                        {tokenVisible ? (
+                                            <EyeOff className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <Eye className="h-3.5 w-3.5" />
+                                        )}
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleCopy(revealedToken.raw, `token-${revealedToken.id}`)}
+                                        onClick={() =>
+                                            handleCopy(
+                                                revealedToken.raw,
+                                                `token-${revealedToken.id}`,
+                                            )
+                                        }
                                         className="h-7 w-7 text-muted-foreground hover:text-[#0E9E8E]"
                                         title="Copy token"
                                     >
-                                        {copiedContent === `token-${revealedToken.id}` ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                        {copiedContent ===
+                                        `token-${revealedToken.id}` ? (
+                                            <Check className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <Copy className="h-3.5 w-3.5" />
+                                        )}
                                     </Button>
                                 </div>
                             </div>
                             <p className="mt-2 text-xs text-muted-foreground">
-                                Use as: <code>Authorization: Bearer {revealedToken.raw.slice(0, 16)}…</code>
+                                Use as:{' '}
+                                <code>
+                                    Authorization: Bearer{' '}
+                                    {revealedToken.raw.slice(0, 16)}…
+                                </code>
                             </p>
                         </div>
                     )}
@@ -541,23 +844,34 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     {/* New token form */}
                     {showNewTokenForm && (
                         <div className="mb-6 rounded-md border border-sidebar-border/50 bg-background p-4">
-                            <p className="mb-3 text-sm font-medium text-foreground">Name this token</p>
+                            <p className="mb-3 text-sm font-medium text-foreground">
+                                Name this token
+                            </p>
                             <p className="mb-3 text-xs text-muted-foreground">
-                                Give it a descriptive name so you know which integration uses it (e.g. "Zapier Production").
+                                Give it a descriptive name so you know which
+                                integration uses it (e.g. "Zapier Production").
                             </p>
                             <div className="flex gap-2">
                                 <div className="flex-1">
                                     <Input
                                         type="text"
                                         value={newTokenName}
-                                        onChange={(e) => { setNewTokenName(e.target.value); setNewTokenNameError(''); }}
+                                        onChange={(e) => {
+                                            setNewTokenName(e.target.value);
+                                            setNewTokenNameError('');
+                                        }}
                                         placeholder="e.g. Zapier Production"
-                                        className="bg-background text-foreground border-sidebar-border/50"
-                                        onKeyDown={(e) => e.key === 'Enter' && handleCreateToken()}
+                                        className="border-sidebar-border/50 bg-background text-foreground"
+                                        onKeyDown={(e) =>
+                                            e.key === 'Enter' &&
+                                            handleCreateToken()
+                                        }
                                         autoFocus
                                     />
                                     {newTokenNameError && (
-                                        <p className="mt-1 text-xs text-red-400">{newTokenNameError}</p>
+                                        <p className="mt-1 text-xs text-red-400">
+                                            {newTokenNameError}
+                                        </p>
                                     )}
                                 </div>
                                 <Button
@@ -571,7 +885,11 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    onClick={() => { setShowNewTokenForm(false); setNewTokenName(''); setNewTokenNameError(''); }}
+                                    onClick={() => {
+                                        setShowNewTokenForm(false);
+                                        setNewTokenName('');
+                                        setNewTokenNameError('');
+                                    }}
                                     className="text-muted-foreground"
                                 >
                                     Cancel
@@ -583,26 +901,45 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                     {/* Active tokens list */}
                     {apiTokens.length > 0 ? (
                         <div className="space-y-2">
-                            <Label className="text-foreground">Active Tokens</Label>
-                            <div className="rounded-md border border-sidebar-border/50 divide-y divide-sidebar-border/30">
+                            <Label className="text-foreground">
+                                Active Tokens
+                            </Label>
+                            <div className="divide-y divide-sidebar-border/30 rounded-md border border-sidebar-border/50">
                                 {apiTokens.map((token) => (
-                                    <div key={token.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                                    <div
+                                        key={token.id}
+                                        className="flex items-center justify-between gap-4 px-4 py-3"
+                                    >
                                         <div className="min-w-0">
-                                            <p className="text-sm font-medium text-foreground truncate">{token.name}</p>
+                                            <p className="truncate text-sm font-medium text-foreground">
+                                                {token.name}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Created {new Date(token.created_at).toLocaleDateString()}
+                                                Created{' '}
+                                                {new Date(
+                                                    token.created_at,
+                                                ).toLocaleDateString()}
                                                 {token.last_used_at && (
-                                                    <> · Last used {new Date(token.last_used_at).toLocaleDateString()}</>
+                                                    <>
+                                                        {' '}
+                                                        · Last used{' '}
+                                                        {new Date(
+                                                            token.last_used_at,
+                                                        ).toLocaleDateString()}
+                                                    </>
                                                 )}
-                                                {!token.last_used_at && ' · Never used'}
+                                                {!token.last_used_at &&
+                                                    ' · Never used'}
                                             </p>
                                         </div>
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRevokeToken(token)}
-                                            className="shrink-0 gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                                            onClick={() =>
+                                                handleRevokeToken(token)
+                                            }
+                                            className="shrink-0 gap-1.5 text-red-400 hover:bg-red-950/30 hover:text-red-300"
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                             Revoke
@@ -612,28 +949,39 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                             </div>
                         </div>
                     ) : (
-                        !showNewTokenForm && !revealedToken && (
+                        !showNewTokenForm &&
+                        !revealedToken && (
                             <p className="text-sm text-muted-foreground">
-                                No active API tokens. Generate one above to connect Zapier or another external service.
+                                No active API tokens. Generate one above to
+                                connect Zapier or another external service.
                             </p>
                         )
                     )}
                 </div>
 
-                <div className="border-t border-border w-full mt-8 mb-8"></div>
+                <div className="mt-8 mb-8 w-full border-t border-border"></div>
 
                 {/* Developer Documentation */}
                 <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-foreground">Developer Documentation & Payload Specs</h3>
+                    <h3 className="mb-4 text-lg font-semibold text-foreground">
+                        Developer Documentation & Payload Specs
+                    </h3>
                     <p className="mb-6 text-sm text-muted-foreground">
-                        When an evaluation is completed, we will POST a JSON payload to your webhook. Note that the payload intentionally contains no Protected Health Information (PHI) to maintain HIPAA standards in transit. Use the provided <code>evaluation_token</code> to fetch the full patient details securely via our REST API.
+                        When an evaluation is completed, we will POST a JSON
+                        payload to your webhook. Note that the payload
+                        intentionally contains no Protected Health Information
+                        (PHI) to maintain HIPAA standards in transit. Use the
+                        provided <code>evaluation_token</code> to fetch the full
+                        patient details securely via our REST API.
                     </p>
 
                     <div className="grid gap-8 lg:grid-cols-2">
                         <div className="space-y-3">
-                            <Label className="text-foreground">Webhook Payload Example (POST)</Label>
-                            <div className="rounded-md border border-border bg-background p-4 font-mono text-xs text-foreground overflow-x-auto whitespace-pre">
-{`{
+                            <Label className="text-foreground">
+                                Webhook Payload Example (POST)
+                            </Label>
+                            <div className="overflow-x-auto rounded-md border border-border bg-background p-4 font-mono text-xs whitespace-pre text-foreground">
+                                {`{
   "event": "evaluation.completed",
   "api_version": "2025-01",
   "idempotency_key": "eval_01HXYZ...",
@@ -654,15 +1002,21 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-foreground">Fetch Patient API (GET)</Label>
-                            <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
-                                Call this endpoint using the token from the webhook to retrieve the full patient profile, including name, email, phone, and securely signed photo URLs.
+                            <Label className="text-foreground">
+                                Fetch Patient API (GET)
+                            </Label>
+                            <p className="mb-2 text-xs leading-relaxed text-muted-foreground">
+                                Call this endpoint using the token from the
+                                webhook to retrieve the full patient profile,
+                                including name, email, phone, and securely
+                                signed photo URLs.
                             </p>
-                            <div className="rounded-md border border-border bg-background px-4 py-3 font-mono text-xs text-[#0E9E8E] overflow-x-auto whitespace-pre">
-                                GET /api/v1/evaluations/{"{"}evaluation_token{"}"}
+                            <div className="overflow-x-auto rounded-md border border-border bg-background px-4 py-3 font-mono text-xs whitespace-pre text-[#0E9E8E]">
+                                GET /api/v1/evaluations/{'{'}evaluation_token
+                                {'}'}
                             </div>
-                            <div className="rounded-md border border-border bg-background p-4 font-mono text-xs text-foreground overflow-x-auto whitespace-pre mt-3">
-{`{
+                            <div className="mt-3 overflow-x-auto rounded-md border border-border bg-background p-4 font-mono text-xs whitespace-pre text-foreground">
+                                {`{
   "data": {
     "id": "eval_01HXYZ...",
     "patient": {
@@ -681,7 +1035,6 @@ export default function Integrations({ tenant, tenantDomain, widgetUrl, availabl
                         </div>
                     </div>
                 </div>
-
             </div>
         </>
     );

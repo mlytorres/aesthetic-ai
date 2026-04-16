@@ -1,6 +1,7 @@
-import { Deferred, Head, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { staffJoin } from '@/actions/App/Http/Controllers/Dashboard/ConsultationController';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +12,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { brief, index, show, updateNotes, updateStatus } from '@/routes/evaluations';
-import { staffJoin } from '@/actions/App/Http/Controllers/Dashboard/ConsultationController';
-import { show as simulationShow, store as simulationStore } from '@/routes/evaluations/simulation';
+import {
+    brief,
+    index,
+    updateNotes,
+    updateStatus,
+} from '@/routes/evaluations';
+import {
+    show as simulationShow,
+    store as simulationStore,
+} from '@/routes/evaluations/simulation';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,17 +76,17 @@ interface Evaluation {
 }
 
 interface AuditEntry {
-    id:          string;
-    action:      string;
-    user_name:   string;
-    user_role:   string | null;
-    ip_address:  string | null;
-    metadata:    Record<string, unknown> | null;
-    created_at:  string;
+    id: string;
+    action: string;
+    user_name: string;
+    user_role: string | null;
+    ip_address: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
 }
 
 interface Props {
-    evaluation:  Evaluation;
+    evaluation: Evaluation;
     auditEntries?: AuditEntry[];
     portal_url?: string;
     video_consultations_enabled?: boolean;
@@ -88,18 +96,18 @@ interface Props {
 
 const STATUS_COLORS: Record<string, string> = {
     analyzing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    complete:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    complete: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
     contacted: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-    booked:    'bg-[#0E9E8E]/15 text-[#0E9E8E] border-[#0E9E8E]/30',
-    no_show:   'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+    booked: 'bg-[#0E9E8E]/15 text-[#0E9E8E] border-[#0E9E8E]/30',
+    no_show: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
     not_a_fit: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
 };
 
 const PHOTO_TYPE_LABELS: Record<string, string> = {
-    front:         'Frontal',
-    left_profile:  'Left Profile',
+    front: 'Frontal',
+    left_profile: 'Left Profile',
     right_profile: 'Right Profile',
-    additional:    'Additional',
+    additional: 'Additional',
 };
 
 function formatProcedure(slug: string): string {
@@ -108,8 +116,8 @@ function formatProcedure(slug: string): string {
 
 function formatDate(iso: string | null | undefined): string {
     if (!iso) {
-return '—';
-}
+        return '—';
+    }
 
     return new Intl.DateTimeFormat('en-US', {
         month: 'short',
@@ -122,11 +130,19 @@ return '—';
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({
+    title,
+    children,
+}: {
+    title: string;
+    children: React.ReactNode;
+}) {
     return (
         <div className="rounded-xl border border-sidebar-border/50 bg-card">
             <div className="border-b border-sidebar-border/50 px-5 py-3">
-                <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+                <h3 className="text-sm font-semibold text-foreground">
+                    {title}
+                </h3>
             </div>
             <div className="p-5">{children}</div>
         </div>
@@ -137,7 +153,9 @@ function PatientCard({ patient }: { patient: Patient | null }) {
     if (!patient) {
         return (
             <SectionCard title="Patient">
-                <p className="text-sm text-muted-foreground italic">Patient info not yet collected.</p>
+                <p className="text-sm text-muted-foreground italic">
+                    Patient info not yet collected.
+                </p>
             </SectionCard>
         );
     }
@@ -146,13 +164,17 @@ function PatientCard({ patient }: { patient: Patient | null }) {
         <SectionCard title="Patient">
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
-                    { label: 'Name',  value: patient.name },
+                    { label: 'Name', value: patient.name },
                     { label: 'Email', value: patient.email },
                     { label: 'Phone', value: patient.phone },
                 ].map(({ label, value }) => (
                     <div key={label}>
-                        <dt className="text-xs text-muted-foreground uppercase tracking-wider">{label}</dt>
-                        <dd className="mt-0.5 text-sm text-foreground">{value ?? '—'}</dd>
+                        <dt className="text-xs tracking-wider text-muted-foreground uppercase">
+                            {label}
+                        </dt>
+                        <dd className="mt-0.5 text-sm text-foreground">
+                            {value ?? '—'}
+                        </dd>
                     </div>
                 ))}
             </dl>
@@ -166,7 +188,9 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
     if (photos.length === 0) {
         return (
             <SectionCard title="Photos">
-                <p className="text-sm text-muted-foreground italic">No photos uploaded yet.</p>
+                <p className="text-sm text-muted-foreground italic">
+                    No photos uploaded yet.
+                </p>
             </SectionCard>
         );
     }
@@ -179,7 +203,7 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
                         key={photo.id}
                         type="button"
                         onClick={() => setLightbox(photo.signed_url)}
-                        className="group relative overflow-hidden rounded-lg border border-sidebar-border/50 bg-background aspect-square focus:outline-none focus:ring-2 focus:ring-[#0E9E8E]"
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-sidebar-border/50 bg-background focus:ring-2 focus:ring-[#0E9E8E] focus:outline-none"
                     >
                         <img
                             src={photo.signed_url}
@@ -196,8 +220,10 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
                                 </p>
                             )}
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-                            <span className="text-xs font-medium text-white">View Full</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                            <span className="text-xs font-medium text-white">
+                                View Full
+                            </span>
                         </div>
                     </button>
                 ))}
@@ -218,7 +244,7 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
                     <button
                         type="button"
                         onClick={() => setLightbox(null)}
-                        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                        className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                     >
                         ✕
                     </button>
@@ -228,23 +254,33 @@ function PhotosGallery({ photos }: { photos: Photo[] }) {
     );
 }
 
-function QuizAnswersCard({ answers }: { answers: Record<string, unknown> | null }) {
+function QuizAnswersCard({
+    answers,
+}: {
+    answers: Record<string, unknown> | null;
+}) {
     if (!answers) {
         return (
             <SectionCard title="Quiz Answers">
-                <p className="text-sm text-muted-foreground italic">No quiz answers recorded.</p>
+                <p className="text-sm text-muted-foreground italic">
+                    No quiz answers recorded.
+                </p>
             </SectionCard>
         );
     }
 
     // Filter out internal metadata key
-    const displayAnswers = Object.entries(answers).filter(([k]) => !k.startsWith('_'));
+    const displayAnswers = Object.entries(answers).filter(
+        ([k]) => !k.startsWith('_'),
+    );
 
     return (
         <SectionCard title="Quiz Answers">
             <dl className="space-y-2">
                 {displayAnswers.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No answers recorded.</p>
+                    <p className="text-sm text-muted-foreground italic">
+                        No answers recorded.
+                    </p>
                 ) : (
                     displayAnswers.map(([key, value]) => (
                         <div key={key} className="grid grid-cols-5 gap-2">
@@ -267,16 +303,16 @@ function QuizAnswersCard({ answers }: { answers: Record<string, unknown> | null 
 // ── Audit timeline ────────────────────────────────────────────────────────────
 
 const ACTION_LABELS: Record<string, string> = {
-    'evaluation.photos.viewed':        'Viewed evaluation',
-    'evaluation.brief.downloaded':     'Downloaded clinical brief',
-    'evaluation.status.changed':       'Updated status',
-    'evaluation.photo.uploaded':       'Photo uploaded',
-    'evaluation.submitted':            'Evaluation submitted',
-    'ai.photo_quality.validated':      'AI: Photo quality validated',
-    'ai.landmarks.extracted':          'AI: Landmarks extracted',
-    'ai.proportions.calculated':       'AI: Proportions calculated',
-    'ai.recommendations.generated':    'AI: Recommendations generated',
-    'coordinator.magic_link.used':     'Accessed via magic link',
+    'evaluation.photos.viewed': 'Viewed evaluation',
+    'evaluation.brief.downloaded': 'Downloaded clinical brief',
+    'evaluation.status.changed': 'Updated status',
+    'evaluation.photo.uploaded': 'Photo uploaded',
+    'evaluation.submitted': 'Evaluation submitted',
+    'ai.photo_quality.validated': 'AI: Photo quality validated',
+    'ai.landmarks.extracted': 'AI: Landmarks extracted',
+    'ai.proportions.calculated': 'AI: Proportions calculated',
+    'ai.recommendations.generated': 'AI: Recommendations generated',
+    'coordinator.magic_link.used': 'Accessed via magic link',
 };
 
 function actionLabel(action: string): string {
@@ -287,19 +323,19 @@ function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60_000);
 
-    if (mins < 1)  {
-return 'just now';
-}
+    if (mins < 1) {
+        return 'just now';
+    }
 
     if (mins < 60) {
-return `${mins}m ago`;
-}
+        return `${mins}m ago`;
+    }
 
     const hrs = Math.floor(mins / 60);
 
-    if (hrs < 24)  {
-return `${hrs}h ago`;
-}
+    if (hrs < 24) {
+        return `${hrs}h ago`;
+    }
 
     return `${Math.floor(hrs / 24)}d ago`;
 }
@@ -310,7 +346,9 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
     if (entries.length === 0) {
         return (
             <SectionCard title="Activity Log">
-                <p className="text-sm italic text-muted-foreground">No activity recorded yet.</p>
+                <p className="text-sm text-muted-foreground italic">
+                    No activity recorded yet.
+                </p>
             </SectionCard>
         );
     }
@@ -320,7 +358,9 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
 
     return (
         <SectionCard title={`Activity Log (${entries.length})`}>
-            <div className={`relative ${showAll ? 'max-h-[600px]' : 'max-h-[400px]'} overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-sidebar-border`}>
+            <div
+                className={`relative ${showAll ? 'max-h-[600px]' : 'max-h-[400px]'} scrollbar-thin scrollbar-thumb-sidebar-border overflow-y-auto pr-2`}
+            >
                 <ol className="relative ml-1.5 border-l border-border">
                     {displayedEntries.map((entry) => (
                         <li key={entry.id} className="mb-5 ml-4 last:mb-0">
@@ -331,7 +371,10 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
                                 <p className="text-sm font-medium text-foreground">
                                     {actionLabel(entry.action)}
                                 </p>
-                                <time className="shrink-0 text-xs text-muted-foreground" dateTime={entry.created_at}>
+                                <time
+                                    className="shrink-0 text-xs text-muted-foreground"
+                                    dateTime={entry.created_at}
+                                >
                                     {timeAgo(entry.created_at)}
                                 </time>
                             </div>
@@ -339,17 +382,26 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
                             <p className="mt-0.5 text-xs text-muted-foreground">
                                 {entry.user_name}
                                 {entry.user_role && (
-                                    <span className="ml-1 capitalize opacity-60">· {entry.user_role}</span>
+                                    <span className="ml-1 capitalize opacity-60">
+                                        · {entry.user_role}
+                                    </span>
                                 )}
                                 {entry.ip_address && (
-                                    <span className="ml-1 font-mono opacity-40"> · {entry.ip_address}</span>
+                                    <span className="ml-1 font-mono opacity-40">
+                                        {' '}
+                                        · {entry.ip_address}
+                                    </span>
                                 )}
                             </p>
 
                             {/* Metadata badge for status changes */}
                             {entry.metadata?.new_status != null && (
-                                <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-[#0E9E8E]">
-                                    → {String(entry.metadata.new_status).replace('_', ' ')}
+                                <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-[#0E9E8E] capitalize">
+                                    →{' '}
+                                    {String(entry.metadata.new_status).replace(
+                                        '_',
+                                        ' ',
+                                    )}
                                 </span>
                             )}
                         </li>
@@ -362,9 +414,11 @@ function AuditTimeline({ entries }: { entries: AuditEntry[] }) {
                     <button
                         type="button"
                         onClick={() => setShowAll(!showAll)}
-                        className="text-xs font-medium text-[#0E9E8E] hover:text-[#0E9E8E]/80 transition-colors"
+                        className="text-xs font-medium text-[#0E9E8E] transition-colors hover:text-[#0E9E8E]/80"
                     >
-                        {showAll ? 'Show less' : `See all ${entries.length} activities`}
+                        {showAll
+                            ? 'Show less'
+                            : `See all ${entries.length} activities`}
                     </button>
                 </div>
             )}
@@ -408,8 +462,8 @@ function SimulationViewer({ evaluation }: { evaluation: Evaluation }) {
             });
 
             if (!res.ok) {
-return;
-}
+                return;
+            }
 
             const data: SimulationStatus = await res.json();
             setSim(data);
@@ -450,7 +504,12 @@ return;
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '',
+                    'X-CSRF-TOKEN':
+                        (
+                            document.querySelector(
+                                'meta[name="csrf-token"]',
+                            ) as HTMLMetaElement
+                        )?.content ?? '',
                 },
             });
             const data = await res.json();
@@ -468,7 +527,10 @@ return;
         evaluation.analysis_data?.proportions != null;
 
     const copyShareLink = async () => {
-        if (!sim.share_url) return;
+        if (!sim.share_url) {
+            return;
+        }
+
         await navigator.clipboard.writeText(sim.share_url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -480,17 +542,17 @@ return;
                 <p className="text-xs text-muted-foreground italic">
                     Simulation will be available once AI analysis is complete.
                 </p>
-
-            ) : (sim.status === null) ? (
+            ) : sim.status === null ? (
                 <div className="space-y-3">
                     <p className="text-xs text-muted-foreground">
-                        Generate an AI before/after simulation for this patient's procedure.
-                        The result is for consultation purposes only and is not a medical guarantee.
+                        Generate an AI before/after simulation for this
+                        patient's procedure. The result is for consultation
+                        purposes only and is not a medical guarantee.
                     </p>
                     <Button
                         onClick={requestSimulation}
                         disabled={requesting}
-                        className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-sm"
+                        className="w-full bg-[#0E9E8E] text-sm text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
                     >
                         {requesting ? 'Requesting…' : '✦ Generate Simulation'}
                     </Button>
@@ -499,17 +561,21 @@ return;
                 <div className="flex flex-col items-center gap-3 py-4">
                     <div className="size-8 animate-spin rounded-full border-2 border-[#0E9E8E] border-t-transparent" />
                     <p className="text-xs text-muted-foreground">
-                        {sim.status === 'pending' ? 'Queued…' : 'Generating simulation…'}
+                        {sim.status === 'pending'
+                            ? 'Queued…'
+                            : 'Generating simulation…'}
                     </p>
                 </div>
             ) : sim.status === 'failed' ? (
                 <div className="space-y-3">
-                    <p className="text-xs text-red-400">Simulation failed. Please try again.</p>
+                    <p className="text-xs text-red-400">
+                        Simulation failed. Please try again.
+                    </p>
                     <Button
                         onClick={requestSimulation}
                         disabled={requesting}
                         variant="outline"
-                        className="w-full text-sm border-sidebar-border/50 text-foreground"
+                        className="w-full border-sidebar-border/50 text-sm text-foreground"
                     >
                         {requesting ? 'Requesting…' : 'Retry Simulation'}
                     </Button>
@@ -520,29 +586,33 @@ return;
                         <img
                             src={sim.simulation_url}
                             alt="AI simulation result"
-                            className="w-full aspect-square rounded-lg border border-sidebar-border/50 object-cover object-center"
+                            className="aspect-square w-full rounded-lg border border-sidebar-border/50 object-cover object-center"
                         />
                     ) : (
-                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-background py-8 px-4">
+                        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#0E9E8E]/30 bg-background px-4 py-8">
                             <span className="text-2xl">✦</span>
                             <p className="text-center text-xs text-muted-foreground">
-                                {sim.simulation_data?.placeholder_message as string
-                                    ?? 'Simulation complete. Enable AI Vision to view generated images.'}
+                                {(sim.simulation_data
+                                    ?.placeholder_message as string) ??
+                                    'Simulation complete. Enable AI Vision to view generated images.'}
                             </p>
                         </div>
                     )}
 
-                    <p className="text-[10px] text-muted-foreground italic text-center">
-                        ⚠ AI simulation for consultation purposes only. Results are not a medical guarantee.
+                    <p className="text-center text-[10px] text-muted-foreground italic">
+                        ⚠ AI simulation for consultation purposes only. Results
+                        are not a medical guarantee.
                     </p>
 
                     {sim.share_url && (
                         <Button
                             onClick={copyShareLink}
                             variant="outline"
-                            className="w-full text-xs border-[#C9A84C]/40 text-[#C9A84C] hover:text-[#C9A84C]/80"
+                            className="w-full border-[#C9A84C]/40 text-xs text-[#C9A84C] hover:text-[#C9A84C]/80"
                         >
-                            {copied ? '✓ Link copied!' : '⎘ Copy patient share link'}
+                            {copied
+                                ? '✓ Link copied!'
+                                : '⎘ Copy patient share link'}
                         </Button>
                     )}
 
@@ -550,7 +620,7 @@ return;
                         onClick={requestSimulation}
                         disabled={requesting}
                         variant="outline"
-                        className="w-full text-xs border-sidebar-border/50 text-muted-foreground hover:text-foreground"
+                        className="w-full border-sidebar-border/50 text-xs text-muted-foreground hover:text-foreground"
                     >
                         {requesting ? 'Requesting…' : 'Regenerate'}
                     </Button>
@@ -574,10 +644,10 @@ interface NotesFormFields {
 
 function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
     const COORDINATOR_STATUSES = [
-        { value: 'contacted',  label: 'Contacted' },
-        { value: 'booked',     label: 'Booked' },
-        { value: 'no_show',    label: 'No Show' },
-        { value: 'not_a_fit',  label: 'Not a Fit' },
+        { value: 'contacted', label: 'Contacted' },
+        { value: 'booked', label: 'Booked' },
+        { value: 'no_show', label: 'No Show' },
+        { value: 'not_a_fit', label: 'Not a Fit' },
     ] as const;
 
     const statusForm = useForm<StatusFormFields>({
@@ -606,25 +676,33 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
             <SectionCard title="Update Status">
                 <form onSubmit={handleStatusUpdate} className="space-y-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-foreground text-xs">New Status</Label>
+                        <Label className="text-xs text-foreground">
+                            New Status
+                        </Label>
                         <Select
                             value={statusForm.data.status}
-                            onValueChange={(v) => statusForm.setData('status', v)}
+                            onValueChange={(v) =>
+                                statusForm.setData('status', v)
+                            }
                         >
-                            <SelectTrigger className="bg-background text-foreground border-sidebar-border/50">
+                            <SelectTrigger className="border-sidebar-border/50 bg-background text-foreground">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-card text-foreground">
-                                {COORDINATOR_STATUSES.map(({ value, label }) => (
-                                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                                ))}
+                                {COORDINATOR_STATUSES.map(
+                                    ({ value, label }) => (
+                                        <SelectItem key={value} value={value}>
+                                            {label}
+                                        </SelectItem>
+                                    ),
+                                )}
                             </SelectContent>
                         </Select>
                     </div>
                     <Button
                         type="submit"
                         disabled={statusForm.processing}
-                        className="w-full bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-sm"
+                        className="w-full bg-[#0E9E8E] text-sm text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
                     >
                         {statusForm.processing ? 'Saving…' : 'Update Status'}
                     </Button>
@@ -634,7 +712,8 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
             {/* Clinical Brief */}
             <SectionCard title="Clinical Brief">
                 <p className="mb-3 text-xs text-muted-foreground">
-                    Download a HIPAA-safe PDF summary of this evaluation for handoff or file storage.
+                    Download a HIPAA-safe PDF summary of this evaluation for
+                    handoff or file storage.
                 </p>
                 <a
                     href={brief.url(evaluation.id)}
@@ -642,7 +721,13 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                     rel="noopener noreferrer"
                     className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border/50 px-3 py-2 text-sm text-foreground transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 shrink-0" aria-hidden="true">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="size-4 shrink-0"
+                        aria-hidden="true"
+                    >
                         <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
                         <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
                     </svg>
@@ -656,26 +741,38 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
                     <div className="grid gap-1.5">
                         <textarea
                             value={notesForm.data.coordinator_notes}
-                            onChange={(e) => notesForm.setData('coordinator_notes', e.target.value)}
+                            onChange={(e) =>
+                                notesForm.setData(
+                                    'coordinator_notes',
+                                    e.target.value,
+                                )
+                            }
                             rows={4}
                             placeholder="Add notes about this patient…"
-                            className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
+                            className="w-full resize-none rounded-md border border-sidebar-border/50 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
                         />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-foreground text-xs">Follow-up Date</Label>
+                        <Label className="text-xs text-foreground">
+                            Follow-up Date
+                        </Label>
                         <Input
                             type="date"
                             value={notesForm.data.follow_up_at}
-                            onChange={(e) => notesForm.setData('follow_up_at', e.target.value)}
-                            className="bg-background text-foreground border-sidebar-border/50"
+                            onChange={(e) =>
+                                notesForm.setData(
+                                    'follow_up_at',
+                                    e.target.value,
+                                )
+                            }
+                            className="border-sidebar-border/50 bg-background text-foreground"
                         />
                     </div>
                     <Button
                         type="submit"
                         disabled={notesForm.processing}
                         variant="outline"
-                        className="w-full text-sm border-sidebar-border/50 text-foreground hover:border-[#0E9E8E]/50"
+                        className="w-full border-sidebar-border/50 text-sm text-foreground hover:border-[#0E9E8E]/50"
                     >
                         {notesForm.processing ? 'Saving…' : 'Save Notes'}
                     </Button>
@@ -688,13 +785,17 @@ function CoordinatorPanel({ evaluation }: { evaluation: Evaluation }) {
 // ── Lead score breakdown ──────────────────────────────────────────────────────
 
 const PRIORITY_BADGE: Record<string, string> = {
-    urgent:   'bg-red-500/15 text-red-400 border-red-500/30',
-    high:     'bg-orange-500/15 text-orange-400 border-orange-500/30',
-    medium:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    urgent: 'bg-red-500/15 text-red-400 border-red-500/30',
+    high: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+    medium: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
     standard: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
 };
 
-function ScoreBreakdownCard({ score, priority, breakdown }: {
+function ScoreBreakdownCard({
+    score,
+    priority,
+    breakdown,
+}: {
     score: number | null;
     priority: string;
     breakdown: ScoreBreakdown | null;
@@ -702,16 +803,24 @@ function ScoreBreakdownCard({ score, priority, breakdown }: {
     if (score === null) {
         return (
             <SectionCard title="Lead Score">
-                <p className="text-sm text-muted-foreground italic">Scoring pending analysis.</p>
+                <p className="text-sm text-muted-foreground italic">
+                    Scoring pending analysis.
+                </p>
             </SectionCard>
         );
     }
 
     const pct = Math.min(100, Math.max(0, score));
-    const scoreColor = pct >= 75 ? '#0E9E8E' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
+    const scoreColor =
+        pct >= 75 ? '#0E9E8E' : pct >= 50 ? '#60a5fa' : '#9B9B8E';
 
     const factors: (keyof ScoreBreakdown)[] = [
-        'timeline', 'budget', 'ai_harmony', 'photo_quality', 'concerns', 'referral',
+        'timeline',
+        'budget',
+        'ai_harmony',
+        'photo_quality',
+        'concerns',
+        'referral',
     ];
 
     return (
@@ -721,28 +830,54 @@ function ScoreBreakdownCard({ score, priority, breakdown }: {
                 <div className="flex items-center gap-3">
                     {/* Circular gauge */}
                     <div className="relative flex size-14 items-center justify-center">
-                        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">
-                            <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor"
-                                className="text-white/10" strokeWidth="4" />
-                            <circle cx="28" cy="28" r="22" fill="none"
-                                stroke={scoreColor} strokeWidth="4"
+                        <svg
+                            className="absolute inset-0 -rotate-90"
+                            viewBox="0 0 56 56"
+                        >
+                            <circle
+                                cx="28"
+                                cy="28"
+                                r="22"
+                                fill="none"
+                                stroke="currentColor"
+                                className="text-white/10"
+                                strokeWidth="4"
+                            />
+                            <circle
+                                cx="28"
+                                cy="28"
+                                r="22"
+                                fill="none"
+                                stroke={scoreColor}
+                                strokeWidth="4"
                                 strokeDasharray={`${2 * Math.PI * 22}`}
                                 strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct / 100)}`}
                                 strokeLinecap="round"
                             />
                         </svg>
-                        <span className="text-sm font-bold tabular-nums" style={{ color: scoreColor }}>
+                        <span
+                            className="text-sm font-bold tabular-nums"
+                            style={{ color: scoreColor }}
+                        >
                             {score}
                         </span>
                     </div>
                     <div>
-                        <p className="text-xs text-muted-foreground">Score / 100</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            {pct >= 75 ? 'Strong lead' : pct >= 50 ? 'Moderate lead' : 'Low engagement'}
+                        <p className="text-xs text-muted-foreground">
+                            Score / 100
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {pct >= 75
+                                ? 'Strong lead'
+                                : pct >= 50
+                                  ? 'Moderate lead'
+                                  : 'Low engagement'}
                         </p>
                     </div>
                 </div>
-                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[priority] ?? ''}`}>
+                <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[priority] ?? ''}`}
+                >
                     {priority}
                 </span>
             </div>
@@ -752,20 +887,36 @@ function ScoreBreakdownCard({ score, priority, breakdown }: {
                 <div className="space-y-2.5">
                     {factors.map((key) => {
                         const factor = breakdown[key];
-                        const factorPct = Math.round((factor.earned / factor.max) * 100);
-                        const barColor = factorPct >= 75 ? '#0E9E8E' : factorPct >= 50 ? '#60a5fa' : '#9B9B8E';
+                        const factorPct = Math.round(
+                            (factor.earned / factor.max) * 100,
+                        );
+                        const barColor =
+                            factorPct >= 75
+                                ? '#0E9E8E'
+                                : factorPct >= 50
+                                  ? '#60a5fa'
+                                  : '#9B9B8E';
+
                         return (
                             <div key={key}>
                                 <div className="mb-1 flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground">{factor.label}</span>
-                                    <span className="text-xs tabular-nums text-foreground">
-                                        {factor.earned}<span className="text-muted-foreground">/{factor.max}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {factor.label}
+                                    </span>
+                                    <span className="text-xs text-foreground tabular-nums">
+                                        {factor.earned}
+                                        <span className="text-muted-foreground">
+                                            /{factor.max}
+                                        </span>
                                     </span>
                                 </div>
                                 <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                                     <div
                                         className="h-full rounded-full transition-all"
-                                        style={{ width: `${factorPct}%`, backgroundColor: barColor }}
+                                        style={{
+                                            width: `${factorPct}%`,
+                                            backgroundColor: barColor,
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -780,7 +931,9 @@ function ScoreBreakdownCard({ score, priority, breakdown }: {
 function MagicLinkCard({ portalUrl }: { portalUrl?: string }) {
     const [copied, setCopied] = useState(false);
 
-    if (!portalUrl) return null;
+    if (!portalUrl) {
+        return null;
+    }
 
     const copyLink = async () => {
         await navigator.clipboard.writeText(portalUrl);
@@ -791,12 +944,14 @@ function MagicLinkCard({ portalUrl }: { portalUrl?: string }) {
     return (
         <SectionCard title="Sales Magic Link">
             <p className="mb-3 text-xs text-muted-foreground">
-                Copy the secure Patient Portal link to share with this patient via SMS or email for instant access to their simulation and report.
+                Copy the secure Patient Portal link to share with this patient
+                via SMS or email for instant access to their simulation and
+                report.
             </p>
             <Button
                 onClick={copyLink}
                 variant="outline"
-                className="w-full text-sm border-[#C9A84C]/50 text-[#C9A84C] hover:text-[#C9A84C] hover:bg-[#C9A84C]/10"
+                className="w-full border-[#C9A84C]/50 text-sm text-[#C9A84C] hover:bg-[#C9A84C]/10 hover:text-[#C9A84C]"
             >
                 {copied ? '✓ Link copied!' : '⎘ Copy Portal Link'}
             </Button>
@@ -839,13 +994,18 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
     });
 
     const csrfToken = () =>
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+            ?.content ?? '';
 
     const fetchConsultations = async () => {
         try {
-            const res = await fetch(`/evaluations/${evaluationId}/consultations`, {
-                headers: { Accept: 'application/json' },
-            });
+            const res = await fetch(
+                `/evaluations/${evaluationId}/consultations`,
+                {
+                    headers: { Accept: 'application/json' },
+                },
+            );
+
             if (res.ok) {
                 setConsultations(await res.json());
             }
@@ -856,7 +1016,7 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
 
     useEffect(() => {
         fetchConsultations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [evaluationId]);
 
     const handleSchedule = async (e: React.FormEvent) => {
@@ -866,24 +1026,33 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
 
         try {
             const payload = { ...form };
+
             if (payload.scheduled_at) {
-                payload.scheduled_at = new Date(payload.scheduled_at).toISOString();
+                payload.scheduled_at = new Date(
+                    payload.scheduled_at,
+                ).toISOString();
             }
 
-            const res = await fetch(`/evaluations/${evaluationId}/consultations`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken(),
+            const res = await fetch(
+                `/evaluations/${evaluationId}/consultations`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': csrfToken(),
+                    },
+                    body: JSON.stringify(payload),
                 },
-                body: JSON.stringify(payload),
-            });
+            );
 
             const data = await res.json();
 
             if (!res.ok) {
-                setFormError(data.message ?? 'Failed to schedule consultation.');
+                setFormError(
+                    data.message ?? 'Failed to schedule consultation.',
+                );
+
                 return;
             }
 
@@ -896,7 +1065,11 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
     };
 
     const handleCancel = async (id: string) => {
-        if (!confirm('Cancel this consultation? The patient will need to be notified separately.')) {
+        if (
+            !confirm(
+                'Cancel this consultation? The patient will need to be notified separately.',
+            )
+        ) {
             return;
         }
 
@@ -913,7 +1086,9 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
 
             if (res.ok) {
                 setConsultations((prev) =>
-                    prev.map((c) => c.id === id ? { ...c, status: 'cancelled' } : c),
+                    prev.map((c) =>
+                        c.id === id ? { ...c, status: 'cancelled' } : c,
+                    ),
                 );
             }
         } finally {
@@ -922,18 +1097,19 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
     };
 
     const copyJoinLink = async (consultation: ConsultationItem) => {
-        const url = consultation.patient_join_url
-            ?? `${window.location.origin}/consult/${consultation.token}`;
+        const url =
+            consultation.patient_join_url ??
+            `${window.location.origin}/consult/${consultation.token}`;
         await navigator.clipboard.writeText(url);
         setCopiedId(consultation.id);
         setTimeout(() => setCopiedId(null), 2000);
     };
 
     const STATUS_COLORS: Record<string, string> = {
-        scheduled:  'text-blue-400 bg-blue-400/10',
-        active:     'text-emerald-400 bg-emerald-400/10',
-        completed:  'text-zinc-400 bg-zinc-400/10',
-        cancelled:  'text-red-400 bg-red-400/10',
+        scheduled: 'text-blue-400 bg-blue-400/10',
+        active: 'text-emerald-400 bg-emerald-400/10',
+        completed: 'text-zinc-400 bg-zinc-400/10',
+        cancelled: 'text-red-400 bg-red-400/10',
     };
 
     return (
@@ -954,7 +1130,7 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
                     {consultations.map((c) => (
                         <div
                             key={c.id}
-                            className="rounded-lg border border-sidebar-border/50 bg-background/50 p-3 space-y-2"
+                            className="space-y-2 rounded-lg border border-sidebar-border/50 bg-background/50 p-3"
                         >
                             <div className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-foreground">
@@ -964,104 +1140,147 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
                                         hour: 'numeric',
                                         minute: '2-digit',
                                     }).format(new Date(c.scheduled_at))}
-                                    <span className="ml-1 text-muted-foreground">({c.duration_minutes}m)</span>
+                                    <span className="ml-1 text-muted-foreground">
+                                        ({c.duration_minutes}m)
+                                    </span>
                                 </span>
-                                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${STATUS_COLORS[c.status] ?? ''}`}>
+                                <span
+                                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${STATUS_COLORS[c.status] ?? ''}`}
+                                >
                                     {c.status}
                                 </span>
                             </div>
 
                             {c.notes && (
-                                <p className="text-xs text-muted-foreground">{c.notes}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {c.notes}
+                                </p>
                             )}
 
                             <div className="flex gap-2">
-                                {c.status !== 'cancelled' && c.status !== 'completed' && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => copyJoinLink(c)}
-                                            className="flex-1 rounded border border-[#C9A84C]/40 px-2 py-1 text-[10px] text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors"
-                                        >
-                                            {copiedId === c.id ? '✓ Copied' : '⎘ Patient link'}
-                                        </button>
-                                        <a
-                                            href={staffJoin.url(c.id)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-1 rounded border border-[#0E9E8E]/40 px-2 py-1 text-[10px] text-center text-[#0E9E8E] hover:bg-[#0E9E8E]/10 transition-colors"
-                                        >
-                                            Join as Staff
-                                        </a>
-                                        <button
-                                            type="button"
-                                            disabled={cancellingId === c.id}
-                                            onClick={() => handleCancel(c.id)}
-                                            className="rounded border border-red-500/30 px-2 py-1 text-[10px] text-red-400 hover:bg-red-400/10 disabled:opacity-40 transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </>
-                                )}
+                                {c.status !== 'cancelled' &&
+                                    c.status !== 'completed' && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyJoinLink(c)}
+                                                className="flex-1 rounded border border-[#C9A84C]/40 px-2 py-1 text-[10px] text-[#C9A84C] transition-colors hover:bg-[#C9A84C]/10"
+                                            >
+                                                {copiedId === c.id
+                                                    ? '✓ Copied'
+                                                    : '⎘ Patient link'}
+                                            </button>
+                                            <a
+                                                href={staffJoin.url(c.id)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 rounded border border-[#0E9E8E]/40 px-2 py-1 text-center text-[10px] text-[#0E9E8E] transition-colors hover:bg-[#0E9E8E]/10"
+                                            >
+                                                Join as Staff
+                                            </a>
+                                            <button
+                                                type="button"
+                                                disabled={cancellingId === c.id}
+                                                onClick={() =>
+                                                    handleCancel(c.id)
+                                                }
+                                                className="rounded border border-red-500/30 px-2 py-1 text-[10px] text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-40"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </>
+                                    )}
                             </div>
                         </div>
                     ))}
 
                     {/* Schedule form */}
                     {showForm ? (
-                        <form onSubmit={handleSchedule} className="space-y-3 pt-1">
+                        <form
+                            onSubmit={handleSchedule}
+                            className="space-y-3 pt-1"
+                        >
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">Date &amp; Time</label>
+                                <label className="text-xs text-muted-foreground">
+                                    Date &amp; Time
+                                </label>
                                 <input
                                     type="datetime-local"
                                     required
                                     value={form.scheduled_at}
-                                    onChange={(e) => setForm((f) => ({ ...f, scheduled_at: e.target.value }))}
+                                    onChange={(e) =>
+                                        setForm((f) => ({
+                                            ...f,
+                                            scheduled_at: e.target.value,
+                                        }))
+                                    }
                                     className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
                                 />
                             </div>
 
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">Duration</label>
+                                <label className="text-xs text-muted-foreground">
+                                    Duration
+                                </label>
                                 <select
                                     value={form.duration_minutes}
-                                    onChange={(e) => setForm((f) => ({ ...f, duration_minutes: Number(e.target.value) }))}
+                                    onChange={(e) =>
+                                        setForm((f) => ({
+                                            ...f,
+                                            duration_minutes: Number(
+                                                e.target.value,
+                                            ),
+                                        }))
+                                    }
                                     className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
                                 >
                                     {[15, 30, 45, 60].map((m) => (
-                                        <option key={m} value={m}>{m} minutes</option>
+                                        <option key={m} value={m}>
+                                            {m} minutes
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             <div className="grid gap-1">
-                                <label className="text-xs text-muted-foreground">Notes (optional)</label>
+                                <label className="text-xs text-muted-foreground">
+                                    Notes (optional)
+                                </label>
                                 <textarea
                                     value={form.notes}
-                                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                                    onChange={(e) =>
+                                        setForm((f) => ({
+                                            ...f,
+                                            notes: e.target.value,
+                                        }))
+                                    }
                                     rows={2}
                                     placeholder="What to discuss…"
-                                    className="w-full rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none resize-none"
+                                    className="w-full resize-none rounded-md border border-sidebar-border/50 bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#0E9E8E]/50 focus:outline-none"
                                 />
                             </div>
 
                             {formError && (
-                                <p className="text-xs text-red-400">{formError}</p>
+                                <p className="text-xs text-red-400">
+                                    {formError}
+                                </p>
                             )}
 
                             <div className="flex gap-2">
                                 <Button
                                     type="submit"
                                     disabled={submitting}
-                                    className="flex-1 bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90 text-xs h-8"
+                                    className="h-8 flex-1 bg-[#0E9E8E] text-xs text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
                                 >
-                                    {submitting ? 'Scheduling…' : 'Schedule & Send Invite'}
+                                    {submitting
+                                        ? 'Scheduling…'
+                                        : 'Schedule & Send Invite'}
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => setShowForm(false)}
-                                    className="flex-1 text-xs h-8 border-sidebar-border/50 text-foreground"
+                                    className="h-8 flex-1 border-sidebar-border/50 text-xs text-foreground"
                                 >
                                     Cancel
                                 </Button>
@@ -1071,7 +1290,7 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
                         <Button
                             onClick={() => setShowForm(true)}
                             variant="outline"
-                            className="w-full text-sm border-[#0E9E8E]/30 text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
+                            className="w-full border-[#0E9E8E]/30 text-sm text-[#0E9E8E] hover:bg-[#0E9E8E]/10"
                         >
                             + Schedule Consultation
                         </Button>
@@ -1084,13 +1303,19 @@ function ConsultationPanel({ evaluationId }: { evaluationId: string }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function EvaluationShow({ evaluation, auditEntries, portal_url, video_consultations_enabled }: Props) {
+export default function EvaluationShow({
+    evaluation,
+    auditEntries,
+    portal_url,
+    video_consultations_enabled,
+}: Props) {
     return (
         <>
-            <Head title={`Evaluation — ${formatProcedure(evaluation.procedure_slug)}`} />
+            <Head
+                title={`Evaluation — ${formatProcedure(evaluation.procedure_slug)}`}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-
                 {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -1098,27 +1323,39 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url, v
                             <h1 className="text-xl font-semibold text-foreground">
                                 {formatProcedure(evaluation.procedure_slug)}
                             </h1>
-                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${STATUS_COLORS[evaluation.status] ?? ''}`}>
+                            <span
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${STATUS_COLORS[evaluation.status] ?? ''}`}
+                            >
                                 {evaluation.status.replace('_', ' ')}
                             </span>
                         </div>
                         <p className="mt-0.5 text-sm text-muted-foreground">
-                            Submitted {formatDate(evaluation.completed_at ?? evaluation.created_at)}
+                            Submitted{' '}
+                            {formatDate(
+                                evaluation.completed_at ??
+                                    evaluation.created_at,
+                            )}
                         </p>
                     </div>
 
                     {/* Scores + actions */}
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <p className="text-xs text-muted-foreground">Lead Score</p>
+                            <p className="text-xs text-muted-foreground">
+                                Lead Score
+                            </p>
                             <p className="text-lg font-semibold text-[#0E9E8E]">
                                 {evaluation.lead_score ?? '—'}
                                 {evaluation.lead_score !== null && (
-                                    <span className="ml-1 text-xs font-normal text-muted-foreground">/100</span>
+                                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                        /100
+                                    </span>
                                 )}
                             </p>
                         </div>
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[evaluation.priority] ?? ''}`}>
+                        <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${PRIORITY_BADGE[evaluation.priority] ?? ''}`}
+                        >
                             {evaluation.priority}
                         </span>
                         {/* Clinical Brief PDF — plain <a> so the browser handles the download natively */}
@@ -1128,7 +1365,13 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url, v
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-[#0E9E8E]/50 hover:text-[#0E9E8E]"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-3.5 shrink-0" aria-hidden="true">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                className="size-3.5 shrink-0"
+                                aria-hidden="true"
+                            >
                                 <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
                                 <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
                             </svg>
@@ -1139,7 +1382,6 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url, v
 
                 {/* Body — two-column layout */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-
                     {/* Left — main content (2/3) */}
                     <div className="space-y-6 lg:col-span-2">
                         <PatientCard patient={evaluation.patient ?? null} />
@@ -1149,7 +1391,7 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url, v
                     </div>
 
                     {/* Right — coordinator actions (1/3) */}
-                    <div className="lg:col-span-1 space-y-6">
+                    <div className="space-y-6 lg:col-span-1">
                         <ScoreBreakdownCard
                             score={evaluation.lead_score}
                             priority={evaluation.priority}
@@ -1171,6 +1413,6 @@ export default function EvaluationShow({ evaluation, auditEntries, portal_url, v
 EvaluationShow.layout = {
     breadcrumbs: [
         { title: 'Evaluations', href: index.url() },
-        { title: 'Detail',      href: '#' },
+        { title: 'Detail', href: '#' },
     ],
 };

@@ -1,8 +1,11 @@
-import type {FC} from 'react';
-import type {Procedure, WizardState, WizardAction} from '@/types/intake';
+import type { FC } from 'react';
 import type { TranslationKey } from '@/i18n/translations';
+import type { Procedure, WizardState, WizardAction } from '@/types/intake';
 
-type TFn = (key: TranslationKey, vars?: Record<string, string | number>) => string;
+type TFn = (
+    key: TranslationKey,
+    vars?: Record<string, string | number>,
+) => string;
 
 interface Props {
     procedures: Procedure[];
@@ -13,26 +16,32 @@ interface Props {
 }
 
 const CATEGORY_LABEL_KEYS: Record<string, TranslationKey> = {
-    face:   'procedure.category.face',
-    body:   'procedure.category.body',
-    skin:   'procedure.category.skin',
+    face: 'procedure.category.face',
+    body: 'procedure.category.body',
+    skin: 'procedure.category.skin',
 };
 
 const CATEGORY_DISPLAY: Record<string, string> = {
-    face:   'Face & Nose',
-    body:   'Body Contouring',
+    face: 'Face & Nose',
+    body: 'Body Contouring',
     breast: 'Breast',
-    skin:   'Skin & Rejuvenation',
+    skin: 'Skin & Rejuvenation',
 };
 
-const ProcedureSelect: FC<Props> = ({ procedures, state, dispatch, t, onNext }) => {
+const ProcedureSelect: FC<Props> = ({
+    procedures,
+    state,
+    dispatch,
+    t,
+    onNext,
+}) => {
     // Group procedures by category
     const groups = procedures.reduce<Record<string, Procedure[]>>((acc, p) => {
         const cat = p.category ?? 'other';
 
         if (!acc[cat]) {
-acc[cat] = [];
-}
+            acc[cat] = [];
+        }
 
         acc[cat].push(p);
 
@@ -45,7 +54,7 @@ acc[cat] = [];
 
     return (
         <div className="py-6">
-            <h1 className="text-2xl font-bold text-[var(--intake-fg)] tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--intake-fg)]">
                 {t('procedure.title')}
             </h1>
             <p className="mt-2 text-sm text-[var(--intake-muted)]">
@@ -55,15 +64,20 @@ acc[cat] = [];
             <div className="mt-8 space-y-6">
                 {Object.entries(groups).map(([category, procs]) => (
                     <div key={category}>
-                        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#0E9E8E]">
+                        <p className="mb-3 text-[11px] font-semibold tracking-widest text-[#0E9E8E] uppercase">
                             {CATEGORY_LABEL_KEYS[category]
-                                ? t(CATEGORY_LABEL_KEYS[category] as TranslationKey)
+                                ? t(
+                                      CATEGORY_LABEL_KEYS[
+                                          category
+                                      ] as TranslationKey,
+                                  )
                                 : (CATEGORY_DISPLAY[category] ?? category)}
                         </p>
 
                         <div className="space-y-2">
                             {procs.map((proc) => {
-                                const isSelected = state.selectedProcedure?.slug === proc.slug;
+                                const isSelected =
+                                    state.selectedProcedure?.slug === proc.slug;
 
                                 return (
                                     <button
@@ -125,7 +139,7 @@ acc[cat] = [];
 
             {/* Error */}
             {state.error && (
-                <p className="mt-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 border border-red-500/20">
+                <p className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                     {state.error}
                 </p>
             )}
@@ -157,7 +171,14 @@ acc[cat] = [];
 
 const Spinner: FC = () => (
     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+        />
         <path
             className="opacity-75"
             fill="currentColor"

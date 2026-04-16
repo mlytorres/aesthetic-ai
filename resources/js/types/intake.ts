@@ -17,9 +17,9 @@ export interface QuizQuestion {
     required?: boolean;
     placeholder?: string;
     // Branching: pre-resolved array indices from the backend
-    skipToOnTrue?: number;   // boolean type: where to jump when answer is true
-    skipToOnFalse?: number;  // boolean type: where to jump when answer is false
-    skipToAlways?: number;   // text / '*' branch: always jump here after answering
+    skipToOnTrue?: number; // boolean type: where to jump when answer is true
+    skipToOnFalse?: number; // boolean type: where to jump when answer is false
+    skipToAlways?: number; // text / '*' branch: always jump here after answering
 }
 
 export interface QuizDefinition {
@@ -52,17 +52,17 @@ export interface PhotoProtocol {
  * - 'additional' is kept for legacy backward-compatibility only
  */
 export type PhotoType =
-    | 'front'           // Face-forward / full-body front
-    | 'left_profile'    // 90° left — face or body
-    | 'right_profile'   // 90° right — face or body
-    | 'back'            // Full-body rear view
-    | 'left_side'       // Body left-side view (45° or 90°)
-    | 'right_side'      // Body right-side view (45° or 90°)
-    | 'abdomen_front'   // Abdominal area close-up (front)
-    | 'abdomen_side'    // Abdominal area close-up (side)
-    | 'chest_front'     // Chest close-up (front)
-    | 'eyes_closed'     // Eyes-closed (eyelid surgery)
-    | 'additional';     // Legacy catch-all
+    | 'front' // Face-forward / full-body front
+    | 'left_profile' // 90° left — face or body
+    | 'right_profile' // 90° right — face or body
+    | 'back' // Full-body rear view
+    | 'left_side' // Body left-side view (45° or 90°)
+    | 'right_side' // Body right-side view (45° or 90°)
+    | 'abdomen_front' // Abdominal area close-up (front)
+    | 'abdomen_side' // Abdominal area close-up (side)
+    | 'chest_front' // Chest close-up (front)
+    | 'eyes_closed' // Eyes-closed (eyelid surgery)
+    | 'additional'; // Legacy catch-all
 
 /**
  * A single photo slot as returned by ProcedureResource.
@@ -94,8 +94,11 @@ export interface ClinicConfig {
     theme?: string;
     /** Hex color override for accent/CTA color (replaces default teal #0E9E8E). */
     brand_primary?: string | null;
+    /** Font stack override for the wizard (e.g. "Inter", sans-serif). */
+    brand_font?: string | null;
     /** BCP-47 locale code: 'en' | 'es' */
     locale?: string;
+    lead_capture_position?: 'beginning' | 'end';
 }
 
 // ─── Wizard state machine ────────────────────────────────────────────────────
@@ -151,10 +154,18 @@ export interface ConsentFormData {
 export type WizardAction =
     | { type: 'SELECT_PROCEDURE'; procedure: Procedure }
     | { type: 'EVALUATION_CREATED'; token: string }
-    | { type: 'SET_QUIZ_ANSWER'; key: string; value: string | string[] | boolean | null }
+    | {
+          type: 'SET_QUIZ_ANSWER';
+          key: string;
+          value: string | string[] | boolean | null;
+      }
     | { type: 'QUIZ_SUBMITTED' }
     | { type: 'PHOTO_UPLOAD_START'; photoType: PhotoType; localUrl: string }
-    | { type: 'PHOTO_UPLOAD_SUCCESS'; photoType: PhotoType; photo: UploadedPhoto }
+    | {
+          type: 'PHOTO_UPLOAD_SUCCESS';
+          photoType: PhotoType;
+          photo: UploadedPhoto;
+      }
     | { type: 'PHOTO_UPLOAD_ERROR'; photoType: PhotoType; error: string }
     | { type: 'PHOTO_REMOVE'; photoType: PhotoType }
     | { type: 'PHOTOS_COMPLETE' }
@@ -163,8 +174,8 @@ export type WizardAction =
     | { type: 'SET_TURNSTILE_TOKEN'; token: string | null }
     | { type: 'SET_LOADING'; loading: boolean }
     | { type: 'SET_ERROR'; error: string | null }
-    | { type: 'NEXT_STEP' }
-    | { type: 'PREV_STEP' };
+    | { type: 'NEXT_STEP'; order: WizardStep[] }
+    | { type: 'PREV_STEP'; order: WizardStep[] };
 
 // ─── API response shapes ──────────────────────────────────────────────────────
 
