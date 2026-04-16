@@ -25,14 +25,20 @@ class FailedJobsAlertCommand extends Command
     public function handle(): int
     {
         $cacheKey = 'failed_jobs_last_checked_at';
-        $lastChecked = cache()->get($cacheKey, now()->subMinutes(35));
+        $lastCheckedValue = cache()->get($cacheKey, now()->subMinutes(35)->toDateTimeString());
+
+        // Handle case where Carbon object might have been cached in a previous version/session
+        // leading to __PHP_Incomplete_Class if CarbonImmutable was used.
+        if ($lastCheckedValue instanceof \__PHP_Incomplete_Class) {
+            $lastCheckedValue = now()->subMinutes(35)->toDateTimeString();
+        }
 
         $newFailures = DB::table('failed_jobs')
-            ->where('failed_at', '>=', $lastChecked)
+            ->where('failed_at', '>=', $lastCheckedValue)
             ->orderBy('failed_at')
             ->get(['uuid', 'queue', 'payload', 'exception', 'failed_at']);
 
-        cache()->put($cacheKey, now(), now()->addHours(2));
+        cache()->put($cacheKey, now()->toDateTimeString(), now()->addHours(2));
 
         if ($newFailures->isEmpty()) {
             return self::SUCCESS;
