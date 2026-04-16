@@ -21,3 +21,6 @@ Schedule::command('billing:send-trial-reminders')->dailyAt('09:00');
 // Bundles up all patients due for a follow-up today and sends a digest to the clinic.
 Schedule::command('crm:send-follow-up-reminders')->dailyAt('08:00');
 
+// Failed job alert — runs every 30 minutes, logs + Sentry-reports any new failed jobs.
+// Keeps failed_jobs table lean and ensures failures don't go unnoticed.
+Schedule::command('queue:failed-jobs-alert')->everyThirtyMinutes();
