@@ -89,6 +89,11 @@ class SocialiteController extends Controller
             ]
         );
 
+        // 6. Redirect based on role
+        if ($user->isSuperAdmin()) {
+            return redirect()->intended('/admin');
+        }
+
         return redirect()->intended('/dashboard');
     }
 }
