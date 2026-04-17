@@ -25,7 +25,6 @@ class TeamController extends Controller
         $tenant = TenantContext::get();
 
         $members = User::where('tenant_id', $tenant->id)
-            ->withoutGlobalScopes()
             ->orderBy('role')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role', 'created_at']);
@@ -89,8 +88,10 @@ class TeamController extends Controller
         return back()->with('flash.success', "{$user->name} added and invitation sent.");
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(string $user): RedirectResponse
     {
+        $user = User::findOrFail($user);
+
         // UserPolicy::remove — checks: same tenant, can't remove self, owner-only to remove owner.
         Gate::authorize('remove', $user);
 
@@ -99,8 +100,10 @@ class TeamController extends Controller
         return back()->with('flash.success', 'Team member removed.');
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(Request $request, string $user): RedirectResponse
     {
+        $user = User::findOrFail($user);
+
         // UserPolicy::update — checks: same tenant, owner-only to update owner.
         Gate::authorize('update', $user);
 
