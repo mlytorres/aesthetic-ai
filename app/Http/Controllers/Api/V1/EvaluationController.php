@@ -31,6 +31,41 @@ class EvaluationController extends Controller
      */
     public function show(string $evaluationToken): JsonResponse
     {
+        if (str_starts_with($evaluationToken, 'test_')) {
+            $tenant = \App\Facades\TenantContext::get();
+
+            return response()->json([
+                'data' => [
+                    'evaluation_token' => $evaluationToken,
+                    'clinic' => $tenant?->name ?? 'Miami Life Cosmetic Center',
+                    'procedure_interest' => 'rhinoplasty',
+                    'lead_score' => 87,
+                    'priority' => 'high',
+                    'ready_for_call' => true,
+                    'timeline' => 'within_3_months',
+                    'budget_range' => '15000_25000',
+                    'photos_available' => true,
+                    'ai_analysis_complete' => true,
+                    'message' => 'This is a test webhook from SymetriHealth. Your endpoint is correctly configured.',
+                    'patient' => [
+                        'name' => 'Jane Doe (Test)',
+                        'email' => 'jane.test@example.com',
+                        'phone' => '+15550198765',
+                    ],
+                    'quiz_summary' => [
+                        'timeline' => 'within_3_months',
+                        'budget_range' => '15000_25000',
+                    ],
+                    'ai_analysis' => [
+                        'clinical_summary' => 'This is a test payload for webhook integration.',
+                        'contraindications' => [],
+                        'recommended_procedures' => ['rhinoplasty'],
+                    ],
+                    'photos' => [],
+                ]
+            ]);
+        }
+
         $evaluation = Evaluation::with(['patient', 'photos'])
             ->where('secure_token', $evaluationToken)
             ->firstOrFail();
