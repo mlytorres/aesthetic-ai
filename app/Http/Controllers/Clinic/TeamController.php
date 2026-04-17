@@ -98,4 +98,31 @@ class TeamController extends Controller
 
         return back()->with('flash.success', 'Team member removed.');
     }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        // UserPolicy::update — checks: same tenant, owner-only to update owner.
+        Gate::authorize('update', $user);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'role' => ['required', Rule::in([
+                User::ROLE_OWNER,
+                User::ROLE_ADMIN,
+                User::ROLE_COORDINATOR,
+                User::ROLE_SURGEON,
+                User::ROLE_VIEWER,
+            ])],
+        ]);
+
+        // If the role is being changed, check if the actor has permission to assign the new role.
+        if ($validated['role'] !== $user->role) {
+            Gate::authorize('assignRole', [User::class, $validated['role']]);
+        }
+
+        $user->update($validated);
+
+        return back()->with('flash.success', "{$user->name} updated successfully.");
+    }
 }

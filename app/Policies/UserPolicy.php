@@ -66,4 +66,23 @@ class UserPolicy
 
         return $actor->canManageClinic();
     }
+
+    /**
+     * Owner and Admin can update team members.
+     * Only the Owner can update another Owner.
+     */
+    public function update(User $actor, User $target): bool
+    {
+        // Must belong to same tenant
+        if ($actor->tenant_id !== $target->tenant_id) {
+            return false;
+        }
+
+        // Updating an owner requires owner-level access
+        if ($target->isOwner()) {
+            return $actor->isOwner();
+        }
+
+        return $actor->canManageClinic();
+    }
 }

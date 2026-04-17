@@ -170,6 +170,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
 
             Route::get('/team', [TeamController::class, 'index'])->name('team.index');
             Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+            Route::patch('/team/{user}', [TeamController::class, 'update'])->name('team.update');
             Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
 
             Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');

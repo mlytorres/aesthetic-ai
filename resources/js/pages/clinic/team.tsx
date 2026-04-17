@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -14,7 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { index, store, destroy } from '@/routes/clinic/team';
+import { index, store, update, destroy } from '@/routes/clinic/team';
 
 interface Member {
     id: number;
@@ -255,26 +264,35 @@ export default function Team({ members, availableRoles }: Props) {
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-sm">
-                                                    {!isCurrentUser && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    member,
-                                                                )
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <EditMemberModal
+                                                            member={member}
+                                                            availableRoles={
+                                                                availableRoles
                                                             }
-                                                            disabled={
-                                                                deletingId ===
+                                                        />
+
+                                                        {!isCurrentUser && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleDelete(
+                                                                        member,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    deletingId ===
+                                                                    member.id
+                                                                }
+                                                                className="font-medium text-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                {deletingId ===
                                                                 member.id
-                                                            }
-                                                            className="font-medium text-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-                                                        >
-                                                            {deletingId ===
-                                                            member.id
-                                                                ? 'Removing...'
-                                                                : 'Remove'}
-                                                        </button>
-                                                    )}
+                                                                    ? 'Removing...'
+                                                                    : 'Remove'}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -286,6 +304,119 @@ export default function Team({ members, availableRoles }: Props) {
                 </div>
             </div>
         </>
+    );
+}
+
+function EditMemberModal({
+    member,
+    availableRoles,
+}: {
+    member: Member;
+    availableRoles: RoleOption[];
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const { data, setData, patch, processing, errors, reset } = useForm({
+        name: member.name,
+        email: member.email,
+        role: member.role,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        patch(update.url({ user: member.id }), {
+            onSuccess: () => {
+                setIsOpen(false);
+            },
+        });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <button
+                    type="button"
+                    className="font-medium text-[#0E9E8E] hover:text-[#0E9E8E]/80"
+                >
+                    Edit
+                </button>
+            </DialogTrigger>
+            <DialogContent className="border-sidebar-border/50 bg-card text-foreground sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Member</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                        Update details for {member.name}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor={`edit-name-${member.id}`}>Name</Label>
+                        <Input
+                            id={`edit-name-${member.id}`}
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            className="bg-background"
+                            required
+                        />
+                        <InputError message={errors.name} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor={`edit-email-${member.id}`}>Email</Label>
+                        <Input
+                            id={`edit-email-${member.id}`}
+                            type="email"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            className="bg-background"
+                            required
+                        />
+                        <InputError message={errors.email} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor={`edit-role-${member.id}`}>Role</Label>
+                        <Select
+                            value={data.role}
+                            onValueChange={(value) => setData('role', value)}
+                        >
+                            <SelectTrigger className="bg-background">
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableRoles.map((role) => (
+                                    <SelectItem
+                                        key={role.value}
+                                        value={role.value}
+                                    >
+                                        {role.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.role} />
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setIsOpen(false)}
+                            className="text-foreground hover:bg-background"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
+                        >
+                            {processing ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 
