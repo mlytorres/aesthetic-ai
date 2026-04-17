@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AllowFramesMiddleware;
 use App\Http\Middleware\EnforcePlanLimits;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RequireRole::class,
             'plan.limits' => EnforcePlanLimits::class,
             'billing.access' => RequireBillingAccess::class,
+            'allow.frames' => AllowFramesMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

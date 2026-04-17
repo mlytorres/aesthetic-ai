@@ -195,7 +195,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
 // Tenant resolved from subdomain (e.g. miamilife.aesthetic-ai.test)
 // No auth — patients are not logged in.
 
-Route::middleware(['tenant'])->prefix('intake')->name('intake.')->group(function (): void {
+Route::middleware(['tenant', 'allow.frames'])->prefix('intake')->name('intake.')->group(function (): void {
     // Inertia page — loads wizard with clinic config + quiz definitions
     Route::get('/', [IntakeController::class, 'show'])->name('show');
 
