@@ -58,6 +58,7 @@ class Evaluation extends Model
         'tenant_id',
         'patient_id',
         'procedure_slug',
+        'affiliate_link_id',
         'status',
         'quiz_answers',
         'analysis_data',
@@ -113,6 +114,11 @@ class Evaluation extends Model
     public function procedure(): BelongsTo
     {
         return $this->belongsTo(Procedure::class, 'procedure_slug', 'slug');
+    }
+
+    public function affiliateLink(): BelongsTo
+    {
+        return $this->belongsTo(AffiliateLink::class);
     }
 
     public function photos(): HasMany

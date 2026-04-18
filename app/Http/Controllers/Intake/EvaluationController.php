@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Intake;
 
 use App\Events\EvaluationReceived;
+use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Intake\CreateEvaluationRequest;
 use App\Http\Requests\Intake\SaveQuizRequest;
@@ -19,9 +20,11 @@ use App\Jobs\AI\GenerateSimulationJob;
 use App\Jobs\AI\SendPatientConfirmationJob;
 use App\Jobs\AI\SendPatientSmsConfirmationJob;
 use App\Jobs\AI\ValidatePhotoQualityJob;
+use App\Jobs\Billing\CheckTenantUsageCapJob;
 use App\Jobs\SendUsageOverageAlertJob;
 use App\Models\Evaluation;
 use App\Models\Patient;
+use App\Services\AffiliateAttributionService;
 use App\Services\AuditLog;
 use App\Services\ProcedureRegistry;
 use Illuminate\Bus\Batch;
@@ -31,7 +34,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
-use App\Facades\TenantContext;
 
 /**
  * Handles the patient evaluation lifecycle during intake.
@@ -39,7 +41,10 @@ use App\Facades\TenantContext;
  */
 class EvaluationController extends Controller
 {
-    public function __construct(private readonly AuditLog $auditLog) {}
+    public function __construct(
+        private readonly AuditLog $auditLog,
+        private readonly AffiliateAttributionService $affiliateAttributionService,
+    ) {}
 
     /**
      * Step 1 — create a draft evaluation when the patient selects a procedure.
@@ -47,6 +52,14 @@ class EvaluationController extends Controller
      */
     public function store(CreateEvaluationRequest $request): JsonResponse
     {
+        $affiliateLinkId = null;
+        $affiliateToken = $request->validated('aff', $request->query('aff'));
+
+        if (is_string($affiliateToken) && $affiliateToken !== '') {
+            $affiliateLink = $this->affiliateAttributionService->findActiveLinkByToken($affiliateToken);
+            $affiliateLinkId = $affiliateLink?->id;
+        }
+
         // Create a stub patient record (no PHI yet — just a placeholder)
         // PHI is collected in the submit step only.
         $patient = Patient::create([
@@ -58,10 +71,12 @@ class EvaluationController extends Controller
         $evaluation = Evaluation::create([
             'patient_id' => $patient->id,
             'procedure_slug' => $request->validated('procedure_slug'),
+            'affiliate_link_id' => $affiliateLinkId,
             'status' => Evaluation::STATUS_DRAFT,
             'funnel_step' => Evaluation::FUNNEL_PROCEDURE,
         ]);
 
+        $this->affiliateAttributionService->trackIntakeStarted($evaluation, $request);
         $this->auditLog->record('evaluation.created', $evaluation);
 
         // Check if usage has crossed the 80% threshold and alert the clinic Owner.
@@ -88,7 +103,7 @@ class EvaluationController extends Controller
 
         return response()->json(['status' => 'saved']);
     }
-    
+
     /**
      * Step 2 (Optional/Early) — update patient contact info as soon as it's entered.
      * Use this when lead_capture_position is 'beginning'.
@@ -99,12 +114,12 @@ class EvaluationController extends Controller
         $validated = $request->validated();
 
         $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-            'secret'   => config('services.turnstile.secret_key'),
+            'secret' => config('services.turnstile.secret_key'),
             'response' => $validated['turnstile_token'],
             'remoteip' => $request->ip(),
         ]);
 
-        if (!$turnstileResponse->json('success')) {
+        if (! $turnstileResponse->json('success')) {
             abort(403, 'Security validation failed.');
         }
 
@@ -116,7 +131,7 @@ class EvaluationController extends Controller
             ->where('tenant_id', $tenantId)
             ->where('procedure_slug', $evaluation->procedure_slug)
             ->whereNotIn('status', [Evaluation::STATUS_DRAFT, Evaluation::STATUS_FAILED])
-            ->whereHas('patient', fn($q) => $q->where('email_hash', $emailHash))
+            ->whereHas('patient', fn ($q) => $q->where('email_hash', $emailHash))
             ->where('created_at', '>=', now()->subHours(24))
             ->where('id', '!=', $evaluation->id)
             ->exists();
@@ -130,11 +145,11 @@ class EvaluationController extends Controller
         // Update the patient record with real PHI
         $patient = Patient::find($evaluation->patient_id);
         $patient->update([
-            'name_encrypted'  => $validated['patient']['name'],
+            'name_encrypted' => $validated['patient']['name'],
             'email_encrypted' => $validated['patient']['email'],
             'phone_encrypted' => $validated['patient']['phone'] ?? null,
-            'email_hash'      => $emailHash,
-            'name_hash'       => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
+            'email_hash' => $emailHash,
+            'name_hash' => hash_hmac('sha256', strtolower($validated['patient']['name']), config('app.key')),
         ]);
 
         $evaluation->update([
@@ -206,7 +221,7 @@ class EvaluationController extends Controller
         if ($email) {
             $emailHash = Patient::hashEmail($email);
             $patient = Patient::findByEmail($email) ?? Patient::find($evaluation->patient_id);
-            
+
             $patient->update([
                 'name_encrypted' => $validated['patient']['name'],
                 'email_encrypted' => $validated['patient']['email'],
@@ -236,6 +251,7 @@ class EvaluationController extends Controller
             ]),
         ]);
 
+        $this->affiliateAttributionService->trackEvaluationCompleted($evaluation, $request);
         $this->auditLog->record('evaluation.submitted', $evaluation);
 
         // Notify clinic staff in real time via Reverb WebSocket.
@@ -250,7 +266,7 @@ class EvaluationController extends Controller
         }
 
         // Check if the tenant just hit 80% usage boundary.
-        \App\Jobs\Billing\CheckTenantUsageCapJob::dispatch($evaluation->tenant_id)->onQueue('notifications');
+        CheckTenantUsageCapJob::dispatch($evaluation->tenant_id)->onQueue('notifications');
 
         // ── Dispatch AI pipeline as a cancellable batch ───────────────────────
         $evaluationId = $evaluation->id;

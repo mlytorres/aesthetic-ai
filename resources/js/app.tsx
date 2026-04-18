@@ -43,6 +43,7 @@ function resolveLayout(component: string) {
 
     if (
         component.startsWith('intake/') ||
+        component.startsWith('affiliate/') ||
         component.startsWith('patient/') ||
         component.startsWith('consult/') ||
         component.startsWith('legal/') ||

@@ -154,9 +154,42 @@ class Tenant extends Model
 
         return (bool) ($this->settings['video_consultations_enabled'] ?? false);
     }
+    
+    /**
+     * Whether the affiliate program is enabled for this tenant.
+     * True when explicitly toggled on in settings, OR the tenant is on the Pro plan.
+     */
+    public function hasAffiliateProgram(): bool
+    {
+        if ($this->plan?->slug === 'pro') {
+            return true;
+        }
+
+        return (bool) ($this->settings['affiliate_program_enabled'] ?? false);
+    }
 
     public function consultations(): HasMany
     {
         return $this->hasMany(Consultation::class);
+    }
+
+    public function affiliatePartners(): HasMany
+    {
+        return $this->hasMany(AffiliatePartner::class);
+    }
+
+    public function affiliateCampaigns(): HasMany
+    {
+        return $this->hasMany(AffiliateCampaign::class);
+    }
+
+    public function affiliateLinks(): HasMany
+    {
+        return $this->hasMany(AffiliateLink::class);
+    }
+
+    public function affiliatePayoutLedgers(): HasMany
+    {
+        return $this->hasMany(AffiliatePayoutLedger::class);
     }
 }

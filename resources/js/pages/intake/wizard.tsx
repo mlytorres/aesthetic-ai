@@ -264,10 +264,15 @@ const WizardPage: FC<Props> = ({
         dispatch({ type: 'SET_ERROR', error: null });
 
         try {
+            const affiliateToken = new URLSearchParams(
+                window.location.search,
+            ).get('aff');
+
             const data = await apiPost<CreateEvaluationResponse>(
                 '/intake/evaluations',
                 {
                     procedure_slug: state.selectedProcedure.slug,
+                    aff: affiliateToken,
                 },
             );
 

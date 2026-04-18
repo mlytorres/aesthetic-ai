@@ -638,6 +638,12 @@ export default function Welcome() {
                     <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 text-xs text-muted-foreground">
                         <div className="flex justify-center gap-6">
                             <Link
+                                href="/affiliate-program"
+                                className="transition-colors hover:text-foreground"
+                            >
+                                Affiliate Program
+                            </Link>
+                            <Link
                                 href="/legal/terms"
                                 className="transition-colors hover:text-foreground"
                             >

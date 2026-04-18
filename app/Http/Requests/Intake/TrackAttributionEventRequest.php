@@ -6,9 +6,8 @@ namespace App\Http\Requests\Intake;
 
 use App\Facades\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class CreateEvaluationRequest extends FormRequest
+class TrackAttributionEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,11 +17,8 @@ class CreateEvaluationRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $enabledProcedures = TenantContext::get()->enabledProcedures();
-
         return [
-            'procedure_slug' => ['required', 'string', Rule::in($enabledProcedures)],
-            'aff' => ['nullable', 'string', 'max:64'],
+            'token' => ['required', 'string', 'max:64'],
         ];
     }
 }

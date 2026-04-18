@@ -54,7 +54,7 @@ Phase 2 — Foundation (Months 4–6)   🚧 IN PROGRESS
 Phase 3 — Intelligence (Months 7–10) 🚧 IN PROGRESS (Analytics + AI Vision + Body Landmarks + Simulation shipped early)
   "Full AI suite. Simulations. Expand to 5+ clinics."
 
-Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
+Phase 4 — Scale (Months 11–18)      🚧 IN PROGRESS
   "50+ clinics. White-label. Partner API."
 ```
 
@@ -551,7 +551,7 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 
 ### Key Deliverables
 
-**White-Label Program:** 🚧 *Partially delivered (Sprint 10)*
+**White-Label Program:** ✅ *Partially delivered (Sprint 10)*
 - [x] Logo upload and display in intake wizard header
 - [x] Brand primary color override (CSS variable, full intake wizard)
 - [x] Custom email sender name (From name in patient emails)
@@ -561,11 +561,15 @@ Phase 4 — Scale (Months 11–18)      ⬜ NOT STARTED
 - [ ] Reseller program for medical marketing agencies
 - [ ] Reseller dashboard: manage multiple clinic accounts
 
-**Partner API:** ⬜
+**Partner API:** 🚧 *Partially delivered*
+- [x] API key management per tenant (Creation, Revocation, Last Used tracking in `/clinic/integrations`)
+- [x] Authentication middleware (`AuthenticateApiToken`) for Bearer tokens
+- [x] External REST API v1 (`/api/v1/evaluations/{token}`)
+- [x] Public JS Event API for widget (postMessage events)
 - [ ] Public API documentation (OpenAPI spec)
 - [ ] SDK: JavaScript, PHP, Python
-- [ ] API key management per tenant
-- [ ] Rate limiting and usage dashboards
+- [ ] Rate limiting and usage dashboards per token
+- [ ] Webhook outbound events (beyond current generic webhook)
 
 **PatientNow Integration:** ⬜
 - [ ] Deep sync: evaluation → PatientNow patient record

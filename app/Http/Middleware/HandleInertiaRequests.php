@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
@@ -49,6 +51,14 @@ class HandleInertiaRequests extends Middleware
             // Tenant ID for the Reverb private channel subscription.
             // Null for super-admins who are not scoped to a tenant.
             'tenantId' => $request->user()?->tenant_id,
+            'flash' => [
+                'success' => fn () => $request->session()->get('flash.success'),
+                'error' => fn () => $request->session()->get('flash.error'),
+                'warning' => fn () => $request->session()->get('flash.warning'),
+                'info' => fn () => $request->session()->get('flash.info'),
+                // Backward-compatible flash event payload support.
+                'toast' => fn () => $request->session()->get('toast'),
+            ],
         ];
     }
 }

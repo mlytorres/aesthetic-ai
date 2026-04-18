@@ -20,6 +20,19 @@ class DatabaseSeeder extends Seeder
 
         // 2. Seed all billing plans
         // stripe_price_id is filled from the Stripe dashboard once products are created.
+        Plan::updateOrCreate(
+            ['slug' => 'free'],
+            [
+                'name' => 'Free',
+                'max_procedures' => null, // unlimited for internal/testing tenants
+                'max_evaluations_mo' => null, // unlimited
+                'stripe_price_id' => null,
+                'features' => ['widget', 'dashboard', 'advanced_ai', 'analytics', 'webhooks', 'api_access', 'white_label', 'affiliate_program'],
+                // Hidden from self-serve billing; assignable by super-admin only.
+                'is_public' => false,
+            ]
+        );
+
         $starterPlan = Plan::updateOrCreate(
             ['slug' => 'starter'],
             [
@@ -49,7 +62,7 @@ class DatabaseSeeder extends Seeder
                 'max_procedures' => null,   // unlimited
                 'max_evaluations_mo' => null,   // unlimited
                 'stripe_price_id' => env('STRIPE_PRICE_PRO'),
-                'features' => ['widget', 'dashboard', 'advanced_ai', 'analytics', 'webhooks', 'api_access', 'white_label'],
+                'features' => ['widget', 'dashboard', 'advanced_ai', 'analytics', 'webhooks', 'api_access', 'white_label', 'affiliate_program'],
             ]
         );
 
