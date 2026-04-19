@@ -2,6 +2,7 @@ import type { FC, ReactNode } from 'react';
 import type { TranslationKey } from '@/i18n/translations';
 import type { WizardStep } from '@/types/intake';
 import ProgressBar from './ProgressBar';
+import { TrustBadges } from '@/components/trust-badges';
 
 type TFn = (
     key: TranslationKey,
@@ -97,12 +98,8 @@ const WizardShell: FC<Props> = ({
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-[var(--intake-border-xs)] py-4 text-center">
-                <p className="text-[11px] text-[var(--intake-muted-faint)]">
-                    {t
-                        ? t('footer.hipaa_notice')
-                        : 'Your information is encrypted and protected under HIPAA.'}
-                </p>
+            <footer className="border-t border-[var(--intake-border-xs)] px-4 py-5">
+                <TrustBadges variant="dark" />
             </footer>
         </div>
     );

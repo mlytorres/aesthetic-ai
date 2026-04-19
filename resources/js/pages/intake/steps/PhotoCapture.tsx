@@ -94,6 +94,14 @@ const PhotoCapture: FC<Props> = ({
                 </ul>
             </div>
 
+            {/* Privacy assurance */}
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--intake-muted)]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5 shrink-0 opacity-60">
+                    <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-.5V4.5A3.5 3.5 0 0 0 8 1Zm2 5V4.5a2 2 0 1 0-4 0V6h4Z" clipRule="evenodd" />
+                </svg>
+                Your photos are only seen by your assigned coordinator and our AI system — never shared or stored beyond your consultation.
+            </p>
+
             {/* Required photos */}
             <div className="mt-6 space-y-3">
                 <p className="text-[11px] font-semibold tracking-widest text-[#0E9E8E] uppercase">

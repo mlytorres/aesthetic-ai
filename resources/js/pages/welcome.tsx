@@ -1,4 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { TrustBadges } from '@/components/trust-badges';
 import type { FormEvent } from 'react';
 import { dashboard, login, register } from '@/routes';
 
@@ -635,7 +636,12 @@ export default function Welcome() {
 
                 {/* Footer */}
                 <footer className="border-t border-dashed border-border py-8">
-                    <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 text-xs text-muted-foreground">
+                    <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 px-6 text-xs text-muted-foreground">
+                        {/* Trust badges */}
+                        <TrustBadges variant="light" />
+
+                        <div className="h-px w-full max-w-sm bg-border/50" />
+
                         <div className="flex justify-center gap-6">
                             <Link
                                 href="/affiliate-program"
