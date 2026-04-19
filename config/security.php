@@ -89,6 +89,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Require 2FA for super-admin routes (/admin/*)
+    |--------------------------------------------------------------------------
+    */
+    'require_two_factor_for_super_admin' => filter_var(
+        env('SECURITY_REQUIRE_2FA_SUPER_ADMIN', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Coordinator email OTP fallback (when authenticator app is not enabled)
     |--------------------------------------------------------------------------
     */

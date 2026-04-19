@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('v1')->middleware([AuthenticateApiToken::class])->group(function (): void {
+Route::prefix('v1')->middleware([AuthenticateApiToken::class, 'throttle:api.v1'])->group(function (): void {
     Route::get('/ping', fn () => response()->json(['status' => 'ok', 'version' => 'v1']));
 
     // Evaluations — called by Zapier after receiving evaluation.completed webhook.

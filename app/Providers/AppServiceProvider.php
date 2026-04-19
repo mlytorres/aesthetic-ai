@@ -108,6 +108,28 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(60)->by($token.'|'.$request->ip());
         });
+
+        // Magic login links are sensitive auth entrypoints; keep enumeration/noise low.
+        RateLimiter::for('magic-link', function (Request $request): Limit {
+            $token = $request->route('token') ?? 'unknown';
+
+            return Limit::perMinute(10)->by($token.'|'.$request->ip());
+        });
+
+        // Public widget loader can be scraped aggressively by bots.
+        RateLimiter::for('widget-loader', function (Request $request): Limit {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        // External API v1 limit per tenant (or user) and IP.
+        RateLimiter::for('api.v1', function (Request $request): Limit {
+            $identifier = $request->user()?->tenant_id
+                ?? $request->user()?->id
+                ?? $request->header('X-Clinic-ID')
+                ?? $request->ip();
+
+            return Limit::perMinute(120)->by($identifier.'|'.$request->ip());
+        });
     }
 
     protected function configureDefaults(): void

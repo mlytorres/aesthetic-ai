@@ -10,6 +10,7 @@ use App\Http\Middleware\RequireBillingAccess;
 use App\Http\Middleware\RequireExecutedBaa;
 use App\Http\Middleware\RequirePrivilegedTwoFactor;
 use App\Http\Middleware\RequireRole;
+use App\Http\Middleware\RequireSuperAdminTwoFactor;
 use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\TenantMiddleware;
 use Illuminate\Foundation\Application;
@@ -53,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'affiliate.access' => RequireAffiliateProgram::class,
             'baa.intake' => RequireExecutedBaa::class,
             'privileged.2fa' => RequirePrivilegedTwoFactor::class,
+            'super-admin.2fa' => RequireSuperAdminTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

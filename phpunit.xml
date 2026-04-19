@@ -35,5 +35,6 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="SECURITY_REQUIRE_BAA_FOR_INTAKE" value="false" force="true"/>
         <env name="SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES" value="false" force="true"/>
+        <env name="SECURITY_REQUIRE_2FA_SUPER_ADMIN" value="false" force="true"/>
     </php>
 </phpunit>

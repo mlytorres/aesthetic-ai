@@ -18,13 +18,13 @@ This section is refreshed when we compare **claims in SECURITY.md** to **what is
 | Login / 2FA challenge throttles | Implemented | `FortifyServiceProvider::configureRateLimiting()` |
 | Global HTTP security headers (HSTS, baseline CSP, etc.) | **Implemented** | `SecurityHeadersMiddleware` on web stack; HSTS only when `APP_ENV=production` and HTTPS |
 | Embed / intake framing policy | **Allowlist-based** | `AllowFramesMiddleware` + tenant `settings.embed_parent_origins` (+ optional `SECURITY_EMBED_PARENT_ORIGINS_EXTRA`); defaults to `frame-ancestors 'none'` |
-| Magic link route throttle | **Not implemented** | `GET /magic/{token}` — `routes/web.php` |
-| Widget loader throttle | **Not implemented** | `GET /widget.js` — `routes/web.php` |
-| External REST API v1 throttle | **Not implemented** | `routes/api.php` prefix `v1` |
+| Magic link route throttle | **Implemented** | `throttle:magic-link` on `GET /magic/{token}` |
+| Widget loader throttle | **Implemented** | `throttle:widget-loader` on `GET /widget.js` |
+| External REST API v1 throttle | **Implemented** | `throttle:api.v1` on `routes/api.php` v1 group |
 | BAA fields on tenants | **Phase A implemented** | `tenants.baa_signed_at`, `tenants.baa_document_path` (encrypted); super-admin tenant UI; intake mutations gated when `SECURITY_REQUIRE_BAA_FOR_INTAKE=true` |
 | Mandatory 2FA for privileged roles | **Implemented** (owner / admin / coordinator) | `RequirePrivilegedTwoFactor` on tenant dashboard + billing routes; `SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES`; impersonation bypass |
 | Virus scanning on uploads | **Not implemented** | — |
-| Sentry + PHI | **Partial** | `config/sentry.php` `send_default_pii` defaults to `false`; `SentryContextServiceProvider` still attaches **user email** to the Sentry user context |
+| Sentry + PHI | **Hardened** | User email removed from Sentry scope + `before_send` / `before_breadcrumb` PHI scrubbing callbacks |
 
 ---
 
@@ -45,9 +45,9 @@ This section is refreshed when we compare **claims in SECURITY.md** to **what is
 | CSP / `frame-ancestors` (embed) | ✅ Allowlist (tenant settings) | — |
 | 2FA enforcement for high-privilege roles | ✅ Owner / admin / coordinator (dashboard) | Super-admin `/admin` not covered by this gate |
 | BAA tracking per tenant | ✅ Phase A (manual date + optional PDF; e-sign deferred) | **P1** follow-up: BoldSign / automation |
-| Rate limits: magic link, `widget.js`, REST API v1 | ❌ Missing | **P2** |
+| Rate limits: magic link, `widget.js`, REST API v1 | ✅ Implemented | Observe and tune thresholds in production |
 | Virus scan on photo uploads | ❌ Missing | P2 |
-| Sentry: scrub user context + `beforeSend` hardening | ⚠️ Partial (email in scope) | P2 |
+| Sentry: scrub user context + `beforeSend` hardening | ✅ Implemented | Continue reviewing new PHI fields in scrub list |
 
 ---
 
@@ -403,7 +403,7 @@ These items are the highest-impact **product and compliance** gaps visible in co
 ### 1. Enforce 2FA for Owner / Admin / Coordinator
 
 **Risk:** Credential theft grants full dashboard access to PHI.  
-**Done:** `RequirePrivilegedTwoFactor` middleware + `security.require_two_factor_for_privileged_tenant_roles` (`SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES`). **Optional follow-up:** require 2FA for super-admins on `/admin/*`.
+**Done:** `RequirePrivilegedTwoFactor` middleware (`SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES`) for tenant privileged roles + `RequireSuperAdminTwoFactor` (`SECURITY_REQUIRE_2FA_SUPER_ADMIN`) for `/admin/*`.
 
 ### 2. BAA tracking on `tenants`
 
@@ -417,7 +417,8 @@ These items are the highest-impact **product and compliance** gaps visible in co
 ### 5. Rate limits for magic link, widget script, and REST API v1
 
 **Risk:** Enumeration, scraping, noisy neighbor cost.  
-**Fix:** Named `RateLimiter`s + route middleware; tune after observing traffic.
+**Done:** `magic-link`, `widget-loader`, and `api.v1` named `RateLimiter`s + route middleware.  
+**Follow-up:** Tune thresholds from production traffic patterns.
 
 ### 6. Virus scanning on photo uploads
 
@@ -426,8 +427,9 @@ These items are the highest-impact **product and compliance** gaps visible in co
 
 ### 7. Sentry scrubbing and scope minimization
 
-**Risk:** Identifiers in error telemetry (`SentryContextServiceProvider` currently sets `email` on the Sentry user).  
-**Fix:** Prefer opaque user id + tenant tags only; add `beforeSend` / `before_breadcrumb` scrubbing for known PHI field names. Client-side Sentry in `resources/js/app.tsx` is currently commented out — if enabled, apply the same scrubbing rules.
+**Risk:** Identifiers in error telemetry.  
+**Done:** Removed email from Sentry user scope; added `before_send` and `before_breadcrumb` scrubbing callbacks for common PHI/sensitive fields.  
+**Follow-up:** Keep scrub field list current as payload schemas evolve. If client-side Sentry is enabled in `resources/js/app.tsx`, apply equivalent client scrubbing.
 
 ---
 

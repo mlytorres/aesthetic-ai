@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\SentryPhiScrubber;
+
 /**
  * Sentry Laravel SDK configuration file.
  *
@@ -52,6 +54,9 @@ return [
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore_exceptions
     // 'ignore_exceptions' => [],
+
+    'before_send' => [SentryPhiScrubber::class, 'beforeSend'],
+    'before_breadcrumb' => [SentryPhiScrubber::class, 'beforeBreadcrumb'],
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore_transactions
     'ignore_transactions' => [

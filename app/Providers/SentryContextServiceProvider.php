@@ -39,7 +39,6 @@ class SentryContextServiceProvider extends ServiceProvider
                 if ($user !== null) {
                     $scope->setUser([
                         'id' => $user->id,
-                        'email' => $user->email,
                         'role' => $user->role ?? 'unknown',
                     ]);
                 }

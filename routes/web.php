@@ -47,7 +47,9 @@ use Laravel\Fortify\Features;
 
 // ─── JavaScript Embed Widget ────────────────────────────────────────────────
 // Dynamically generated JS loader for clinics to embed the intake wizard.
-Route::get('/widget.js', [WidgetController::class, 'show'])->name('widget.js');
+Route::get('/widget.js', [WidgetController::class, 'show'])
+    ->middleware('throttle:widget-loader')
+    ->name('widget.js');
 
 // ─── Public landing ───────────────────────────────────────────────────────────
 
@@ -70,7 +72,9 @@ Route::post('/access-requests', [ClinicAccessRequestController::class, 'store'])
 // Tenant resolved from subdomain so TenantContext is available.
 
 Route::middleware(['tenant'])->group(function (): void {
-    Route::get('/magic/{token}', MagicLinkController::class)->name('magic-link.use');
+    Route::get('/magic/{token}', MagicLinkController::class)
+        ->middleware('throttle:magic-link')
+        ->name('magic-link.use');
 });
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
@@ -303,7 +307,7 @@ Route::get('/consult/{token}', [ConsultationController::class, 'join'])
 // No 'tenant' middleware — super-admins don't belong to a clinic.
 // Cannot be reached by any tenant user regardless of role.
 
-Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', 'super-admin', 'super-admin.2fa'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [PlatformController::class, 'dashboard'])->name('dashboard');
     Route::get('/audit-log', [PlatformController::class, 'auditLog'])->name('audit-log');
 
