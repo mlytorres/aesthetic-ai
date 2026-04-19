@@ -16,8 +16,8 @@ use App\Http\Controllers\Clinic\AffiliateFraudQueueController;
 use App\Http\Controllers\Clinic\AffiliateLinkController;
 use App\Http\Controllers\Clinic\AffiliatePartnerController;
 use App\Http\Controllers\Clinic\AffiliatePayoutController;
-use App\Http\Controllers\Clinic\CampaignAssetUploadController;
 use App\Http\Controllers\Clinic\BillingController;
+use App\Http\Controllers\Clinic\CampaignAssetUploadController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\IntegrationController;
 use App\Http\Controllers\Clinic\TeamController;
@@ -33,6 +33,7 @@ use App\Http\Controllers\Dashboard\OnboardingController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Dashboard\SimulationController;
 use App\Http\Controllers\Intake\AffiliateAttributionController;
+use App\Http\Controllers\Intake\AffiliateShortLinkController;
 use App\Http\Controllers\Intake\EvaluationController;
 use App\Http\Controllers\Intake\IntakeController;
 use App\Http\Controllers\Intake\PatientReportController;
@@ -89,7 +90,7 @@ Route::get('/login/google/callback', [SocialiteController::class, 'callback'])->
 
 // ── Billing routes — no billing.access gate so expired tenants can upgrade ──
 // Owner/admin only (same role restriction as before).
-Route::middleware(['auth', 'verified', 'tenant', 'role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN])])
+Route::middleware(['auth', 'verified', 'privileged.2fa', 'tenant', 'role:'.implode(',', [User::ROLE_OWNER, User::ROLE_ADMIN])])
     ->prefix('clinic')->name('clinic.')
     ->group(function (): void {
         Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
@@ -99,7 +100,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'role:'.implode(',', [User::ROL
     });
 
 // ── All other authenticated clinic routes — gated by active billing ──────────
-Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'privileged.2fa', 'tenant', 'billing.access'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
 

@@ -136,4 +136,21 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->isAdmin();
     }
+
+    /**
+     * Whether this account is subject to mandatory 2FA for tenant dashboard access.
+     * Super-admins and read-only / surgeon roles are exempt.
+     */
+    public function requiresMandatoryTwoFactor(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return false;
+        }
+
+        return in_array($this->role, [
+            self::ROLE_OWNER,
+            self::ROLE_ADMIN,
+            self::ROLE_COORDINATOR,
+        ], true);
+    }
 }

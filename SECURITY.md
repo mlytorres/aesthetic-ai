@@ -22,7 +22,7 @@ This section is refreshed when we compare **claims in SECURITY.md** to **what is
 | Widget loader throttle | **Not implemented** | `GET /widget.js` — `routes/web.php` |
 | External REST API v1 throttle | **Not implemented** | `routes/api.php` prefix `v1` |
 | BAA fields on tenants | **Phase A implemented** | `tenants.baa_signed_at`, `tenants.baa_document_path` (encrypted); super-admin tenant UI; intake mutations gated when `SECURITY_REQUIRE_BAA_FOR_INTAKE=true` |
-| Mandatory 2FA for privileged roles | **Not implemented** | Fortify TOTP is optional only |
+| Mandatory 2FA for privileged roles | **Implemented** (owner / admin / coordinator) | `RequirePrivilegedTwoFactor` on tenant dashboard + billing routes; `SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES`; impersonation bypass |
 | Virus scanning on uploads | **Not implemented** | — |
 | Sentry + PHI | **Partial** | `config/sentry.php` `send_default_pii` defaults to `false`; `SentryContextServiceProvider` still attaches **user email** to the Sentry user context |
 
@@ -43,7 +43,7 @@ This section is refreshed when we compare **claims in SECURITY.md** to **what is
 | Fortify login + two-factor challenge throttles | ✅ Implemented | — |
 | HTTP security headers middleware | ✅ Implemented | — |
 | CSP / `frame-ancestors` (embed) | ✅ Allowlist (tenant settings) | — |
-| 2FA enforcement for high-privilege roles | ⚠️ Optional only | **P1** |
+| 2FA enforcement for high-privilege roles | ✅ Owner / admin / coordinator (dashboard) | Super-admin `/admin` not covered by this gate |
 | BAA tracking per tenant | ✅ Phase A (manual date + optional PDF; e-sign deferred) | **P1** follow-up: BoldSign / automation |
 | Rate limits: magic link, `widget.js`, REST API v1 | ❌ Missing | **P2** |
 | Virus scan on photo uploads | ❌ Missing | P2 |
@@ -174,7 +174,7 @@ Access method:
 | Cross-tenant data access bug | Medium | Critical | Global Scopes + RLS + tests | ✅ |
 | S3 bucket misconfiguration | Low | Critical | All-public-access blocked | ✅ |
 | SQL injection | Low | High | Eloquent ORM, parameterized queries | ✅ |
-| Coordinator credential theft | Medium | High | TOTP 2FA available, session timeout | ⚠️ 2FA optional |
+| Coordinator credential theft | Medium | Medium | Mandatory auth step: TOTP or email OTP fallback + session timeout | Residual risk reduced; email channel security still matters |
 | Webhook payload interception | Low | Medium | HMAC signing, HTTPS only, no PHI in payload | ✅ |
 | Malicious photo upload | Medium | Medium | File type + size validation, Rekognition | ⚠️ No virus scan |
 | AI model data exfiltration | Low | High | No PHI passed to external LLMs unredacted | ✅ |
@@ -312,9 +312,9 @@ Content-Security-Policy:
 
 ## Two-Factor Authentication
 
-2FA is implemented via Laravel Fortify (TOTP) and is currently **optional** for all users.
+2FA is implemented via Laravel Fortify (TOTP). Owner/Admin require authenticator app setup for dashboard access. Coordinators require either authenticator app setup or a short-lived email OTP fallback.
 
-> ⚠️ **Gap:** 2FA should be enforced for Owner, Admin, and Coordinator roles. A middleware check (`Require2FA`) should redirect non-2FA-enabled users of these roles to the 2FA setup page on login. See P1 backlog.
+> ℹ️ Implementation: `RequirePrivilegedTwoFactor` enforces the gate on tenant dashboard routes. Coordinator fallback is handled by `CoordinatorEmailOtpController` and `CoordinatorEmailOtpMail`.
 
 Current state:
 
@@ -403,7 +403,7 @@ These items are the highest-impact **product and compliance** gaps visible in co
 ### 1. Enforce 2FA for Owner / Admin / Coordinator
 
 **Risk:** Credential theft grants full dashboard access to PHI.  
-**Fix:** `Require2FA` middleware redirecting privileged roles without `two_factor_confirmed_at` to Fortify’s 2FA setup.
+**Done:** `RequirePrivilegedTwoFactor` middleware + `security.require_two_factor_for_privileged_tenant_roles` (`SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES`). **Optional follow-up:** require 2FA for super-admins on `/admin/*`.
 
 ### 2. BAA tracking on `tenants`
 
@@ -435,8 +435,8 @@ These items are the highest-impact **product and compliance** gaps visible in co
 
 Use this when prioritizing engineering time. Order weighs **exploitability**, **blast radius**, and **dependencies**.
 
-1. **Require 2FA for privileged roles** — Large reduction in account-takeover impact for PHI-bearing accounts.
-2. **BAA fields + admin workflow** — Critical for HIPAA *program* readiness; does not by itself stop technical attacks.
+1. **Require 2FA for privileged roles** — ✅ Implemented for tenant owner / admin / coordinator on dashboard routes.
+2. **BAA fields + admin workflow** — Phase A done; e-sign / automation optional follow-up.
 3. **Throttle magic links + `widget.js` + API v1** — Reduces abuse noise before it becomes operational pain.
 4. **Sentry scope + `beforeSend`** — Prevents accidental identifier leakage in error reports.
 5. **Virus scanning** — Important for storage integrity; often deployed after core app hardening unless threat model prioritizes malware.

@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
@@ -17,12 +17,14 @@ type Props = {
     canManageTwoFactor?: boolean;
     requiresConfirmation?: boolean;
     twoFactorEnabled?: boolean;
+    coordinatorEmailFallbackAvailable?: boolean;
 };
 
 export default function Security({
     canManageTwoFactor = false,
     requiresConfirmation = false,
     twoFactorEnabled = false,
+    coordinatorEmailFallbackAvailable = false,
 }: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
@@ -193,6 +195,21 @@ export default function Security({
                                 This pin can be retrieved from a TOTP-supported
                                 application on your phone.
                             </p>
+
+                            {coordinatorEmailFallbackAvailable && (
+                                <p className="text-sm text-muted-foreground">
+                                    If you are a coordinator and do not have an
+                                    authenticator app yet, you can use an email
+                                    verification fallback from{' '}
+                                    <Link
+                                        className="font-medium text-primary underline underline-offset-4"
+                                        href="/settings/security/coordinator-otp"
+                                    >
+                                        this verification page
+                                    </Link>
+                                    .
+                                </p>
+                            )}
 
                             <div>
                                 {hasSetupData ? (

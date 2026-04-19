@@ -71,4 +71,29 @@ return [
         FILTER_VALIDATE_BOOL,
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Require 2FA for privileged tenant roles (dashboard)
+    |--------------------------------------------------------------------------
+    |
+    | When true, authenticated clinic users with role owner, admin, or
+    | coordinator must complete Fortify two-factor setup before accessing
+    | tenant-scoped dashboard routes. They are redirected to Security settings.
+    | Set SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES=false in tests or local demos.
+    |
+    */
+    'require_two_factor_for_privileged_tenant_roles' => filter_var(
+        env('SECURITY_REQUIRE_2FA_PRIVILEGED_ROLES', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coordinator email OTP fallback (when authenticator app is not enabled)
+    |--------------------------------------------------------------------------
+    */
+    'coordinator_email_otp_code_minutes' => (int) env('SECURITY_COORDINATOR_EMAIL_OTP_MINUTES', 10),
+    'coordinator_email_otp_session_minutes' => (int) env('SECURITY_COORDINATOR_EMAIL_OTP_SESSION_MINUTES', 720),
+    'coordinator_email_otp_max_attempts' => (int) env('SECURITY_COORDINATOR_EMAIL_OTP_MAX_ATTEMPTS', 5),
+
 ];
