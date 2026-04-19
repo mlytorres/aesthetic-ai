@@ -1,5 +1,15 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, LogIn, Mail, Sparkles, UserPlus, Video } from 'lucide-react';
+import {
+    AlertTriangle,
+    ArrowLeft,
+    FileText,
+    LogIn,
+    Mail,
+    Shield,
+    Sparkles,
+    UserPlus,
+    Video,
+} from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -15,6 +25,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import tenantBaa from '@/routes/admin/tenants/baa';
 
 interface TenantData {
     id: string;
@@ -28,6 +39,9 @@ interface TenantData {
     has_affiliate_program: boolean;
     active: boolean;
     created_at: string;
+    baa_signed_at: string | null;
+    baa_has_document: boolean;
+    baa_intake_enforced: boolean;
 }
 
 interface User {
@@ -105,6 +119,14 @@ export default function TenantShow({
         role: availableRoles[0]?.value ?? 'owner',
     });
 
+    const baaForm = useForm({
+        baa_signed_at: tenant.baa_signed_at ?? '',
+    });
+
+    const baaDocumentForm = useForm<{ document: File | null }>({
+        document: null,
+    });
+
     const [selectedRole, setSelectedRole] = useState(
         availableRoles[0]?.value ?? 'owner',
     );
@@ -112,6 +134,40 @@ export default function TenantShow({
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         editForm.patch(`/admin/tenants/${tenant.id}`);
+    };
+
+    const handleBaaSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        baaForm.patch(tenantBaa.update.url(tenant.id), {
+            preserveScroll: true,
+        });
+    };
+
+    const handleBaaDocumentUpload = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!baaDocumentForm.data.document) {
+            return;
+        }
+        baaDocumentForm.post(tenantBaa.document.store.url(tenant.id), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                baaDocumentForm.reset('document');
+            },
+        });
+    };
+
+    const handleBaaDocumentDelete = () => {
+        if (
+            !confirm(
+                'Remove the stored signed BAA PDF from the server? The date field is not changed.',
+            )
+        ) {
+            return;
+        }
+        router.delete(tenantBaa.document.destroy.url(tenant.id), {
+            preserveScroll: true,
+        });
     };
 
     const handleAddUser = (e: React.FormEvent) => {
@@ -179,16 +235,27 @@ export default function TenantShow({
                         />
                     </div>
 
-                    <Badge
-                        className={
-                            tenant.active
-                                ? 'border-0 bg-emerald-400/10 text-emerald-400'
-                                : 'border-0 bg-red-400/10 text-red-400'
-                        }
-                        variant="outline"
-                    >
-                        {tenant.active ? 'Active' : 'Inactive'}
-                    </Badge>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        {tenant.baa_intake_enforced && !tenant.baa_signed_at && (
+                            <Badge
+                                className="border-0 bg-amber-400/15 text-amber-400"
+                                variant="outline"
+                            >
+                                <AlertTriangle className="mr-1 h-3 w-3" />
+                                BAA required for intake
+                            </Badge>
+                        )}
+                        <Badge
+                            className={
+                                tenant.active
+                                    ? 'border-0 bg-emerald-400/10 text-emerald-400'
+                                    : 'border-0 bg-red-400/10 text-red-400'
+                            }
+                            variant="outline"
+                        >
+                            {tenant.active ? 'Active' : 'Inactive'}
+                        </Badge>
+                    </div>
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-2">
@@ -281,6 +348,143 @@ export default function TenantShow({
                                         : 'Save Changes'}
                                 </Button>
                             </form>
+                        </div>
+
+                        {/* BAA (HIPAA) */}
+                        <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                            <h3 className="mb-1 flex items-center gap-2 text-base font-semibold text-foreground">
+                                <Shield className="h-4 w-4 text-[#C9A84C]" />
+                                Business Associate Agreement
+                            </h3>
+                            <p className="mb-4 text-sm text-muted-foreground">
+                                Record when this clinic&apos;s BAA was executed. When{' '}
+                                <span className="font-medium text-foreground">
+                                    intake enforcement
+                                </span>{' '}
+                                is on, patient intake submissions require a signed
+                                date before evaluations, quiz saves, and photo uploads
+                                are accepted.
+                            </p>
+                            {tenant.baa_intake_enforced && (
+                                <div className="mb-4 flex gap-2 rounded-md border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs text-amber-200/90">
+                                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                    <span>
+                                        Global setting:{' '}
+                                        <code className="rounded bg-background/80 px-1 py-0.5 font-mono text-[10px]">
+                                            SECURITY_REQUIRE_BAA_FOR_INTAKE
+                                        </code>{' '}
+                                        controls whether this gate is active in each
+                                        environment.
+                                    </span>
+                                </div>
+                            )}
+
+                            <form
+                                onSubmit={handleBaaSubmit}
+                                className="space-y-4"
+                            >
+                                <div className="grid gap-2">
+                                    <Label className="text-foreground">
+                                        BAA executed on
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        value={baaForm.data.baa_signed_at}
+                                        onChange={(e) =>
+                                            baaForm.setData(
+                                                'baa_signed_at',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="bg-background text-foreground"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Clear the date to remove the record (intake
+                                        will be blocked if enforcement is on).
+                                    </p>
+                                    <InputError
+                                        message={baaForm.errors.baa_signed_at}
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    disabled={baaForm.processing}
+                                    variant="outline"
+                                    className="w-full border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/10"
+                                >
+                                    {baaForm.processing
+                                        ? 'Saving...'
+                                        : 'Save BAA date'}
+                                </Button>
+                            </form>
+
+                            <div className="mt-6 border-t border-sidebar-border/50 pt-6">
+                                <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                    Signed PDF (optional)
+                                </h4>
+                                <p className="mb-3 text-xs text-muted-foreground">
+                                    Store a copy on the app disk for super-admin
+                                    download only — not exposed via public URLs.
+                                </p>
+                                {tenant.baa_has_document ? (
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button asChild variant="secondary" size="sm">
+                                            <a
+                                                href={tenantBaa.document.show.url(
+                                                    tenant.id,
+                                                )}
+                                            >
+                                                Download PDF
+                                            </a>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-red-400 hover:bg-red-400/10 hover:text-red-300"
+                                            onClick={handleBaaDocumentDelete}
+                                        >
+                                            Remove file
+                                        </Button>
+                                    </div>
+                                ) : null}
+
+                                <form
+                                    onSubmit={handleBaaDocumentUpload}
+                                    className="mt-3 space-y-3"
+                                >
+                                    <Input
+                                        type="file"
+                                        accept="application/pdf"
+                                        className="cursor-pointer bg-background text-sm text-foreground file:mr-3 file:rounded file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
+                                        onChange={(e) =>
+                                            baaDocumentForm.setData(
+                                                'document',
+                                                e.target.files?.[0] ?? null,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={
+                                            baaDocumentForm.errors.document
+                                        }
+                                    />
+                                    <Button
+                                        type="submit"
+                                        disabled={
+                                            baaDocumentForm.processing ||
+                                            !baaDocumentForm.data.document
+                                        }
+                                        size="sm"
+                                        className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
+                                    >
+                                        {baaDocumentForm.processing
+                                            ? 'Uploading...'
+                                            : 'Upload PDF'}
+                                    </Button>
+                                </form>
+                            </div>
                         </div>
 
                         {/* Add User */}

@@ -13,6 +13,7 @@ interface Tenant {
     users_count: number;
     active: boolean;
     created_at: string;
+    baa_complete: boolean;
 }
 
 interface Props {
@@ -115,6 +116,7 @@ export default function TenantsIndex({ tenants }: Props) {
                                             'Clinic',
                                             'Slug',
                                             'Plan',
+                                            'BAA',
                                             'Staff',
                                             'Created',
                                             'Status',
@@ -148,6 +150,20 @@ export default function TenantsIndex({ tenants }: Props) {
                                             </td>
                                             <td className="px-4 py-3 text-sm text-muted-foreground">
                                                 {tenant.plan ?? '—'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Badge
+                                                    className={
+                                                        tenant.baa_complete
+                                                            ? 'border-0 bg-emerald-400/10 text-emerald-400'
+                                                            : 'border-0 bg-amber-400/10 text-amber-400'
+                                                    }
+                                                    variant="outline"
+                                                >
+                                                    {tenant.baa_complete
+                                                        ? 'Recorded'
+                                                        : 'Missing'}
+                                                </Badge>
                                             </td>
                                             <td className="px-4 py-3 text-sm text-muted-foreground">
                                                 {tenant.users_count}

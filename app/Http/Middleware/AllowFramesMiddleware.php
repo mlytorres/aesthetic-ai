@@ -1,29 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
+use App\Facades\TenantContext;
+use App\Support\ContentSecurityPolicy;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Specifically allows framing for intake pages so they can be embedded in clinic websites.
- * Removes X-Frame-Options: DENY and sets a relaxed Content-Security-Policy.
+ * Allows the intake wizard to be embedded only by parent origins configured on the tenant.
+ *
+ * Sets a full Content-Security-Policy for intake pages (see {@see ContentSecurityPolicy::forIntakeEmbed})
+ * including frame-ancestors. When no parent origins are configured, framing is denied everywhere
+ * via frame-ancestors 'none'.
  */
-class AllowFramesMiddleware
+final class AllowFramesMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        // Remove the restrictive X-Frame-Options header
+        $tenant = TenantContext::get();
+
         $response->headers->remove('X-Frame-Options');
-        
-        // Explicitly set frame-ancestors to allow any domain if 'embedded=true' is present,
-        // or just generally for the intake route.
-        // In production, we should ideally restrict this to the clinic's domain.
-        $csp = "frame-ancestors *;";
-        $response->headers->set('Content-Security-Policy', $csp, false);
+
+        $response->headers->set(
+            'Content-Security-Policy',
+            ContentSecurityPolicy::forIntakeEmbed($tenant),
+            false,
+        );
 
         return $response;
     }

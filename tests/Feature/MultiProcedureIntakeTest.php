@@ -252,9 +252,17 @@ test('clinic settings update can enable and disable procedures', function (): vo
         ->patch(route('clinic.settings.update'), [
             'name' => $tenant->name,
             'theme' => 'luxury-dark',
+            'brand_primary' => null,
+            'brand_font' => null,
+            'from_name' => null,
+            'custom_domain' => null,
+            'locale' => 'en',
             'procedures_enabled' => ['bbl', 'lipo_360'],
             'coordinator_emails' => [],
-            'webhook_url' => null,
+            'phone' => null,
+            'booking_url' => null,
+            'lead_capture_position' => 'end',
+            'embed_parent_origins' => [],
         ])
         ->assertRedirect();
 
@@ -278,8 +286,17 @@ test('clinic settings requires at least one procedure enabled', function (): voi
         ->patchJson(route('clinic.settings.update'), [
             'name' => $tenant->name,
             'theme' => 'luxury-dark',
+            'brand_primary' => null,
+            'brand_font' => null,
+            'from_name' => null,
+            'custom_domain' => null,
+            'locale' => 'en',
             'procedures_enabled' => [],
             'coordinator_emails' => [],
+            'phone' => null,
+            'booking_url' => null,
+            'lead_capture_position' => 'end',
+            'embed_parent_origins' => [],
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('procedures_enabled');

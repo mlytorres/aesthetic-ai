@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Clinic;
 use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Models\Procedure;
+use App\Support\ContentSecurityPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,6 +42,7 @@ class ClinicController extends Controller
                 'phone' => $settings['phone'] ?? null,
                 'booking_url' => $settings['booking_url'] ?? null,
                 'lead_capture_position' => $settings['lead_capture_position'] ?? 'end',
+                'embed_parent_origins' => $settings['embed_parent_origins'] ?? [],
             ],
             'availableProcedures' => Procedure::where('active', true)
                 ->get(['slug', 'label', 'category'])
@@ -67,22 +70,44 @@ class ClinicController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'booking_url' => ['nullable', 'url', 'max:500'],
             'lead_capture_position' => ['required', Rule::in(['beginning', 'end'])],
+            'embed_parent_origins' => ['nullable', 'array', 'max:40'],
+            'embed_parent_origins.*' => ['nullable', 'string', 'max:512'],
         ]);
+
+        foreach ($validated['embed_parent_origins'] ?? [] as $line) {
+            if (! is_string($line) || trim($line) === '') {
+                continue;
+            }
+
+            if (ContentSecurityPolicy::normalizeParentOrigin($line) === null) {
+                throw ValidationException::withMessages([
+                    'embed_parent_origins' => __('Each line must be a valid origin (e.g. https://www.yourclinic.com).'),
+                ]);
+            }
+        }
+
+        $embedOrigins = collect($validated['embed_parent_origins'] ?? [])
+            ->map(fn (?string $o) => is_string($o) ? ContentSecurityPolicy::normalizeParentOrigin($o) : null)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         $tenant->update([
             'name' => $validated['name'],
             'settings' => array_merge($tenant->settings ?? [], [
                 'theme' => $validated['theme'],
-                'brand_primary' => $validated['brand_primary'] ?: null,
-                'brand_font' => $validated['brand_font'] ?: null,
-                'from_name' => $validated['from_name'] ?: null,
-                'custom_domain' => $validated['custom_domain'] ?: null,
+                'brand_primary' => ! empty($validated['brand_primary'] ?? null) ? $validated['brand_primary'] : null,
+                'brand_font' => ! empty($validated['brand_font'] ?? null) ? $validated['brand_font'] : null,
+                'from_name' => ! empty($validated['from_name'] ?? null) ? $validated['from_name'] : null,
+                'custom_domain' => ! empty($validated['custom_domain'] ?? null) ? $validated['custom_domain'] : null,
                 'locale' => $validated['locale'],
                 'procedures_enabled' => $validated['procedures_enabled'],
                 'coordinator_emails' => $validated['coordinator_emails'] ?? [],
-                'phone' => $validated['phone'] ?: null,
-                'booking_url' => $validated['booking_url'] ?: null,
+                'phone' => ! empty($validated['phone'] ?? null) ? $validated['phone'] : null,
+                'booking_url' => ! empty($validated['booking_url'] ?? null) ? $validated['booking_url'] : null,
                 'lead_capture_position' => $validated['lead_capture_position'],
+                'embed_parent_origins' => $embedOrigins,
                 'clinic_configured' => true,
             ]),
         ]);

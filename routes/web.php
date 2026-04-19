@@ -239,19 +239,19 @@ Route::middleware(['tenant', 'allow.frames'])->prefix('intake')->name('intake.')
 
     // Evaluation lifecycle (JSON responses — not Inertia redirects)
     Route::post('/evaluations', [EvaluationController::class, 'store'])
-        ->middleware(['throttle:intake.evaluation.create', 'plan.limits'])
+        ->middleware(['throttle:intake.evaluation.create', 'baa.intake', 'plan.limits'])
         ->name('evaluations.store');
 
     Route::post('/evaluations/{token}/quiz', [EvaluationController::class, 'quiz'])
-        ->middleware(['throttle:intake.quiz'])
+        ->middleware(['throttle:intake.quiz', 'baa.intake'])
         ->name('evaluations.quiz');
 
     Route::post('/evaluations/{token}/lead', [EvaluationController::class, 'lead'])
-        ->middleware(['throttle:intake.lead'])
+        ->middleware(['throttle:intake.lead', 'baa.intake'])
         ->name('evaluations.lead');
 
     Route::post('/evaluations/{token}/submit', [EvaluationController::class, 'submit'])
-        ->middleware(['throttle:intake.evaluation.submit', 'plan.limits'])
+        ->middleware(['throttle:intake.evaluation.submit', 'baa.intake', 'plan.limits'])
         ->name('evaluations.submit');
 
     // Plan limit exceeded — shown when a clinic's eval cap or subscription has lapsed.
@@ -259,7 +259,7 @@ Route::middleware(['tenant', 'allow.frames'])->prefix('intake')->name('intake.')
 
     // Photo upload
     Route::post('/evaluations/{token}/photos', [PhotoController::class, 'store'])
-        ->middleware(['throttle:intake.photos'])
+        ->middleware(['throttle:intake.photos', 'baa.intake'])
         ->name('evaluations.photos.store');
 
     // Patient Beauty Roadmap PDF (no auth — gated by evaluation token)
@@ -312,6 +312,10 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
         Route::delete('/{tenant}', [TenantAdminController::class, 'deactivate'])->name('deactivate');
         Route::post('/{id}/restore', [TenantAdminController::class, 'restore'])->name('restore');
         Route::patch('/{id}/features', [TenantAdminController::class, 'updateFeatures'])->name('features.update');
+        Route::patch('/{id}/baa', [TenantAdminController::class, 'updateBaa'])->name('baa.update');
+        Route::post('/{id}/baa/document', [TenantAdminController::class, 'uploadBaaDocument'])->name('baa.document.store');
+        Route::get('/{id}/baa/document', [TenantAdminController::class, 'downloadBaaDocument'])->name('baa.document.show');
+        Route::delete('/{id}/baa/document', [TenantAdminController::class, 'deleteBaaDocument'])->name('baa.document.destroy');
         Route::post('/{tenant}/users', [TenantAdminController::class, 'addUser'])->name('users.store');
         Route::post('/{tenant}/users/{user}/resend-invite', [TenantAdminController::class, 'resendInvite'])->name('users.resend');
     });

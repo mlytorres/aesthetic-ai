@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Facades\TenantContext;
+use Closure;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -27,6 +29,37 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         return parent::version($request);
+    }
+
+    /**
+     * Handle the incoming request — bridge Laravel session flash into
+     * Inertia's native flash channel so router.on('flash') fires on
+     * every response, including preserveScroll patch requests.
+     */
+    public function handle(Request $request, Closure $next): mixed
+    {
+        // Read session flash before the response is built (session is
+        // reflashed on redirect, so we must read it here, not in share()).
+        $toast = null;
+
+        if ($explicit = $request->session()->get('toast')) {
+            $toast = $explicit;
+        } else {
+            foreach (['success', 'error', 'warning', 'info'] as $type) {
+                if ($message = $request->session()->get("flash.{$type}")) {
+                    $toast = ['type' => $type, 'message' => $message];
+                    break;
+                }
+            }
+        }
+
+        // Push into Inertia's native flash channel (page.flash) so
+        // router.on('flash') fires and useFlashToast picks it up.
+        if ($toast !== null) {
+            Inertia::flash('toast', $toast);
+        }
+
+        return parent::handle($request, $next);
     }
 
     /**
@@ -60,8 +93,6 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('flash.error'),
                 'warning' => fn () => $request->session()->get('flash.warning'),
                 'info' => fn () => $request->session()->get('flash.info'),
-                // Backward-compatible flash event payload support.
-                'toast' => fn () => $request->session()->get('toast'),
             ],
         ];
     }

@@ -58,6 +58,7 @@ test('tenant list includes all tenants with correct shape', function () {
             ->has('tenants', fn ($tenants) => $tenants
                 ->where('0.name', 'Acme Clinic')
                 ->where('0.active', true)
+                ->where('0.baa_complete', false)
                 ->etc()
             )
         );

@@ -9,14 +9,17 @@ use App\Mail\UserInviteMail;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TenantAdminController extends Controller
 {
@@ -39,6 +42,7 @@ class TenantAdminController extends Controller
                 'users_count' => $t->users_count,
                 'active' => $t->deleted_at === null,
                 'created_at' => $t->created_at?->toDateString(),
+                'baa_complete' => $t->hasExecutedBaa(),
             ]),
         ]);
     }
@@ -69,6 +73,10 @@ class TenantAdminController extends Controller
                 'has_affiliate_program' => $tenant->hasAffiliateProgram(),
                 'active' => $tenant->deleted_at === null,
                 'created_at' => $tenant->created_at?->toDateString(),
+                'baa_signed_at' => $tenant->baa_signed_at?->toDateString(),
+                'baa_has_document' => $tenant->baa_document_path !== null
+                    && Storage::disk('local')->exists($tenant->baa_document_path),
+                'baa_intake_enforced' => config('security.require_baa_for_intake_submissions', true),
             ],
             'users' => $users,
             'plans' => $plans,
@@ -247,5 +255,79 @@ class TenantAdminController extends Controller
         ));
 
         return back()->with('flash.success', "Invitation resent to {$user->email}.");
+    }
+
+    // ─── Business Associate Agreement (HIPAA) ─────────────────────────────────
+
+    public function updateBaa(Request $request, string $id): RedirectResponse
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+
+        $request->validate([
+            'baa_signed_at' => ['nullable', 'string', 'date_format:Y-m-d'],
+        ]);
+
+        $raw = $request->input('baa_signed_at');
+
+        $tenant->update([
+            'baa_signed_at' => is_string($raw) && $raw !== ''
+                ? CarbonImmutable::parse($raw)->startOfDay()
+                : null,
+        ]);
+
+        return back()->with('flash.success', 'BAA details updated.');
+    }
+
+    public function uploadBaaDocument(Request $request, string $id): RedirectResponse
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+
+        $request->validate([
+            'document' => ['required', 'file', 'mimes:pdf', 'max:12288'],
+        ]);
+
+        if ($tenant->baa_document_path !== null) {
+            Storage::disk('local')->delete($tenant->baa_document_path);
+        }
+
+        $path = $request->file('document')->storeAs(
+            'baa-documents/'.$tenant->id,
+            'baa-signed.pdf',
+            'local',
+        );
+
+        $tenant->update(['baa_document_path' => $path]);
+
+        return back()->with('flash.success', 'Signed BAA PDF stored.');
+    }
+
+    public function deleteBaaDocument(string $id): RedirectResponse
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+
+        if ($tenant->baa_document_path !== null) {
+            Storage::disk('local')->delete($tenant->baa_document_path);
+        }
+
+        $tenant->update(['baa_document_path' => null]);
+
+        return back()->with('flash.success', 'Stored BAA document removed.');
+    }
+
+    public function downloadBaaDocument(string $id): BinaryFileResponse
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($id);
+
+        if ($tenant->baa_document_path === null || ! Storage::disk('local')->exists($tenant->baa_document_path)) {
+            abort(404);
+        }
+
+        $absolutePath = Storage::disk('local')->path($tenant->baa_document_path);
+
+        return response()->download(
+            $absolutePath,
+            'baa-'.$tenant->slug.'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 }

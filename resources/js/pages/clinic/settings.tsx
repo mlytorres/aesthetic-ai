@@ -29,15 +29,13 @@ interface ClinicFormData {
     phone: string;
     booking_url: string;
     lead_capture_position: 'beginning' | 'end';
+    embed_parent_origins: string[];
 }
 
 interface Props {
     clinic: ClinicFormData & {
         slug: string;
         logo_url: string | null;
-        phone: string | null;
-        booking_url: string | null;
-        lead_capture_position: 'beginning' | 'end';
     };
     availableProcedures: AvailableProcedure[];
 }
@@ -57,6 +55,7 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
             phone: clinic.phone ?? '',
             booking_url: clinic.booking_url ?? '',
             lead_capture_position: clinic.lead_capture_position ?? 'end',
+            embed_parent_origins: clinic.embed_parent_origins ?? [],
         });
 
     const [newEmail, setNewEmail] = useState('');
@@ -259,6 +258,58 @@ export default function ClinicSettings({ clinic, availableProcedures }: Props) {
                                     ))}
                                 </div>
                                 <InputError message={errors.theme} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Website embed (iframe) */}
+                    <div className="rounded-lg border border-sidebar-border/50 bg-card p-6">
+                        <h3 className="mb-6 text-base font-semibold text-foreground">
+                            Website embed (iframe)
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label
+                                    htmlFor="embed_parent_origins"
+                                    className="text-foreground"
+                                >
+                                    Allowed parent origins
+                                </Label>
+                                <p className="-mt-1 text-xs text-muted-foreground">
+                                    One origin per line (scheme + host + optional
+                                    port). Example:{' '}
+                                    <code className="font-mono">
+                                        https://www.yourclinic.com
+                                    </code>
+                                    . Only these sites can load your intake
+                                    wizard in an iframe. Leave empty to disallow
+                                    embedding everywhere.
+                                </p>
+                                <textarea
+                                    id="embed_parent_origins"
+                                    value={data.embed_parent_origins.join(
+                                        '\n',
+                                    )}
+                                    onChange={(e) =>
+                                        setData(
+                                            'embed_parent_origins',
+                                            e.target.value
+                                                .split('\n')
+                                                .map((s) => s.trim())
+                                                .filter(Boolean),
+                                        )
+                                    }
+                                    rows={5}
+                                    spellCheck={false}
+                                    className="border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 min-h-[120px] w-full max-w-xl rounded-md border px-3 py-2 font-mono text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+                                    placeholder={
+                                        'https://www.yourclinic.com\nhttps://staging.yourclinic.com'
+                                    }
+                                />
+                                <InputError
+                                    message={errors.embed_parent_origins}
+                                />
                             </div>
                         </div>
                     </div>

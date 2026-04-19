@@ -27,6 +27,8 @@ class Tenant extends Model
         'webhook_url',
         'webhook_secret',
         'settings',
+        'baa_signed_at',
+        'baa_document_path',
     ];
 
     protected function casts(): array
@@ -35,6 +37,8 @@ class Tenant extends Model
             'settings' => 'array',
             'webhook_secret' => 'encrypted',  // stored encrypted at rest
             'trial_ends_at' => 'datetime',
+            'baa_signed_at' => 'datetime',
+            'baa_document_path' => 'encrypted',
         ];
     }
 
@@ -61,6 +65,14 @@ class Tenant extends Model
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Whether a Business Associate Agreement execution date has been recorded for this clinic.
+     */
+    public function hasExecutedBaa(): bool
+    {
+        return $this->baa_signed_at !== null;
+    }
 
     // ─── Billing helpers ──────────────────────────────────────────────────────
 
@@ -154,7 +166,7 @@ class Tenant extends Model
 
         return (bool) ($this->settings['video_consultations_enabled'] ?? false);
     }
-    
+
     /**
      * Whether the affiliate program is enabled for this tenant.
      * True when explicitly toggled on in settings, OR the tenant is on the Pro plan.

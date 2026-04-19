@@ -7,13 +7,17 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireAffiliateProgram;
 use App\Http\Middleware\RequireBillingAccess;
+use App\Http\Middleware\RequireExecutedBaa;
 use App\Http\Middleware\RequireRole;
+use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\TenantMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Sentry\Laravel\Integration;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -34,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            SecurityHeadersMiddleware::class,
         ]);
 
         // Named middleware aliases — use in route groups
@@ -45,12 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'billing.access' => RequireBillingAccess::class,
             'allow.frames' => AllowFramesMiddleware::class,
             'affiliate.access' => RequireAffiliateProgram::class,
+            'baa.intake' => RequireExecutedBaa::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        \Sentry\Laravel\Integration::handles($exceptions);
+        Integration::handles($exceptions);
 
-        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, \Illuminate\Http\Request $request) {
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
             if (! app()->environment('local') && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
                 return inertia('error', ['status' => $response->getStatusCode()])
                     ->toResponse($request)
