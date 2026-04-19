@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Clinic;
 use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clinic\StoreAffiliatePartnerRequest;
+use App\Http\Requests\Clinic\UpdateAffiliatePartnerRequest;
 use App\Mail\AffiliatePartnerInviteMail;
 use App\Models\AffiliatePartner;
 use App\Services\AuditLog;
@@ -50,19 +51,19 @@ class AffiliatePartnerController extends Controller
 
         return Inertia::render('clinic/affiliate-partners', [
             'partners' => $partners->map(fn (AffiliatePartner $partner): array => [
-                'id' => $partner->id,
-                'name' => $partner->name,
-                'email' => $partner->email,
-                'platform' => $partner->platform,
-                'handle' => $partner->handle,
-                'status' => $partner->status,
-                'payout_cents' => $partner->payout_cents,
-                'currency' => $partner->currency,
+                'id'                => $partner->id,
+                'name'              => $partner->name,
+                'email'             => $partner->email,
+                'platform'          => $partner->platform,
+                'handle'            => $partner->handle,
+                'status'            => $partner->status,
+                'payout_cents'      => $partner->payout_cents,
+                'currency'          => $partner->currency,
                 'monthly_cap_cents' => $partner->monthly_cap_cents,
-                'hold_days' => $partner->hold_days,
-                'portal_url' => route('affiliate.portal.show', [
+                'hold_days'         => $partner->hold_days,
+                'portal_url'        => route('affiliate.portal.show', [
                     'partner' => $partner->id,
-                    'token' => $partner->portal_access_token,
+                    'token'   => $partner->portal_access_token,
                 ], absolute: true),
             ])->values(),
         ]);
@@ -86,39 +87,33 @@ class AffiliatePartnerController extends Controller
         );
     }
 
-    /**
-     * Queue the invite email. Wrapped in a try/catch so a mail driver hiccup never
-     * kills the create flow — the partner record is already persisted and the audit
-     * log captures the failure for follow-up.
-     */
-    private function sendPartnerInvite(AffiliatePartner $partner): bool
+    public function update(UpdateAffiliatePartnerRequest $request, string $affiliatePartner): RedirectResponse
     {
-        try {
-            Mail::to($partner->email)->queue(new AffiliatePartnerInviteMail(
-                partner: $partner,
-                tenant: TenantContext::get(),
-            ));
+        $partner = AffiliatePartner::findOrFail($affiliatePartner);
+        abort_unless($partner->tenant_id === TenantContext::id(), 404);
 
-            $this->auditLog->record('affiliate.partner.invite_sent', $partner, [
-                'affiliate_partner_id' => $partner->id,
-                'email' => $partner->email,
-            ]);
+        $partner->update($request->validated());
 
-            return true;
-        } catch (Throwable $e) {
-            Log::warning('Failed to queue affiliate partner invite', [
-                'affiliate_partner_id' => $partner->id,
-                'tenant_id' => $partner->tenant_id,
-                'error' => $e->getMessage(),
-            ]);
+        $this->auditLog->record('affiliate.partner.updated', $partner, [
+            'affiliate_partner_id' => $partner->id,
+        ]);
 
-            $this->auditLog->record('affiliate.partner.invite_failed', $partner, [
-                'affiliate_partner_id' => $partner->id,
-                'error' => $e->getMessage(),
-            ]);
+        return back()->with('flash.success', 'Partner updated.');
+    }
 
-            return false;
-        }
+    public function destroy(string $affiliatePartner): RedirectResponse
+    {
+        $partner = AffiliatePartner::findOrFail($affiliatePartner);
+        abort_unless($partner->tenant_id === TenantContext::id(), 404);
+
+        $partner->delete();
+
+        $this->auditLog->record('affiliate.partner.deleted', null, [
+            'affiliate_partner_id' => $partner->id,
+            'name'                 => $partner->name,
+        ]);
+
+        return back()->with('flash.success', 'Partner removed.');
     }
 
     public function rotatePortalToken(string $affiliatePartner): RedirectResponse
@@ -135,5 +130,40 @@ class AffiliatePartnerController extends Controller
         ]);
 
         return back()->with('flash.success', 'Affiliate portal token rotated.');
+    }
+
+    /**
+     * Queue the invite email. Wrapped in a try/catch so a mail driver hiccup never
+     * kills the create flow — the partner record is already persisted and the audit
+     * log captures the failure for follow-up.
+     */
+    private function sendPartnerInvite(AffiliatePartner $partner): bool
+    {
+        try {
+            Mail::to($partner->email)->queue(new AffiliatePartnerInviteMail(
+                partner: $partner,
+                tenant: TenantContext::get(),
+            ));
+
+            $this->auditLog->record('affiliate.partner.invite_sent', $partner, [
+                'affiliate_partner_id' => $partner->id,
+                'email'                => $partner->email,
+            ]);
+
+            return true;
+        } catch (Throwable $e) {
+            Log::warning('Failed to queue affiliate partner invite', [
+                'affiliate_partner_id' => $partner->id,
+                'tenant_id'            => $partner->tenant_id,
+                'error'                => $e->getMessage(),
+            ]);
+
+            $this->auditLog->record('affiliate.partner.invite_failed', $partner, [
+                'affiliate_partner_id' => $partner->id,
+                'error'                => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

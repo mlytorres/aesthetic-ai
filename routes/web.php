@@ -10,11 +10,13 @@ use App\Http\Controllers\Admin\TenantAdminController;
 use App\Http\Controllers\Affiliate\AffiliatePortalController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\Clinic\AffiliateAnalyticsController;
 use App\Http\Controllers\Clinic\AffiliateCampaignController;
 use App\Http\Controllers\Clinic\AffiliateFraudQueueController;
 use App\Http\Controllers\Clinic\AffiliateLinkController;
 use App\Http\Controllers\Clinic\AffiliatePartnerController;
 use App\Http\Controllers\Clinic\AffiliatePayoutController;
+use App\Http\Controllers\Clinic\CampaignAssetUploadController;
 use App\Http\Controllers\Clinic\BillingController;
 use App\Http\Controllers\Clinic\ClinicController;
 use App\Http\Controllers\Clinic\IntegrationController;
@@ -190,10 +192,14 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
             Route::middleware('affiliate.access')->group(function (): void {
                 Route::get('/affiliates/partners', [AffiliatePartnerController::class, 'index'])->name('affiliates.partners.index');
                 Route::post('/affiliates/partners', [AffiliatePartnerController::class, 'store'])->name('affiliates.partners.store');
+                Route::patch('/affiliates/partners/{affiliatePartner}', [AffiliatePartnerController::class, 'update'])->name('affiliates.partners.update');
+                Route::delete('/affiliates/partners/{affiliatePartner}', [AffiliatePartnerController::class, 'destroy'])->name('affiliates.partners.destroy');
                 Route::post('/affiliates/partners/{affiliatePartner}/rotate-token', [AffiliatePartnerController::class, 'rotatePortalToken'])->name('affiliates.partners.rotate-token');
                 Route::get('/affiliates/campaigns', [AffiliateCampaignController::class, 'index'])->name('affiliates.campaigns.index');
                 Route::post('/affiliates/campaigns', [AffiliateCampaignController::class, 'store'])->name('affiliates.campaigns.store');
                 Route::post('/affiliates/campaigns/{affiliateCampaign}/assets', [AffiliateCampaignController::class, 'storeAsset'])->name('affiliates.campaigns.assets.store');
+                Route::post('/affiliates/campaigns/{affiliateCampaign}/assets/presign', [CampaignAssetUploadController::class, 'presign'])->name('affiliates.campaigns.assets.presign');
+                Route::post('/affiliates/campaigns/{affiliateCampaign}/assets/confirm', [CampaignAssetUploadController::class, 'confirm'])->name('affiliates.campaigns.assets.confirm');
                 Route::post('/affiliates/campaigns/{affiliateCampaign}/links', [AffiliateLinkController::class, 'store'])->name('affiliates.campaigns.links.store');
                 Route::get('/affiliates/payouts', [AffiliatePayoutController::class, 'index'])->name('affiliates.payouts.index');
                 Route::patch('/affiliates/payouts/{affiliatePayoutLedger}/review', [AffiliatePayoutController::class, 'review'])->name('affiliates.payouts.review');
@@ -201,6 +207,7 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
                 Route::get('/affiliates/fraud-queue', [AffiliateFraudQueueController::class, 'index'])->name('affiliates.fraud-queue.index');
                 Route::patch('/affiliates/fraud-queue/{affiliatePayoutLedger}/clear', [AffiliateFraudQueueController::class, 'clear'])->name('affiliates.fraud-queue.clear');
                 Route::patch('/affiliates/fraud-queue/{affiliatePayoutLedger}/reject', [AffiliateFraudQueueController::class, 'reject'])->name('affiliates.fraud-queue.reject');
+                Route::get('/affiliates/analytics', [AffiliateAnalyticsController::class, 'index'])->name('affiliates.analytics.index');
             });
 
             Route::get('/integrations/api-tokens', [IntegrationController::class, 'listTokens'])->name('integrations.api-tokens.index');

@@ -8,12 +8,18 @@ use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clinic\ReleaseAffiliatePayoutRequest;
 use App\Http\Requests\Clinic\ReviewAffiliatePayoutRequest;
+use App\Mail\AffiliatePayoutApprovedMail;
+use App\Mail\AffiliatePayoutRejectedMail;
+use App\Mail\AffiliatePayoutReleasedMail;
 use App\Models\AffiliatePayoutLedger;
 use App\Services\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class AffiliatePayoutController extends Controller
 {
@@ -50,15 +56,14 @@ class AffiliatePayoutController extends Controller
             ->map(function (AffiliatePayoutLedger $payout): array {
                 $data = $payout->toArray();
                 $data['fraud_flags'] = $payout->metadata['fraud_flags'] ?? [];
-                $data['fraud_risk'] = $payout->metadata['fraud_risk'] ?? 'low';
-                // Keep response payload lean — the reviewer only needs the derived fields.
+                $data['fraud_risk']  = $payout->metadata['fraud_risk'] ?? 'low';
                 unset($data['metadata']);
 
                 return $data;
             });
 
         return Inertia::render('clinic/affiliate-payouts', [
-            'payouts' => $payouts,
+            'payouts'   => $payouts,
             'serverNow' => now()->toIso8601String(),
         ]);
     }
@@ -68,7 +73,7 @@ class AffiliatePayoutController extends Controller
         $payoutLedger = $this->resolvePayoutLedger($affiliatePayoutLedger);
 
         $validated = $request->validated();
-        $status = $validated['status'];
+        $status    = $validated['status'];
 
         if (! in_array($payoutLedger->status, [
             AffiliatePayoutLedger::STATUS_PENDING_HOLD,
@@ -79,7 +84,7 @@ class AffiliatePayoutController extends Controller
 
         DB::transaction(function () use ($payoutLedger, $status, $validated, $request): void {
             $payoutLedger->update([
-                'status' => $status,
+                'status'           => $status,
                 'reviewed_by_user_id' => $request->user()?->id,
                 'rejection_reason' => $status === AffiliatePayoutLedger::STATUS_REJECTED
                     ? $validated['rejection_reason']
@@ -87,10 +92,13 @@ class AffiliatePayoutController extends Controller
             ]);
 
             $this->auditLog->record('affiliate.payout.reviewed', $payoutLedger, [
-                'payout_id' => $payoutLedger->id,
+                'payout_id'  => $payoutLedger->id,
                 'new_status' => $status,
             ]);
         });
+
+        // Queue partner notification email (never let mail failure affect the response)
+        $this->notifyPartnerOfReview($payoutLedger, $status);
 
         return back()->with('flash.success', 'Payout review saved.');
     }
@@ -113,8 +121,8 @@ class AffiliatePayoutController extends Controller
 
         DB::transaction(function () use ($payoutLedger, $request): void {
             $payoutLedger->update([
-                'status' => AffiliatePayoutLedger::STATUS_RELEASED,
-                'released_at' => now(),
+                'status'              => AffiliatePayoutLedger::STATUS_RELEASED,
+                'released_at'         => now(),
                 'reviewed_by_user_id' => $request->user()?->id,
             ]);
 
@@ -123,13 +131,64 @@ class AffiliatePayoutController extends Controller
             ]);
         });
 
+        // Queue partner notification email
+        $this->notifyPartnerOfRelease($payoutLedger);
+
         return back()->with('flash.success', 'Payout released.');
+    }
+
+    private function notifyPartnerOfReview(AffiliatePayoutLedger $payout, string $status): void
+    {
+        try {
+            $partner = $payout->partner()->with([])->first();
+
+            if (! $partner) {
+                return;
+            }
+
+            $tenant = TenantContext::get();
+
+            $mailable = match ($status) {
+                AffiliatePayoutLedger::STATUS_APPROVED => new AffiliatePayoutApprovedMail($payout, $partner, $tenant),
+                AffiliatePayoutLedger::STATUS_REJECTED => new AffiliatePayoutRejectedMail($payout, $partner, $tenant),
+                default => null,
+            };
+
+            if ($mailable) {
+                Mail::to($partner->email)->queue($mailable);
+            }
+        } catch (Throwable $e) {
+            Log::warning('Failed to queue payout review notification', [
+                'payout_id' => $payout->id,
+                'status'    => $status,
+                'error'     => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function notifyPartnerOfRelease(AffiliatePayoutLedger $payout): void
+    {
+        try {
+            $partner = $payout->partner()->with([])->first();
+
+            if (! $partner) {
+                return;
+            }
+
+            Mail::to($partner->email)->queue(
+                new AffiliatePayoutReleasedMail($payout, $partner, TenantContext::get())
+            );
+        } catch (Throwable $e) {
+            Log::warning('Failed to queue payout release notification', [
+                'payout_id' => $payout->id,
+                'error'     => $e->getMessage(),
+            ]);
+        }
     }
 
     private function resolvePayoutLedger(string $id): AffiliatePayoutLedger
     {
         $payoutLedger = AffiliatePayoutLedger::findOrFail($id);
-
         abort_unless($payoutLedger->tenant_id === TenantContext::id(), 404);
 
         return $payoutLedger;

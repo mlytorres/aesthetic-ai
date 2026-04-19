@@ -17,6 +17,7 @@ import {
 import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
 import { index as affiliatePayoutsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliatePayoutController';
+import { index as affiliateAnalyticsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliateAnalyticsController';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -75,6 +76,11 @@ const affiliateNavItems: NavItem[] = [
         title: 'Affiliate Payouts',
         href: affiliatePayoutsIndex.url(),
         icon: CreditCard,
+    },
+    {
+        title: 'Affiliate Analytics',
+        href: affiliateAnalyticsIndex.url(),
+        icon: BarChart3,
     },
 ];
 
