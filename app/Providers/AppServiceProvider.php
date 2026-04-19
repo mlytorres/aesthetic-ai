@@ -55,6 +55,8 @@ class AppServiceProvider extends ServiceProvider
      * - intake.photos             → 15 photo uploads per 10 min per token+IP
      * - intake.quiz               → 30 quiz saves per minute per token+IP
      * - access-requests           → 5 demo/access requests per hour per IP
+     * - affiliate.click           → 60 clicks per minute per token+IP (also covers short_code)
+     * - affiliate.portal          → 60 portal visits per minute per token+IP
      */
     protected function configureRateLimiters(): void
     {
@@ -87,6 +89,24 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('access-requests', function (Request $request): Limit {
             return Limit::perHour(5)->by($request->ip());
+        });
+
+        // Affiliate click tracking — public, unauthenticated. Limit per link-identifier + IP so a
+        // single bad actor cannot run up click counts (skews attribution + potential payout fraud).
+        // Covers both /intake/a/{token} and /intake/s/{code}.
+        RateLimiter::for('affiliate.click', function (Request $request): Limit {
+            $identifier = $request->route('token')
+                ?? $request->route('code')
+                ?? $request->ip();
+
+            return Limit::perMinute(60)->by($identifier.'|'.$request->ip());
+        });
+
+        // Partner portal — signed with partner_id + portal_access_token. Limit per token+IP.
+        RateLimiter::for('affiliate.portal', function (Request $request): Limit {
+            $token = $request->route('token') ?? $request->ip();
+
+            return Limit::perMinute(60)->by($token.'|'.$request->ip());
         });
     }
 

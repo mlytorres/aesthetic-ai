@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Intake;
 
 use App\Http\Controllers\Controller;
-use App\Models\AffiliateLink;
 use App\Services\AffiliateAttributionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,10 +17,9 @@ class AffiliateShortLinkController extends Controller
 
     public function redirect(Request $request, string $code): RedirectResponse
     {
-        $link = AffiliateLink::query()
-            ->where('short_code', $code)
-            ->where('status', AffiliateLink::STATUS_ACTIVE)
-            ->first();
+        // Service bypasses TenantScope for the lookup (short_code is unique across tenants)
+        // and then hydrates TenantContext from the resolved link, so RLS allows downstream writes.
+        $link = $this->attributionService->findActiveLinkByShortCode($code);
 
         if ($link === null) {
             return redirect()->route('intake.show');

@@ -39,6 +39,7 @@
 **Sprint 10 — White-Label, SMS, Multilingual & Usage Alerts:** ✅ **Complete**
 **Sprint 11 — Procedure-Specific Photos, Quiz Expansion & Quiz Editor:** ✅ **Complete**
 **Sprint 12 — Telemedicine Video Consultations:** ✅ **Complete**
+**Sprint 13 — Influencer Affiliate Program (MVP):** ✅ **Complete** (RLS, fraud controls, and invite delivery all landed Apr 18, 2026 — legal sign-off still required before first payout)
 
 ---
 
@@ -449,6 +450,90 @@ Phase 4 — Scale (Months 11–18)      🚧 IN PROGRESS
 
 ---
 
+---
+
+### P1 Sprint 13 — Influencer Affiliate Program (MVP) ✅ COMPLETE
+
+> *HIPAA-compliant, multi-tenant influencer attribution + payout system. Pro-plan gated. See `docs/technical/affiliate-program-implementation-guide.md` and `docs/technical/influencer-affiliate-mvp-ticket-breakdown.md`.*
+
+**Data layer:**
+- [x] Migration `create_affiliate_program_tables` — 7 tables: `affiliate_partners`, `affiliate_campaigns`, `campaign_assets`, `affiliate_links`, `attribution_events`, `affiliate_payout_ledgers`, `affiliate_terms_acceptances`; `affiliate_link_id` FK added to `evaluations`
+- [x] All tables UUID PKs, tenant-scoped, soft-deletes, proper indexes (tenant, status, token, FK), idempotency unique key on `attribution_events(tenant_id, event_type, idempotency_key)`
+- [x] Follow-up migrations — `portal_access_token` unique column on partners, `short_code` on links
+
+**Domain models (all `HasTenantScope` + `HasUuids` + `SoftDeletes`):**
+- [x] `AffiliatePartner` — statuses `active/paused/blocked`, per-partner payout + hold config, auto-generated 48-char `portal_access_token`
+- [x] `AffiliateCampaign` — statuses `draft/active/paused/archived`, default payout cents, hold days, currency, date window, JSONB settings
+- [x] `CampaignAsset` — statuses `pending/approved/rejected/revoked`, `approved_by_user_id`, checksum, compliance notes
+- [x] `AffiliateLink` — 40-char primary `token` + 8-char social `short_code`, click counter, last-clicked timestamp
+- [x] `AttributionEvent` — `click`, `intake_started`, `evaluation_completed`; IP + user-agent hashed with app key; idempotency key prevents duplicate completions
+- [x] `AffiliatePayoutLedger` — lifecycle `pending_hold → approved → released` (or `rejected`), `hold_until`, `reviewed_by_user_id`, `released_at`; fraud queue columns `fraud_review_required`, `fraud_reviewed_at`, `fraud_reviewed_by_user_id`; `isFraudReviewPending()` helper
+- [x] `AffiliateTermsAcceptance` — versioned, hashed IP/user-agent, tenant-partner-version unique
+
+**Services & middleware:**
+- [x] `AffiliateAttributionService` — eligibility gate (active partner + active campaign + approved asset + current terms) checked on every `trackClick / trackIntakeStarted / trackEvaluationCompleted`; `firstOrCreate` idempotency for intake + completion; auto-generates `pending_hold` payout on first qualified completion; HMAC-SHA256 hash of IP/UA with app key; fraud flags: `missing_fingerprint`, `duplicate_ip_24h`, `high_click_velocity_1h`, `duplicate_ua_1h`, `high_velocity_24h`; per-tenant thresholds via `tenant.settings`; `isFraudReviewRequired()` auto-sets `fraud_review_required` on medium/high risk ledgers
+- [x] `RequireAffiliateProgram` middleware (`affiliate.access` alias) — Pro plan OR `settings.affiliate_program_enabled` toggle required; JSON 403 or redirect with flash
+- [x] `Tenant::hasAffiliateProgram()` helper
+- [x] `AuditLog` entries written for every partner/campaign/asset/link/payout state change
+
+**Controllers:**
+- [x] `Clinic\AffiliatePartnerController` — index + store + `rotatePortalToken`
+- [x] `Clinic\AffiliateCampaignController` — index + store + `storeAsset`
+- [x] `Clinic\AffiliateLinkController` — issue partner × campaign × approved-asset tracking links
+- [x] `Clinic\AffiliatePayoutController` — index, `review` (approve/reject), `release` (post-hold; blocked when fraud review pending)
+- [x] `Clinic\AffiliateFraudQueueController` — index (all fraud-flagged payouts), `clear` (not fraud, proceed), `reject` (confirmed fraud, auto-reject)
+- [x] `Affiliate\AffiliatePortalController` — signed-token portal (`hash_equals`), aggregate metrics, tracking links, signed media-kit URLs, terms acceptance endpoint
+- [x] `Intake\AffiliateAttributionController` — `/intake/a/{token}` click capture + redirect
+- [x] `Intake\AffiliateShortLinkController` — 8-char social short-link redirect
+- [x] `Admin\AffiliatePlatformController` — cross-tenant stats, top tenants by payout volume, recent-payouts table
+
+**Form requests:** StoreAffiliatePartner, StoreAffiliateCampaign, StoreCampaignAsset, StoreAffiliateLink, ReviewAffiliatePayout, ReleaseAffiliatePayout, TrackAttributionEvent (all with strict validation + tenant-scoped uniqueness)
+
+**Policy:** `AffiliatePartnerPolicy` — clinical-role + tenant-match guard on every action
+
+**Frontend (Inertia + React + TypeScript):**
+- [x] `clinic/affiliate-partners.tsx` — add-partner form + partner table with rotate-URL
+- [x] `clinic/affiliate-campaigns.tsx` — campaign + asset + link CRUD
+- [x] `clinic/affiliate-payouts.tsx` — approve / reject / release actions, hold window display
+- [x] `affiliate/portal.tsx` — luxury-dark partner portal; stats grid, tracking links with copy-to-clipboard, media kit with view/download/copy-caption, terms acceptance gate (aggregate-only — zero PHI)
+- [x] `affiliate/program.tsx` + `affiliate/guide.tsx` — public marketing and partner guide pages
+- [x] `admin/affiliate-audit.tsx` — global cross-tenant audit with 4 stat cards and recent-payouts table
+- [x] `clinic/affiliate-fraud-queue.tsx` — fraud velocity review queue: stat cards, pending-review table (Clear / Confirm Fraud), review history table with outcome badges
+- [x] Sidebar — new "Top Affiliate" nav group (Partners / Campaigns / Payouts / Fraud Queue) rendered when tenant has access
+
+**Evaluation integration:**
+- [x] `EvaluationController::store` — captures `aff` query/body, resolves eligible link via service, stamps `affiliate_link_id` on evaluation, fires `trackIntakeStarted` with idempotency
+- [x] `EvaluationController::submit` — fires `trackEvaluationCompleted`; auto-creates `pending_hold` payout ledger entry with `hold_until = now() + campaign.hold_days`
+- [x] Intake wizard preserves `?aff=...` token through the funnel (welcome page passthrough)
+
+**Seeder + docs:**
+- [x] `AffiliateProgramDemoSeeder` — 1 tenant campaign, approved + pending assets, 3 sample partners (accepted terms / no terms / paused), links, sample attribution + payout ledgers
+- [x] Public partner guide at `/affiliate-program/guide`
+- [x] Docs — `docs/technical/affiliate-program-implementation-guide.md`, `docs/technical/influencer-affiliate-mvp-ticket-breakdown.md`, `docs/partners/affiliate-partner-guide.md`
+- [x] `.env.testing` — SQLite forced in test bootstrap to prevent tests from mutating dev Postgres
+
+**Tests:**
+- [x] `AffiliateAttributionTest.php` — 8 tests: click event recording, idempotent intake + completion, payout auto-creation, eligibility gates (inactive partner, missing terms, unapproved asset), track endpoint redirect
+- [x] `AffiliatePayoutReviewTest.php` — state transition + tenant isolation + hold-window enforcement
+- [x] `AffiliatePortalTest.php` — signed-token access, terms acceptance, aggregate-only metrics, link listing
+- [x] `AffiliateFraudQueueTest.php` — 9 tests: index tenant isolation, clear + reject state transitions, idempotency guards, release enforcement, 404 guard on non-flagged payouts
+- [x] `DatabaseSeederPlansTest.php` — FREE plan restore test
+- [x] `makePayoutLedger()` helper moved to `tests/Pest.php` as a shared global fixture
+
+**Remaining launch blockers (see "What's Next"):**
+- [x] **Route collision fix** — short-link moved to `/intake/s/{code}` (Apr 18, 2026)
+- [x] **Broken route name** — portal now uses `intake.affiliate.short_link` (Apr 18, 2026)
+- [x] **Fatal bug** — `AffiliatePlatformController` now aggregates `pending_hold + approved` via valid constants (Apr 18, 2026)
+- [x] PostgreSQL RLS policies (`TKT-B2`) — defense-in-depth beyond Global Scope (migration `2026_04_18_060000_add_rls_policies_to_affiliate_tables.php`; pgsql-only, sqlite test suite unaffected)
+- [x] Fraud scoring + velocity review queue (`TKT-C5`) — migration adds `fraud_review_required` / `fraud_reviewed_at` / `fraud_reviewed_by_user_id` to ledger; new `high_click_velocity_1h` flag; per-tenant thresholds via `tenant.settings`; `AffiliateFraudQueueController` (index/clear/reject); release blocked until fraud review cleared; queue page at `/clinic/affiliates/fraud-queue` (Apr 18, 2026)
+- [x] Influencer invite email delivery (`TKT-C2`) — `AffiliatePartnerInviteMail` queued on partner creation; SMS variant still TBD
+- [ ] Post-proof verification workflow (`TKT-E1`)
+- [ ] Frontend Vitest + Playwright E2E coverage (`TKT-G2`, `TKT-G3`)
+- [ ] Security PASS/FAIL/WARNING report (`TKT-F1`)
+- [ ] Legal sign-off on anti-kickback + FTC disclosure — required before first payout
+
+---
+
 ## Phase 2 — Foundation
 
 **Theme:** Multi-procedure, multi-tenant, revenue model live.
@@ -607,7 +692,17 @@ Phase 4 — Scale (Months 11–18)      🚧 IN PROGRESS
 
 | Priority | Item | Phase | Effort |
 |---|---|---|---|
-| 🔥 1 | **Lead score visibility** — surface quiz-derived score badge + breakdown tooltip prominently in evaluation list and detail; makes the whole intake quiz investment visible to coordinators | Phase 3 | Small |
+| ✅ | ~~**Affiliate route collision**~~ — fixed Apr 18, 2026: short link moved to `/intake/s/{code}`; portal now uses the fully-qualified `intake.affiliate.short_link` route name. | Bug | XS |
+| ✅ | ~~**Admin affiliate audit fatal**~~ — fixed Apr 18, 2026: `AffiliatePlatformController::index` now aggregates `STATUS_PENDING_HOLD + STATUS_APPROVED` via valid constants. | Bug | XS |
+| ✅ | ~~**Affiliate feature-flag toggle**~~ — fixed Apr 18, 2026: `TenantAdminController::updateFeatures` accepts `affiliate_program_enabled`; admin tenant-show page has a gold-accented toggle. | Bug | Small |
+| ✅ | ~~**Affiliate portal rate limiting**~~ — fixed Apr 18, 2026: `affiliate.portal` limiter (60/min per token+IP) wrapped around the portal group (show + acceptTerms). | Security | XS |
+| ✅ | ~~**Affiliate link rate limiting + bot filter**~~ — fixed Apr 18, 2026: `affiliate.click` limiter (60/min per token+IP) on `/intake/a/{token}` + `/intake/s/{code}`, plus UA heuristic in `AffiliateAttributionService::trackClick` that skips `click_count` increments for known bots (still records the event with `metadata.bot=true`). | Security | Small |
+| ✅ | ~~**PostgreSQL RLS on affiliate tables (`TKT-B2`)**~~ — fixed Apr 18, 2026: migration `2026_04_18_060000_add_rls_policies_to_affiliate_tables.php` enables RLS on the 7 affiliate tables (pgsql-only, no-op on sqlite for tests). `TenantContext::set()` syncs the resolved tenant id to the `app.current_tenant_id` session GUC; `TenantContext::withAllTenants()` admin helper sets the `'all'` sentinel for cross-tenant audit reads. Public click endpoints hydrate context from the resolved link via `AffiliateAttributionService::hydrateTenantContext()`. | Security | Medium |
+| ✅ | ~~**Fraud scoring / velocity queue (`TKT-C5`)**~~ — fixed Apr 18, 2026: new `high_click_velocity_1h` flag + per-tenant threshold support via `tenant.settings`; migration adds `fraud_review_required` / `fraud_reviewed_at` / `fraud_reviewed_by_user_id` to ledger; medium+ risk auto-sets `fraud_review_required=true`; release endpoint blocks until fraud review cleared; `AffiliateFraudQueueController` with `index` / `clear` / `reject` actions; `clinic/affiliate-fraud-queue` Inertia page with pending/history tables + stats; 9 Pest tests. | Phase 4 | Medium |
+| ✅ | ~~**Influencer invite delivery (`TKT-C2`)**~~ — fixed Apr 18, 2026: `AffiliatePartnerInviteMail` + `emails.affiliate-partner-invite` Blade template (luxury dark) auto-queued from `AffiliatePartnerController::store()`; mail failures are caught, logged, and surfaced to the clinician via flash message instead of breaking the create flow. | Phase 4 | Small |
+| ✅ | ~~**Affiliate partners page design parity**~~ — fixed Apr 18, 2026: teal → gold, Platform Select, promoted table with Badge status. | Design | Small |
+| ✅ | ~~**Partner portal: verified route name**~~ — fixed Apr 18, 2026: portal uses Wayfinder `acceptTerms({ partner, token })` helpers. | Tech debt | XS |
+| 🔥 8 | **Lead score visibility** — surface quiz-derived score badge + breakdown tooltip prominently in evaluation list and detail; makes the whole intake quiz investment visible to coordinators | Phase 3 | Small |
 | 🔥 2 | **Per-tenant quiz customization** — tenants add custom questions on top of the universal keys; global quiz is the base; tenant overrides layered on top (Pro feature) | Phase 4 | Medium |
 | 3 | **Patient follow-up email** — 48-hour "did you book?" nudge with portal link dispatched after evaluation completes; closes more leads with minimal friction | Phase 2 | Small |
 | 4 | **Photo quality client-side enforcement** — actual blur/face detection in the browser (MediaPipe) instead of hardcoded `quality_score: 80` placeholder; prevents bad-angle photos reaching AI | ADR-004/005 | Medium |
@@ -641,6 +736,7 @@ Phase 4 — Scale (Months 11–18)      🚧 IN PROGRESS
 | ✅ | Lead Capture Strategy — Configurable Volume vs. Quality first capture, abandoned lead tracking | P2 | Done |
 | ✅ | Embeddable Widget — Dynamic JS loader, postMessage events, parent redirect support | P4 | Done |
 | ✅ | Procedure-specific photo protocols — 12 semantic `PhotoType` values, `PhotoSlot` with label+tip, procedure-aware `PhotoCapture.tsx` | Sprint 11 | Done |
+| ✅ | Influencer Affiliate Program MVP — 7 tenant-scoped tables, attribution pipeline (click → intake_started → evaluation_completed), payout ledger with hold window + review, signed partner portal, media kit, Pro-plan gated, `AffiliateProgramDemoSeeder` + public guide | Sprint 13 | Done |
 
 ---
 

@@ -7,12 +7,16 @@ namespace App\Http\Controllers\Clinic;
 use App\Facades\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clinic\StoreAffiliatePartnerRequest;
+use App\Mail\AffiliatePartnerInviteMail;
 use App\Models\AffiliatePartner;
 use App\Services\AuditLog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class AffiliatePartnerController extends Controller
 {
@@ -72,7 +76,49 @@ class AffiliatePartnerController extends Controller
             'platform' => $partner->platform,
         ]);
 
-        return back()->with('flash.success', 'Affiliate partner created.');
+        $inviteSent = $this->sendPartnerInvite($partner);
+
+        return back()->with(
+            'flash.success',
+            $inviteSent
+                ? 'Affiliate partner created — invite email sent.'
+                : 'Affiliate partner created. Invite email could not be queued; resend from the portal.'
+        );
+    }
+
+    /**
+     * Queue the invite email. Wrapped in a try/catch so a mail driver hiccup never
+     * kills the create flow — the partner record is already persisted and the audit
+     * log captures the failure for follow-up.
+     */
+    private function sendPartnerInvite(AffiliatePartner $partner): bool
+    {
+        try {
+            Mail::to($partner->email)->queue(new AffiliatePartnerInviteMail(
+                partner: $partner,
+                tenant: TenantContext::get(),
+            ));
+
+            $this->auditLog->record('affiliate.partner.invite_sent', $partner, [
+                'affiliate_partner_id' => $partner->id,
+                'email' => $partner->email,
+            ]);
+
+            return true;
+        } catch (Throwable $e) {
+            Log::warning('Failed to queue affiliate partner invite', [
+                'affiliate_partner_id' => $partner->id,
+                'tenant_id' => $partner->tenant_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->auditLog->record('affiliate.partner.invite_failed', $partner, [
+                'affiliate_partner_id' => $partner->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     public function rotatePortalToken(string $affiliatePartner): RedirectResponse

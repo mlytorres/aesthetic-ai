@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Facades\TenantContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -51,6 +52,9 @@ class HandleInertiaRequests extends Middleware
             // Tenant ID for the Reverb private channel subscription.
             // Null for super-admins who are not scoped to a tenant.
             'tenantId' => $request->user()?->tenant_id,
+            'features' => [
+                'affiliateProgram' => fn () => TenantContext::isSet() && TenantContext::get()->hasAffiliateProgram(),
+            ],
             'flash' => [
                 'success' => fn () => $request->session()->get('flash.success'),
                 'error' => fn () => $request->session()->get('flash.error'),

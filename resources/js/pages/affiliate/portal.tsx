@@ -44,31 +44,28 @@ interface LinkItem {
 
 interface Props {
     partner: Partner;
+    portal_token: string;
     terms: TermsInfo;
     metrics: Metrics;
     links: LinkItem[];
     media_kit: Asset[];
 }
 
-function currentPortalArgs(): { partner: string; token: string } {
-    const parts = window.location.pathname.split('/').filter(Boolean);
-
-    return {
-        partner: parts[1] ?? '',
-        token: parts[2] ?? '',
-    };
-}
-
 export default function AffiliatePortal({
     partner,
+    portal_token,
     terms,
     metrics,
     links,
     media_kit,
 }: Props) {
     const acceptCurrentTerms = (): void => {
-        const args = currentPortalArgs();
-        router.post(acceptTerms(args).url);
+        router.post(
+            acceptTerms({
+                partner: partner.id,
+                token: portal_token,
+            }).url,
+        );
     };
 
     const copyToClipboard = (text: string) => {

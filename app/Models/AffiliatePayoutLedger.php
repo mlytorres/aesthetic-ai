@@ -38,6 +38,9 @@ class AffiliatePayoutLedger extends Model
         'released_at',
         'rejection_reason',
         'metadata',
+        'fraud_review_required',
+        'fraud_reviewed_at',
+        'fraud_reviewed_by_user_id',
     ];
 
     protected function casts(): array
@@ -46,8 +49,15 @@ class AffiliatePayoutLedger extends Model
             'amount_cents' => 'integer',
             'hold_until' => 'datetime',
             'released_at' => 'datetime',
+            'fraud_reviewed_at' => 'datetime',
+            'fraud_review_required' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    public function isFraudReviewPending(): bool
+    {
+        return $this->fraud_review_required && $this->fraud_reviewed_at === null;
     }
 
     public function tenant(): BelongsTo
@@ -83,5 +93,10 @@ class AffiliatePayoutLedger extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_user_id');
+    }
+
+    public function fraudReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fraud_reviewed_by_user_id');
     }
 }

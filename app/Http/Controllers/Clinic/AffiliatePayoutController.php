@@ -44,8 +44,18 @@ class AffiliatePayoutController extends Controller
                 'hold_until',
                 'released_at',
                 'rejection_reason',
+                'metadata',
                 'created_at',
-            ]);
+            ])
+            ->map(function (AffiliatePayoutLedger $payout): array {
+                $data = $payout->toArray();
+                $data['fraud_flags'] = $payout->metadata['fraud_flags'] ?? [];
+                $data['fraud_risk'] = $payout->metadata['fraud_risk'] ?? 'low';
+                // Keep response payload lean — the reviewer only needs the derived fields.
+                unset($data['metadata']);
+
+                return $data;
+            });
 
         return Inertia::render('clinic/affiliate-payouts', [
             'payouts' => $payouts,
@@ -95,6 +105,10 @@ class AffiliatePayoutController extends Controller
 
         if ($payoutLedger->hold_until !== null && $payoutLedger->hold_until->isFuture()) {
             return back()->with('flash.error', 'Hold window has not expired yet.');
+        }
+
+        if ($payoutLedger->isFraudReviewPending()) {
+            return back()->with('flash.error', 'This payout has pending fraud flags and must be reviewed in the fraud queue before release.');
         }
 
         DB::transaction(function () use ($payoutLedger, $request): void {

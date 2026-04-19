@@ -200,11 +200,11 @@ export default function Register() {
 
                 <p className="text-center text-xs text-muted-foreground">
                     By signing up you agree to our{' '}
-                    <TextLink href="/terms" tabIndex={8} className="text-xs">
+                    <TextLink href="/legal/terms" tabIndex={8} className="text-xs">
                         Terms of Service
                     </TextLink>{' '}
                     and{' '}
-                    <TextLink href="/privacy" tabIndex={9} className="text-xs">
+                    <TextLink href="/legal/privacy" tabIndex={9} className="text-xs">
                         Privacy Policy
                     </TextLink>
                     .

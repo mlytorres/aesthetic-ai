@@ -34,7 +34,7 @@ Launch a HIPAA-compliant, multi-tenant influencer attribution and payout system 
   - Added clinic payout review UI page and route wiring.
   - Added regression tests for state transitions and tenant isolation.
 
-### Phase 3 In Progress
+### Phase 3 Completed
 - `TKT-C2` Partner onboarding + terms acceptance (partial):
   - Added per-partner secure portal token and rotation flow.
   - Added terms acceptance endpoint storing version + accepted timestamp + hashed IP/user-agent metadata.
@@ -50,16 +50,41 @@ Launch a HIPAA-compliant, multi-tenant influencer attribution and payout system 
   - Added operator and partner documentation in `docs/technical` and `docs/partners`.
   - Test safety hardening: forced SQLite in test bootstrap + added `.env.testing` defaults to prevent tests from hitting local development PostgreSQL data.
 
-### Not Started / Remaining
-- `TKT-B2` PostgreSQL RLS policies and isolation tests.
-- `TKT-C2` Influencer invitation delivery workflow (email/SMS) and hard backend gating to block inactive/non-accepted partners from link usage.
-- `TKT-C5` Fraud scoring/velocity controls and compliance review queue.
-- `TKT-D2` Influencer portal polish (copy-to-clipboard UX, stronger terms lock, and history views).
-- `TKT-D3` Compliance review UI.
-- `TKT-E1` Post proof verification workflow.
+### Phase 4 Completed (April 18, 2026)
+- `TKT-B2` PostgreSQL RLS policies delivered:
+  - Migration enables RLS on all 7 affiliate tables (pgsql-only, no-op on SQLite).
+  - `TenantContext::set()` syncs `app.current_tenant_id` GUC; `withAllTenants()` sets the `'all'` sentinel for admin reads.
+  - Fixed multi-statement `DB::statement()` bug (PostgreSQL rejects multiple commands in a single prepared statement).
+- `TKT-C2` Influencer invitation delivery delivered:
+  - `AffiliatePartnerInviteMail` mailable auto-queued from `AffiliatePartnerController::store()`.
+  - Luxury dark email template; mail failures caught and surfaced as flash message (non-fatal).
+- `TKT-C5` Fraud scoring / velocity review queue delivered:
+  - Migration adds `fraud_review_required` (bool, indexed), `fraud_reviewed_at`, `fraud_reviewed_by_user_id` to `affiliate_payout_ledgers`.
+  - New `high_click_velocity_1h` fraud flag: click burst from same IP in last 1h per partner.
+  - Per-tenant velocity thresholds via `tenant.settings` (`affiliate_fraud_daily_completion_threshold`, `affiliate_fraud_click_velocity_1h_threshold`), falling back to global `config/affiliate.php`.
+  - Medium+ risk ledgers auto-flagged with `fraud_review_required = true` at creation time.
+  - `AffiliatePayoutController::release` blocks payout release until fraud review is cleared.
+  - `AffiliateFraudQueueController` with `index` / `clear` / `reject` actions + audit logging.
+  - Inertia page `clinic/affiliate-fraud-queue` with stat cards, pending review table, and review history.
+  - 9 Pest tests covering tenant isolation, state transitions, and release enforcement.
+- `TKT-D3` Compliance review UI delivered (as fraud queue):
+  - Clinic staff can view all fraud-flagged payouts, clear legitimate flags, or confirm and reject fraud in one dedicated page.
+
+### Remaining
+- `TKT-D2` Influencer portal polish (copy-to-clipboard UX, stronger terms lock, history views).
+- `TKT-E1` Post-proof verification workflow.
 - `TKT-F1` Security PASS/FAIL/WARNING report.
-- `TKT-G2` Frontend unit tests.
-- `TKT-G3` End-to-end tests.
+- `TKT-G2` Frontend Vitest + RTL coverage.
+- `TKT-G3` End-to-end Playwright flow.
+
+### Bugs discovered in review (April 18, 2026)
+- ✅ `BUG-AF-01` — **Fixed Apr 18, 2026.** Short link moved to `/intake/s/{code}` (routes/web.php). Route name stays `intake.affiliate.short_link`.
+- ✅ `BUG-AF-02` — **Fixed Apr 18, 2026.** `AffiliatePortalController::show` now calls `route('intake.affiliate.short_link', …)`.
+- ✅ `BUG-AF-03` — **Fixed Apr 18, 2026.** `AffiliatePlatformController::index` now sums `STATUS_PENDING_HOLD + STATUS_APPROVED` via `whereIn`.
+- ✅ `BUG-AF-04` — **Fixed Apr 18, 2026.** `TenantAdminController::updateFeatures` now accepts `affiliate_program_enabled`; admin tenant-show has a gold-accented toggle mirroring Video Consultations.
+- ✅ `BUG-AF-05` — **Fixed Apr 18, 2026.** Added `affiliate.click` (60/min per token+IP) on `/intake/a/{token}` + `/intake/s/{code}` and `affiliate.portal` (60/min per token+IP) on the partner portal routes. Also added a bot filter in `AffiliateAttributionService::trackClick` that skips `click_count` bumps for known crawler UAs (records event with `metadata.bot=true`).
+- ✅ `BUG-AF-06` — **Fixed Apr 18, 2026.** `clinic/affiliate-partners.tsx` Save button now uses the platform gold (`#C9A84C`).
+- ✅ `BUG-AF-07` — **Fixed Apr 18, 2026.** `affiliate/portal.tsx` uses the Wayfinder-generated `acceptTerms({ partner, token }).url` helper.
 
 ## Compliance and Risk Gates (Launch Blockers)
 - Compensation is tied to qualified evaluation completion events, not treatment outcomes.

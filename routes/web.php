@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\AffiliatePlatformController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\Admin\QuizAdminController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Affiliate\AffiliatePortalController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Clinic\AffiliateCampaignController;
+use App\Http\Controllers\Clinic\AffiliateFraudQueueController;
 use App\Http\Controllers\Clinic\AffiliateLinkController;
 use App\Http\Controllers\Clinic\AffiliatePartnerController;
 use App\Http\Controllers\Clinic\AffiliatePayoutController;
@@ -196,6 +198,9 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
                 Route::get('/affiliates/payouts', [AffiliatePayoutController::class, 'index'])->name('affiliates.payouts.index');
                 Route::patch('/affiliates/payouts/{affiliatePayoutLedger}/review', [AffiliatePayoutController::class, 'review'])->name('affiliates.payouts.review');
                 Route::patch('/affiliates/payouts/{affiliatePayoutLedger}/release', [AffiliatePayoutController::class, 'release'])->name('affiliates.payouts.release');
+                Route::get('/affiliates/fraud-queue', [AffiliateFraudQueueController::class, 'index'])->name('affiliates.fraud-queue.index');
+                Route::patch('/affiliates/fraud-queue/{affiliatePayoutLedger}/clear', [AffiliateFraudQueueController::class, 'clear'])->name('affiliates.fraud-queue.clear');
+                Route::patch('/affiliates/fraud-queue/{affiliatePayoutLedger}/reject', [AffiliateFraudQueueController::class, 'reject'])->name('affiliates.fraud-queue.reject');
             });
 
             Route::get('/integrations/api-tokens', [IntegrationController::class, 'listTokens'])->name('integrations.api-tokens.index');
@@ -217,9 +222,14 @@ Route::middleware(['auth', 'verified', 'tenant', 'billing.access'])->group(funct
 // No auth — patients are not logged in.
 
 Route::middleware(['tenant', 'allow.frames'])->prefix('intake')->name('intake.')->group(function (): void {
-    Route::get('/a/{token}', [AffiliateAttributionController::class, 'track'])->name('affiliate.track');
+    Route::get('/a/{token}', [AffiliateAttributionController::class, 'track'])
+        ->middleware('throttle:affiliate.click')
+        ->name('affiliate.track');
 
-    Route::get('/a/{code}', [AffiliateShortLinkController::class, 'redirect'])->name('affiliate.short_link');
+    // Short social link — distinct path to avoid colliding with /a/{token}.
+    Route::get('/s/{code}', [AffiliateShortLinkController::class, 'redirect'])
+        ->middleware('throttle:affiliate.click')
+        ->name('affiliate.short_link');
 
     // Inertia page — loads wizard with clinic config + quiz definitions
     Route::get('/', [IntakeController::class, 'show'])->name('show');
@@ -265,10 +275,12 @@ Route::middleware(['tenant', 'allow.frames'])->prefix('intake')->name('intake.')
         ->name('patient.portal');
 });
 
-Route::middleware(['tenant'])->prefix('affiliate-portal')->name('affiliate.portal.')->group(function (): void {
-    Route::get('/{partner}/{token}', [AffiliatePortalController::class, 'show'])->name('show');
-    Route::post('/{partner}/{token}/accept-terms', [AffiliatePortalController::class, 'acceptTerms'])->name('accept-terms');
-});
+Route::middleware(['tenant', 'throttle:affiliate.portal'])
+    ->prefix('affiliate-portal')->name('affiliate.portal.')
+    ->group(function (): void {
+        Route::get('/{partner}/{token}', [AffiliatePortalController::class, 'show'])->name('show');
+        Route::post('/{partner}/{token}/accept-terms', [AffiliatePortalController::class, 'acceptTerms'])->name('accept-terms');
+    });
 
 // ─── Video Consultation — public patient join page ────────────────────────────
 // No auth — gated by a UUID token.
@@ -288,7 +300,7 @@ Route::middleware(['auth', 'super-admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/audit-log', [PlatformController::class, 'auditLog'])->name('audit-log');
 
     // ── Global Affiliate Audit ───────────────────────────────────────────
-    Route::get('/affiliates', [\App\Http\Controllers\Admin\AffiliatePlatformController::class, 'index'])->name('affiliates.index');
+    Route::get('/affiliates', [AffiliatePlatformController::class, 'index'])->name('affiliates.index');
 
     Route::prefix('tenants')->name('tenants.')->group(function (): void {
         Route::get('/', [TenantAdminController::class, 'index'])->name('index');

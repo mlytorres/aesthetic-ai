@@ -109,8 +109,12 @@ const clinicNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
-    const page = usePage<{ auth: { user: { tenant_id: string | null } } }>();
+    const page = usePage<{
+        auth: { user: { tenant_id: string | null } };
+        features: { affiliateProgram: boolean };
+    }>();
     const isSuperAdmin = page.props.auth.user?.tenant_id === null;
+    const hasAffiliateProgram = page.props.features?.affiliateProgram ?? false;
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -139,7 +143,7 @@ export function AppSidebar() {
                 ) : (
                     <>
                         <NavMain items={mainNavItems} />
-                        <NavAffiliates items={affiliateNavItems} />
+                        {hasAffiliateProgram && <NavAffiliates items={affiliateNavItems} />}
                         <NavClinic items={clinicNavItems} />
                     </>
                 )}

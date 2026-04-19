@@ -108,7 +108,7 @@ export default function Login({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="w-full border-[#C9A84C]/20 hover:bg-[#C9A84C]/5 hover:text-[#C9A84C]"
+                                className="w-full"
                                 asChild
                             >
                                 <a href={google.url()}>

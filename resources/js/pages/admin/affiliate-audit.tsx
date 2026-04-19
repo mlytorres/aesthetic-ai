@@ -1,16 +1,8 @@
 import { Head } from '@inertiajs/react';
 import Heading from '@/components/heading';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-    Table, 
-    TableBody, 
-    TableCell, 
-    TableHead, 
-    TableHeader, 
-    TableRow 
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, DollarSign, Activity, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, DollarSign, TrendingUp, Users } from 'lucide-react';
 
 interface Stats {
     total_partners: number;
@@ -121,26 +113,50 @@ export default function AffiliateAudit({ stats, topTenants, recentPayouts }: Pro
                         <CardTitle className="text-lg">Top Clinics by Affiliate Volume</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Clinic</TableHead>
-                                    <TableHead className="text-center">Partners</TableHead>
-                                    <TableHead className="text-right">Total Payouts</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {topTenants.map((tenant) => (
-                                    <TableRow key={tenant.id}>
-                                        <TableCell className="font-medium">{tenant.name}</TableCell>
-                                        <TableCell className="text-center">{tenant.affiliate_partners_count}</TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                            {formatCurrency(tenant.affiliate_payout_ledgers_sum_amount_cents || 0)}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        {topTenants.length === 0 ? (
+                            <div className="rounded-md border border-dashed border-sidebar-border/50 p-6 text-center text-sm text-muted-foreground">
+                                No clinic affiliate activity yet.
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-sidebar-border/50">
+                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Clinic
+                                            </th>
+                                            <th className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Partners
+                                            </th>
+                                            <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Total Payouts
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {topTenants.map((tenant) => (
+                                            <tr
+                                                key={tenant.id}
+                                                className="border-b border-sidebar-border/30"
+                                            >
+                                                <td className="px-4 py-3 font-medium text-foreground">
+                                                    {tenant.name}
+                                                </td>
+                                                <td className="px-4 py-3 text-center text-foreground">
+                                                    {tenant.affiliate_partners_count}
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold text-foreground">
+                                                    {formatCurrency(
+                                                        tenant.affiliate_payout_ledgers_sum_amount_cents ||
+                                                            0,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -150,33 +166,75 @@ export default function AffiliateAudit({ stats, topTenants, recentPayouts }: Pro
                         <CardTitle className="text-lg">Recent Ledger Activity</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Partner / Clinic</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                    <TableHead className="text-right">Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentPayouts.map((payout) => (
-                                    <TableRow key={payout.id}>
-                                        <TableCell>
-                                            <div className="font-medium">{payout.partner?.name || 'Unknown'}</div>
-                                            <div className="text-[10px] text-muted-foreground">{payout.tenant?.name}</div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {formatCurrency(payout.amount_cents)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge variant={payout.status === 'released' ? 'success' : 'outline'} className="text-[10px] uppercase">
-                                                {payout.status}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        {recentPayouts.length === 0 ? (
+                            <div className="rounded-md border border-dashed border-sidebar-border/50 p-6 text-center text-sm text-muted-foreground">
+                                No recent payout ledger activity.
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-sidebar-border/50">
+                                            <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Partner / Clinic
+                                            </th>
+                                            <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Amount
+                                            </th>
+                                            <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                                Status
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {recentPayouts.map((payout) => (
+                                            <tr
+                                                key={payout.id}
+                                                className="border-b border-sidebar-border/30"
+                                            >
+                                                <td className="px-4 py-3">
+                                                    <div className="font-medium text-foreground">
+                                                        {payout.partner?.name ||
+                                                            'Unknown'}
+                                                    </div>
+                                                    <div className="text-[10px] text-muted-foreground">
+                                                        {payout.tenant?.name}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-foreground">
+                                                    {formatCurrency(payout.amount_cents)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <Badge
+                                                        variant={
+                                                            payout.status === 'released'
+                                                                ? 'default'
+                                                                : payout.status ===
+                                                                    'rejected'
+                                                                  ? 'destructive'
+                                                                  : 'outline'
+                                                        }
+                                                        className={`text-[10px] uppercase ${
+                                                            payout.status === 'released'
+                                                                ? 'bg-emerald-500 text-white hover:bg-emerald-500/90'
+                                                                : payout.status ===
+                                                                    'approved'
+                                                                  ? 'border-[#C9A84C]/60 text-[#C9A84C]'
+                                                                  : payout.status ===
+                                                                      'pending_hold'
+                                                                    ? 'border-amber-500/60 text-amber-400'
+                                                                    : ''
+                                                        }`}
+                                                    >
+                                                        {payout.status.replace('_', ' ')}
+                                                    </Badge>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

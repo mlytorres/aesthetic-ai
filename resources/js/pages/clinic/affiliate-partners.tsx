@@ -1,9 +1,17 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     rotateToken as rotatePartnerToken,
     store as storeAffiliatePartner,
@@ -63,6 +71,16 @@ export default function AffiliatePartners({ partners }: Props) {
         router.post(rotatePartnerToken.url(partnerId));
     };
 
+    const copyPortalUrl = (url: string): void => {
+        void navigator.clipboard.writeText(url);
+    };
+
+    const formatCurrency = (cents: number, currency: string): string =>
+        new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency,
+        }).format(cents / 100);
+
     return (
         <>
             <Head title="Affiliate Partners" />
@@ -106,13 +124,22 @@ export default function AffiliatePartners({ partners }: Props) {
 
                         <div className="grid gap-2">
                             <Label htmlFor="platform">Platform</Label>
-                            <Input
-                                id="platform"
+                            <Select
                                 value={data.platform}
-                                onChange={(event) =>
-                                    setData('platform', event.target.value)
+                                onValueChange={(value) =>
+                                    setData('platform', value)
                                 }
-                            />
+                            >
+                                <SelectTrigger id="platform">
+                                    <SelectValue placeholder="Select platform" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="instagram">Instagram</SelectItem>
+                                    <SelectItem value="tiktok">TikTok</SelectItem>
+                                    <SelectItem value="youtube">YouTube</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <InputError message={errors.platform} />
                         </div>
 
@@ -160,7 +187,7 @@ export default function AffiliatePartners({ partners }: Props) {
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-[#0E9E8E] text-[#0A0A0F] hover:bg-[#0E9E8E]/90"
+                                className="bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90"
                             >
                                 {processing ? 'Saving...' : 'Save Partner'}
                             </Button>
@@ -173,58 +200,123 @@ export default function AffiliatePartners({ partners }: Props) {
                         Partners
                     </h3>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-sidebar-border/50">
-                                    <th className="px-4 py-2 text-left">Name</th>
-                                    <th className="px-4 py-2 text-left">Platform</th>
-                                    <th className="px-4 py-2 text-left">Portal URL</th>
-                                    <th className="px-4 py-2 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {partners.map((partner) => (
-                                    <tr
-                                        key={partner.id}
-                                        className="border-b border-sidebar-border/30"
-                                    >
-                                        <td className="px-4 py-2">
-                                            <div className="font-medium text-foreground">
-                                                {partner.name}
-                                            </div>
-                                            <div className="text-muted-foreground">
-                                                {partner.email}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            {partner.platform} ({partner.handle})
-                                        </td>
-                                        <td className="max-w-[280px] px-4 py-2 text-xs text-muted-foreground">
-                                            <a
-                                                className="underline"
-                                                href={partner.portal_url}
-                                                target="_blank"
-                                                rel="noreferrer"
+                    {partners.length === 0 ? (
+                        <div className="rounded-md border border-dashed border-sidebar-border/50 p-10 text-center text-sm text-muted-foreground">
+                            No affiliate partners yet. Add your first partner above to start generating tracking links.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-sidebar-border/50">
+                                        {[
+                                            'Partner',
+                                            'Platform',
+                                            'Status',
+                                            'Payout',
+                                            'Hold',
+                                            'Portal',
+                                        ].map((label, index) => (
+                                            <th
+                                                key={label}
+                                                className={`px-4 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground ${
+                                                    index === 3 || index === 4
+                                                        ? 'text-right'
+                                                        : index === 5
+                                                          ? 'text-right'
+                                                          : 'text-left'
+                                                }`}
                                             >
-                                                {partner.portal_url}
-                                            </a>
-                                        </td>
-                                        <td className="px-4 py-2 text-right">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => rotate(partner.id)}
-                                            >
-                                                Rotate URL
-                                            </Button>
-                                        </td>
+                                                {label}
+                                            </th>
+                                        ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {partners.map((partner) => (
+                                        <tr
+                                            key={partner.id}
+                                            className="border-b border-sidebar-border/30"
+                                        >
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-foreground">
+                                                    {partner.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {partner.email}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="capitalize text-foreground">
+                                                    {partner.platform}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {partner.handle}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Badge
+                                                    variant={
+                                                        partner.status === 'active'
+                                                            ? 'default'
+                                                            : partner.status === 'paused'
+                                                              ? 'secondary'
+                                                              : 'destructive'
+                                                    }
+                                                    className={
+                                                        partner.status === 'active'
+                                                            ? 'bg-[#C9A84C] text-[#0A0A0F] hover:bg-[#C9A84C]/90'
+                                                            : ''
+                                                    }
+                                                >
+                                                    <span className="capitalize">
+                                                        {partner.status}
+                                                    </span>
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium text-foreground">
+                                                {formatCurrency(
+                                                    partner.payout_cents,
+                                                    partner.currency,
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-right text-muted-foreground">
+                                                {partner.hold_days}d
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            copyPortalUrl(
+                                                                partner.portal_url,
+                                                            )
+                                                        }
+                                                        title="Copy portal URL to clipboard"
+                                                    >
+                                                        Copy URL
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            rotate(partner.id)
+                                                        }
+                                                        title="Revoke the current URL and issue a new one"
+                                                    >
+                                                        Rotate
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

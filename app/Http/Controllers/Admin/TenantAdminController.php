@@ -66,6 +66,7 @@ class TenantAdminController extends Controller
                 'plan_slug' => $tenant->plan?->slug,
                 'settings' => $tenant->settings,
                 'has_video_consultations' => $tenant->hasVideoConsultations(),
+                'has_affiliate_program' => $tenant->hasAffiliateProgram(),
                 'active' => $tenant->deleted_at === null,
                 'created_at' => $tenant->created_at?->toDateString(),
             ],
@@ -178,10 +179,15 @@ class TenantAdminController extends Controller
 
         $validated = $request->validate([
             'video_consultations_enabled' => ['required', 'boolean'],
+            'affiliate_program_enabled' => ['sometimes', 'boolean'],
         ]);
 
         $settings = $tenant->settings ?? [];
         $settings['video_consultations_enabled'] = $validated['video_consultations_enabled'];
+
+        if (array_key_exists('affiliate_program_enabled', $validated)) {
+            $settings['affiliate_program_enabled'] = $validated['affiliate_program_enabled'];
+        }
 
         $tenant->update(['settings' => $settings]);
 

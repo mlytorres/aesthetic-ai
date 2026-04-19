@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, LogIn, Mail, UserPlus, Video } from 'lucide-react';
+import { ArrowLeft, LogIn, Mail, Sparkles, UserPlus, Video } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -25,6 +25,7 @@ interface TenantData {
     plan_slug: string | null;
     settings: Record<string, unknown>;
     has_video_consultations: boolean;
+    has_affiliate_program: boolean;
     active: boolean;
     created_at: string;
 }
@@ -88,6 +89,8 @@ export default function TenantShow({
     const featuresForm = useForm({
         video_consultations_enabled:
             Boolean(tenant.settings?.video_consultations_enabled) || false,
+        affiliate_program_enabled:
+            Boolean(tenant.settings?.affiliate_program_enabled) || false,
     });
 
     const handleFeaturesSubmit = (e: React.FormEvent) => {
@@ -399,6 +402,7 @@ export default function TenantShow({
                                 <label className="flex cursor-pointer items-center justify-between rounded-lg border border-sidebar-border/50 bg-background/50 px-4 py-3">
                                     <div>
                                         <p className="text-sm font-medium text-foreground">
+                                            <Video className="mr-1.5 inline h-3.5 w-3.5 text-[#0E9E8E]" />
                                             Video Consultations
                                         </p>
                                         <p className="text-xs text-muted-foreground">
@@ -428,6 +432,43 @@ export default function TenantShow({
                                     tenant.plan_slug !== 'pro' && (
                                         <p className="text-xs text-[#0E9E8E]">
                                             ✓ Video consultations currently
+                                            enabled
+                                        </p>
+                                    )}
+
+                                <label className="flex cursor-pointer items-center justify-between rounded-lg border border-sidebar-border/50 bg-background/50 px-4 py-3">
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground">
+                                            <Sparkles className="mr-1.5 inline h-3.5 w-3.5 text-[#C9A84C]" />
+                                            Influencer Affiliate Program
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {tenant.plan_slug === 'pro'
+                                                ? 'Included in Pro plan'
+                                                : 'Enable partner tracking, campaigns, and payout ledger for this clinic'}
+                                        </p>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            featuresForm.data
+                                                .affiliate_program_enabled
+                                        }
+                                        disabled={tenant.plan_slug === 'pro'}
+                                        onChange={(e) =>
+                                            featuresForm.setData(
+                                                'affiliate_program_enabled',
+                                                e.target.checked,
+                                            )
+                                        }
+                                        className="h-4 w-4 rounded accent-[#C9A84C] disabled:opacity-50"
+                                    />
+                                </label>
+
+                                {tenant.has_affiliate_program &&
+                                    tenant.plan_slug !== 'pro' && (
+                                        <p className="text-xs text-[#C9A84C]">
+                                            ✓ Affiliate program currently
                                             enabled
                                         </p>
                                     )}

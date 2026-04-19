@@ -39,6 +39,24 @@ test('super admin can impersonate a tenant user', function (): void {
         ->and(session('impersonating_id'))->toBe($admin->id);
 });
 
+test('inertia impersonation request uses location() for cross-domain hard nav', function (): void {
+    $admin = superAdmin();
+    [$tenant, $owner] = tenantWithOwner();
+
+    $response = $this->actingAs($admin)
+        ->withHeaders(['X-Inertia' => 'true'])
+        ->post("/admin/users/{$owner->id}/impersonate");
+
+    // Inertia::location() returns a 409 Conflict with the X-Inertia-Location header
+    // so the client performs a full browser navigation instead of an XHR follow.
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location');
+
+    $location = $response->headers->get('X-Inertia-Location');
+    expect($location)->toContain($tenant->slug)
+        ->and($location)->toContain('/dashboard');
+});
+
 test('non-super-admin cannot reach the impersonate route', function (): void {
     [$tenant, $owner] = tenantWithOwner();
     $anotherUser = User::factory()->create(['tenant_id' => $tenant->id, 'role' => User::ROLE_ADMIN]);

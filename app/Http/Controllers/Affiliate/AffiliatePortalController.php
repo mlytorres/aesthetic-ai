@@ -108,6 +108,7 @@ class AffiliatePortalController extends Controller
                 'status' => $affiliatePartner->status,
                 'platform' => $affiliatePartner->platform,
             ],
+            'portal_token' => $token,
             'terms' => [
                 'current_version' => AffiliateTerms::CURRENT_VERSION,
                 'accepted_current' => $acceptedTerms,
@@ -133,7 +134,7 @@ class AffiliatePortalController extends Controller
                 'asset_name' => $link->asset?->name,
                 'tracking_url' => route('intake.affiliate.track', ['token' => $link->token], absolute: true),
                 'short_tracking_url' => $link->short_code
-                    ? route('affiliate.short_link', ['code' => $link->short_code], absolute: true)
+                    ? route('intake.affiliate.short_link', ['code' => $link->short_code], absolute: true)
                     : null,
             ])->values(),
             'media_kit' => $mediaKit,
