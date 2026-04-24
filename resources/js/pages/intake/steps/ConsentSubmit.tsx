@@ -200,6 +200,9 @@ const ConsentSubmit: FC<Props> = ({
                                 </p>
                                 <p className="mt-1 text-xs leading-relaxed text-[var(--intake-muted)]">
                                     {description}
+                                    {field === 'opt_in_sms' && (
+                                        <> <a href="/legal/privacy" target="_blank" className="underline hover:text-[var(--intake-fg)] transition-colors">Privacy Policy</a>.</>
+                                    )}
                                 </p>
                             </div>
                         </button>
