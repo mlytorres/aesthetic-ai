@@ -204,9 +204,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'rhinoplasty', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -297,104 +297,111 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
         // ─── Quiz: Brazilian Butt Lift ─────────────────────────────────────────
+        // Pattern demo: the universal + buttock-injection helpers are prepended
+        // to the procedure-specific questions. Apply this same array_merge to
+        // other procedure quizzes to roll out the universal medical-safety block.
 
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'bbl', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge(
+                    $this->universalSafetyQuestions(),
+                    $this->buttockInjectionQuestions(),
                     [
-                        'id' => 'q_concerns',
-                        'type' => 'multiselect',
-                        'label' => 'What are your primary goals for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'volume',       'label' => 'Increase volume and fullness'],
-                            ['value' => 'lift',         'label' => 'Lift and reshape'],
-                            ['value' => 'hourglass',    'label' => 'Achieve an hourglass silhouette'],
-                            ['value' => 'proportions',  'label' => 'Improve overall body proportions'],
-                            ['value' => 'asymmetry',    'label' => 'Correct asymmetry'],
+                        [
+                            'id' => 'q_concerns',
+                            'type' => 'multiselect',
+                            'label' => 'What are your primary goals for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'volume',       'label' => 'Increase volume and fullness'],
+                                ['value' => 'lift',         'label' => 'Lift and reshape'],
+                                ['value' => 'hourglass',    'label' => 'Achieve an hourglass silhouette'],
+                                ['value' => 'proportions',  'label' => 'Improve overall body proportions'],
+                                ['value' => 'asymmetry',    'label' => 'Correct asymmetry'],
+                            ],
+                            'branches' => [],
                         ],
-                        'branches' => [],
-                    ],
-                    [
-                        'id' => 'q_donor_areas',
-                        'type' => 'multiselect',
-                        'label' => 'Which areas would you like to use as donor sites for fat harvesting?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'abdomen',     'label' => 'Abdomen'],
-                            ['value' => 'flanks',      'label' => 'Flanks / love handles'],
-                            ['value' => 'back',        'label' => 'Back / bra rolls'],
-                            ['value' => 'thighs',      'label' => 'Inner or outer thighs'],
-                            ['value' => 'not_sure',    'label' => 'Not sure — surgeon\'s recommendation'],
+                        [
+                            'id' => 'q_donor_areas',
+                            'type' => 'multiselect',
+                            'label' => 'Which areas would you like to use as donor sites for fat harvesting?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'abdomen',     'label' => 'Abdomen'],
+                                ['value' => 'flanks',      'label' => 'Flanks / love handles'],
+                                ['value' => 'back',        'label' => 'Back / bra rolls'],
+                                ['value' => 'thighs',      'label' => 'Inner or outer thighs'],
+                                ['value' => 'not_sure',    'label' => 'Not sure — surgeon\'s recommendation'],
+                            ],
+                            'branches' => [],
                         ],
-                        'branches' => [],
-                    ],
-                    [
-                        'id' => 'q_weight_stable',
-                        'type' => 'boolean',
-                        'label' => 'Has your weight been stable for the past 6 or more months?',
-                        'required' => true,
-                        'branches' => [
-                            'true' => ['next' => 'q_timeline'],
-                            'false' => ['next' => 'q_weight_note'],
+                        [
+                            'id' => 'q_weight_stable',
+                            'type' => 'boolean',
+                            'label' => 'Has your weight been stable for the past 6 or more months?',
+                            'required' => true,
+                            'branches' => [
+                                'true' => ['next' => 'q_timeline'],
+                                'false' => ['next' => 'q_weight_note'],
+                            ],
                         ],
-                    ],
-                    [
-                        'id' => 'q_weight_note',
-                        'type' => 'text',
-                        'label' => 'Weight stability is important for lasting BBL results. Please tell us more about your situation.',
-                        'required' => false,
-                        'branches' => ['*' => ['next' => 'q_timeline']],
-                    ],
-                    [
-                        'id' => 'q_timeline',
-                        'type' => 'select',
-                        'label' => 'What is your timeline for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'asap',        'label' => 'As soon as possible'],
-                            ['value' => '3_months',    'label' => 'Within 3 months'],
-                            ['value' => '6_months',    'label' => 'Within 6 months'],
-                            ['value' => 'researching', 'label' => 'Still researching'],
+                        [
+                            'id' => 'q_weight_note',
+                            'type' => 'text',
+                            'label' => 'Weight stability is important for lasting BBL results. Please tell us more about your situation.',
+                            'required' => false,
+                            'branches' => ['*' => ['next' => 'q_timeline']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_budget']],
-                    ],
-                    [
-                        'id' => 'q_budget',
-                        'type' => 'select',
-                        'label' => 'What is your approximate budget for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'under_10k', 'label' => 'Under $10,000'],
-                            ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
-                            ['value' => '15k_25k',   'label' => '$15,000 – $20,000'],
-                            ['value' => 'over_25k',  'label' => 'Over $20,000'],
+                        [
+                            'id' => 'q_timeline',
+                            'type' => 'select',
+                            'label' => 'What is your timeline for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'asap',        'label' => 'As soon as possible'],
+                                ['value' => '3_months',    'label' => 'Within 3 months'],
+                                ['value' => '6_months',    'label' => 'Within 6 months'],
+                                ['value' => 'researching', 'label' => 'Still researching'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_budget']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_referral']],
-                    ],
-                    [
-                        'id' => 'q_referral',
-                        'type' => 'select',
-                        'label' => 'How did you hear about us?',
-                        'required' => false,
-                        'options' => [
-                            ['value' => 'instagram', 'label' => 'Instagram'],
-                            ['value' => 'google',    'label' => 'Google Search'],
-                            ['value' => 'referral',  'label' => 'Friend or family'],
-                            ['value' => 'tiktok',    'label' => 'TikTok'],
-                            ['value' => 'other',     'label' => 'Other'],
+                        [
+                            'id' => 'q_budget',
+                            'type' => 'select',
+                            'label' => 'What is your approximate budget for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'under_10k', 'label' => 'Under $10,000'],
+                                ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
+                                ['value' => '15k_25k',   'label' => '$15,000 – $20,000'],
+                                ['value' => 'over_25k',  'label' => 'Over $20,000'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_referral']],
                         ],
-                        'branches' => [],
-                    ],
-                ],
+                        [
+                            'id' => 'q_referral',
+                            'type' => 'select',
+                            'label' => 'How did you hear about us?',
+                            'required' => false,
+                            'options' => [
+                                ['value' => 'instagram', 'label' => 'Instagram'],
+                                ['value' => 'google',    'label' => 'Google Search'],
+                                ['value' => 'referral',  'label' => 'Friend or family'],
+                                ['value' => 'tiktok',    'label' => 'TikTok'],
+                                ['value' => 'other',     'label' => 'Other'],
+                            ],
+                            'branches' => [],
+                        ],
+                    ]
+                ),
             ]
         );
 
@@ -403,94 +410,98 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'lipo_360', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge(
+                    $this->universalSafetyQuestions(),
+                    $this->buttockInjectionQuestions(),
                     [
-                        'id' => 'q_concerns',
-                        'type' => 'multiselect',
-                        'label' => 'Which areas are you looking to treat?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'upper_abdomen', 'label' => 'Upper abdomen'],
-                            ['value' => 'lower_abdomen', 'label' => 'Lower abdomen / pouch'],
-                            ['value' => 'flanks',        'label' => 'Flanks / love handles'],
-                            ['value' => 'back',          'label' => 'Back / bra rolls'],
-                            ['value' => 'inner_thighs',  'label' => 'Inner thighs'],
-                            ['value' => 'outer_thighs',  'label' => 'Outer thighs'],
+                        [
+                            'id' => 'q_concerns',
+                            'type' => 'multiselect',
+                            'label' => 'Which areas are you looking to treat?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'upper_abdomen', 'label' => 'Upper abdomen'],
+                                ['value' => 'lower_abdomen', 'label' => 'Lower abdomen / pouch'],
+                                ['value' => 'flanks',        'label' => 'Flanks / love handles'],
+                                ['value' => 'back',          'label' => 'Back / bra rolls'],
+                                ['value' => 'inner_thighs',  'label' => 'Inner thighs'],
+                                ['value' => 'outer_thighs',  'label' => 'Outer thighs'],
+                            ],
+                            'branches' => [],
                         ],
-                        'branches' => [],
-                    ],
-                    [
-                        'id' => 'q_skin_laxity',
-                        'type' => 'select',
-                        'label' => 'How would you describe your skin elasticity in the treatment area(s)?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'excellent', 'label' => 'Excellent — firm and elastic'],
-                            ['value' => 'mild',      'label' => 'Mild laxity — some looseness'],
-                            ['value' => 'moderate',  'label' => 'Moderate laxity — noticeable looseness'],
+                        [
+                            'id' => 'q_skin_laxity',
+                            'type' => 'select',
+                            'label' => 'How would you describe your skin elasticity in the treatment area(s)?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'excellent', 'label' => 'Excellent — firm and elastic'],
+                                ['value' => 'mild',      'label' => 'Mild laxity — some looseness'],
+                                ['value' => 'moderate',  'label' => 'Moderate laxity — noticeable looseness'],
+                            ],
+                            'branches' => [],
                         ],
-                        'branches' => [],
-                    ],
-                    [
-                        'id' => 'q_weight_stable',
-                        'type' => 'boolean',
-                        'label' => 'Has your weight been stable for the past 12 months?',
-                        'required' => true,
-                        'branches' => [
-                            'true' => ['next' => 'q_timeline'],
-                            'false' => ['next' => 'q_weight_note'],
+                        [
+                            'id' => 'q_weight_stable',
+                            'type' => 'boolean',
+                            'label' => 'Has your weight been stable for the past 12 months?',
+                            'required' => true,
+                            'branches' => [
+                                'true' => ['next' => 'q_timeline'],
+                                'false' => ['next' => 'q_weight_note'],
+                            ],
                         ],
-                    ],
-                    [
-                        'id' => 'q_weight_note',
-                        'type' => 'text',
-                        'label' => 'Liposuction works best when your weight is stable. Please tell us more about your situation.',
-                        'required' => false,
-                        'branches' => ['*' => ['next' => 'q_timeline']],
-                    ],
-                    [
-                        'id' => 'q_timeline',
-                        'type' => 'select',
-                        'label' => 'What is your timeline for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'asap',        'label' => 'As soon as possible'],
-                            ['value' => '3_months',    'label' => 'Within 3 months'],
-                            ['value' => '6_months',    'label' => 'Within 6 months'],
-                            ['value' => 'researching', 'label' => 'Still researching'],
+                        [
+                            'id' => 'q_weight_note',
+                            'type' => 'text',
+                            'label' => 'Liposuction works best when your weight is stable. Please tell us more about your situation.',
+                            'required' => false,
+                            'branches' => ['*' => ['next' => 'q_timeline']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_budget']],
-                    ],
-                    [
-                        'id' => 'q_budget',
-                        'type' => 'select',
-                        'label' => 'What is your approximate budget for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'under_10k', 'label' => 'Under $10,000'],
-                            ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
-                            ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
-                            ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                        [
+                            'id' => 'q_timeline',
+                            'type' => 'select',
+                            'label' => 'What is your timeline for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'asap',        'label' => 'As soon as possible'],
+                                ['value' => '3_months',    'label' => 'Within 3 months'],
+                                ['value' => '6_months',    'label' => 'Within 6 months'],
+                                ['value' => 'researching', 'label' => 'Still researching'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_budget']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_referral']],
-                    ],
-                    [
-                        'id' => 'q_referral',
-                        'type' => 'select',
-                        'label' => 'How did you hear about us?',
-                        'required' => false,
-                        'options' => [
-                            ['value' => 'instagram', 'label' => 'Instagram'],
-                            ['value' => 'google',    'label' => 'Google Search'],
-                            ['value' => 'referral',  'label' => 'Friend or family'],
-                            ['value' => 'tiktok',    'label' => 'TikTok'],
-                            ['value' => 'other',     'label' => 'Other'],
+                        [
+                            'id' => 'q_budget',
+                            'type' => 'select',
+                            'label' => 'What is your approximate budget for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'under_10k', 'label' => 'Under $10,000'],
+                                ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
+                                ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
+                                ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_referral']],
                         ],
-                        'branches' => [],
-                    ],
-                ],
+                        [
+                            'id' => 'q_referral',
+                            'type' => 'select',
+                            'label' => 'How did you hear about us?',
+                            'required' => false,
+                            'options' => [
+                                ['value' => 'instagram', 'label' => 'Instagram'],
+                                ['value' => 'google',    'label' => 'Google Search'],
+                                ['value' => 'referral',  'label' => 'Friend or family'],
+                                ['value' => 'tiktok',    'label' => 'TikTok'],
+                                ['value' => 'other',     'label' => 'Other'],
+                            ],
+                            'branches' => [],
+                        ],
+                    ]
+                ),
             ]
         );
 
@@ -499,9 +510,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'breast_augmentation', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -598,7 +609,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -607,9 +618,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'facelift', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -710,7 +721,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -719,109 +730,112 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'tummy_tuck', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge(
+                    $this->universalSafetyQuestions(),
                     [
-                        'id' => 'q_concerns',
-                        'type' => 'multiselect',
-                        'label' => 'Which concerns would you like to address?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'excess_skin',   'label' => 'Excess loose skin on the abdomen'],
-                            ['value' => 'muscle_repair', 'label' => 'Separated or weakened abdominal muscles'],
-                            ['value' => 'belly_button',  'label' => 'Reshape or reposition belly button'],
-                            ['value' => 'stretch_marks', 'label' => 'Stretch marks on lower abdomen'],
-                            ['value' => 'overall_flat',  'label' => 'Overall flatter stomach contour'],
+                        [
+                            'id' => 'q_concerns',
+                            'type' => 'multiselect',
+                            'label' => 'Which concerns would you like to address?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'excess_skin',   'label' => 'Excess loose skin on the abdomen'],
+                                ['value' => 'muscle_repair', 'label' => 'Separated or weakened abdominal muscles'],
+                                ['value' => 'belly_button',  'label' => 'Reshape or reposition belly button'],
+                                ['value' => 'stretch_marks', 'label' => 'Stretch marks on lower abdomen'],
+                                ['value' => 'overall_flat',  'label' => 'Overall flatter stomach contour'],
+                            ],
+                            'branches' => [],
                         ],
-                        'branches' => [],
-                    ],
-                    [
-                        'id' => 'q_post_pregnancy',
-                        'type' => 'boolean',
-                        'label' => 'Is this related to changes from pregnancy or childbirth?',
-                        'required' => true,
-                        'branches' => ['*' => ['next' => 'q_future_pregnancy']],
-                    ],
-                    [
-                        'id' => 'q_future_pregnancy',
-                        'type' => 'boolean',
-                        'label' => 'Are you planning to have more children in the future?',
-                        'required' => true,
-                        'branches' => ['*' => ['next' => 'q_diastasis']],
-                    ],
-                    [
-                        'id' => 'q_diastasis',
-                        'type' => 'boolean',
-                        'label' => 'Have you been told or do you suspect you have diastasis recti (abdominal muscle separation)?',
-                        'required' => true,
-                        'branches' => ['*' => ['next' => 'q_prior_surgery']],
-                    ],
-                    [
-                        'id' => 'q_prior_surgery',
-                        'type' => 'boolean',
-                        'label' => 'Have you had any previous abdominal surgery (C-section, hernia repair, laparoscopy)?',
-                        'required' => true,
-                        'branches' => [
-                            'true' => ['next' => 'q_prior_details'],
-                            'false' => ['next' => 'q_weight_stable'],
+                        [
+                            'id' => 'q_post_pregnancy',
+                            'type' => 'boolean',
+                            'label' => 'Is this related to changes from pregnancy or childbirth?',
+                            'required' => true,
+                            'branches' => ['*' => ['next' => 'q_future_pregnancy']],
                         ],
-                    ],
-                    [
-                        'id' => 'q_prior_details',
-                        'type' => 'text',
-                        'label' => 'Please briefly describe the previous abdominal surgery.',
-                        'required' => false,
-                        'branches' => ['*' => ['next' => 'q_weight_stable']],
-                    ],
-                    [
-                        'id' => 'q_weight_stable',
-                        'type' => 'boolean',
-                        'label' => 'Has your weight been stable for the past 6 months or more?',
-                        'required' => true,
-                        'branches' => ['*' => ['next' => 'q_timeline']],
-                    ],
-                    [
-                        'id' => 'q_timeline',
-                        'type' => 'select',
-                        'label' => 'What is your timeline for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'asap',        'label' => 'As soon as possible'],
-                            ['value' => '3_months',    'label' => 'Within 3 months'],
-                            ['value' => '6_months',    'label' => 'Within 6 months'],
-                            ['value' => 'researching', 'label' => 'Still researching'],
+                        [
+                            'id' => 'q_future_pregnancy',
+                            'type' => 'boolean',
+                            'label' => 'Are you planning to have more children in the future?',
+                            'required' => true,
+                            'branches' => ['*' => ['next' => 'q_diastasis']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_budget']],
-                    ],
-                    [
-                        'id' => 'q_budget',
-                        'type' => 'select',
-                        'label' => 'What is your approximate budget for this procedure?',
-                        'required' => true,
-                        'options' => [
-                            ['value' => 'under_10k', 'label' => 'Under $10,000'],
-                            ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
-                            ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
-                            ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                        [
+                            'id' => 'q_diastasis',
+                            'type' => 'boolean',
+                            'label' => 'Have you been told or do you suspect you have diastasis recti (abdominal muscle separation)?',
+                            'required' => true,
+                            'branches' => ['*' => ['next' => 'q_prior_surgery']],
                         ],
-                        'branches' => ['*' => ['next' => 'q_referral']],
-                    ],
-                    [
-                        'id' => 'q_referral',
-                        'type' => 'select',
-                        'label' => 'How did you hear about us?',
-                        'required' => false,
-                        'options' => [
-                            ['value' => 'instagram', 'label' => 'Instagram'],
-                            ['value' => 'google',    'label' => 'Google Search'],
-                            ['value' => 'referral',  'label' => 'Friend or family'],
-                            ['value' => 'tiktok',    'label' => 'TikTok'],
-                            ['value' => 'other',     'label' => 'Other'],
+                        [
+                            'id' => 'q_prior_surgery',
+                            'type' => 'boolean',
+                            'label' => 'Have you had any previous abdominal surgery (C-section, hernia repair, laparoscopy)?',
+                            'required' => true,
+                            'branches' => [
+                                'true' => ['next' => 'q_prior_details'],
+                                'false' => ['next' => 'q_weight_stable'],
+                            ],
                         ],
-                        'branches' => [],
-                    ],
-                ],
+                        [
+                            'id' => 'q_prior_details',
+                            'type' => 'text',
+                            'label' => 'Please briefly describe the previous abdominal surgery.',
+                            'required' => false,
+                            'branches' => ['*' => ['next' => 'q_weight_stable']],
+                        ],
+                        [
+                            'id' => 'q_weight_stable',
+                            'type' => 'boolean',
+                            'label' => 'Has your weight been stable for the past 6 months or more?',
+                            'required' => true,
+                            'branches' => ['*' => ['next' => 'q_timeline']],
+                        ],
+                        [
+                            'id' => 'q_timeline',
+                            'type' => 'select',
+                            'label' => 'What is your timeline for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'asap',        'label' => 'As soon as possible'],
+                                ['value' => '3_months',    'label' => 'Within 3 months'],
+                                ['value' => '6_months',    'label' => 'Within 6 months'],
+                                ['value' => 'researching', 'label' => 'Still researching'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_budget']],
+                        ],
+                        [
+                            'id' => 'q_budget',
+                            'type' => 'select',
+                            'label' => 'What is your approximate budget for this procedure?',
+                            'required' => true,
+                            'options' => [
+                                ['value' => 'under_10k', 'label' => 'Under $10,000'],
+                                ['value' => '10k_15k',   'label' => '$10,000 – $15,000'],
+                                ['value' => '15k_25k',   'label' => '$15,000 – $25,000'],
+                                ['value' => 'over_25k',  'label' => 'Over $25,000'],
+                            ],
+                            'branches' => ['*' => ['next' => 'q_referral']],
+                        ],
+                        [
+                            'id' => 'q_referral',
+                            'type' => 'select',
+                            'label' => 'How did you hear about us?',
+                            'required' => false,
+                            'options' => [
+                                ['value' => 'instagram', 'label' => 'Instagram'],
+                                ['value' => 'google',    'label' => 'Google Search'],
+                                ['value' => 'referral',  'label' => 'Friend or family'],
+                                ['value' => 'tiktok',    'label' => 'TikTok'],
+                                ['value' => 'other',     'label' => 'Other'],
+                            ],
+                            'branches' => [],
+                        ],
+                    ]
+                ),
             ]
         );
 
@@ -830,9 +844,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'mommy_makeover', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -918,7 +932,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -927,9 +941,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'breast_lift', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1015,7 +1029,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1024,9 +1038,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'breast_reduction', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1106,7 +1120,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1115,9 +1129,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'skinny_bbl', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), $this->buttockInjectionQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1215,7 +1229,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1224,9 +1238,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'gynecomastia', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1315,7 +1329,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1324,9 +1338,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'abdominal_etching', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1410,7 +1424,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1419,9 +1433,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'liposuction', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1507,7 +1521,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1516,9 +1530,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'reverse_bbl', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), $this->buttockInjectionQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1597,7 +1611,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1606,9 +1620,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'j_plasma', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1682,7 +1696,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1698,9 +1712,9 @@ class ProcedureSeeder extends Seeder
             QuizDefinition::updateOrCreate(
                 ['procedure_slug' => $slug, 'is_active' => true],
                 [
-                    'version' => 1,
+                    'version' => 2,
                     'is_active' => true,
-                    'questions' => [
+                    'questions' => array_merge($this->universalSafetyQuestions(), [
                         [
                             'id' => 'q_concerns',
                             'type' => 'multiselect',
@@ -1779,7 +1793,7 @@ class ProcedureSeeder extends Seeder
                             ],
                             'branches' => [],
                         ],
-                    ],
+                    ]),
                 ]
             );
         }
@@ -1789,9 +1803,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'axillary_liposuction', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1862,7 +1876,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1871,9 +1885,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'labiaplasty', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -1940,7 +1954,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -1949,9 +1963,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'scar_revision', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2035,7 +2049,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2044,9 +2058,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'face_and_neck_lift', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2130,7 +2144,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2139,9 +2153,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'eyelid_surgery', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2215,7 +2229,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2224,9 +2238,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'chin_lipo', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2292,7 +2306,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2301,9 +2315,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'bichectomy', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2369,7 +2383,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2378,9 +2392,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => 'otoplasty', 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'multiselect',
@@ -2464,7 +2478,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
 
@@ -2563,5 +2577,140 @@ class ProcedureSeeder extends Seeder
                 ],
             ]
         );
+    }
+
+    /**
+     * Universal medical-safety questions prepended to every procedure quiz.
+     * Returns 7 questions covering age, body type, smoking, pregnancy,
+     * medical history, medications, and allergies.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function universalSafetyQuestions(): array
+    {
+        return [
+            [
+                'id' => 'q_age_range',
+                'type' => 'select',
+                'label' => 'What is your age range?',
+                'required' => true,
+                'options' => [
+                    ['value' => '18_24', 'label' => '18-24'],
+                    ['value' => '25_34', 'label' => '25-34'],
+                    ['value' => '35_44', 'label' => '35-44'],
+                    ['value' => '45_54', 'label' => '45-54'],
+                    ['value' => '55_64', 'label' => '55-64'],
+                    ['value' => '65_plus', 'label' => '65+'],
+                ],
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_body_type',
+                'type' => 'select',
+                'label' => 'How would you describe your body type?',
+                'required' => true,
+                'options' => [
+                    ['value' => 'lean', 'label' => 'Lean / slim'],
+                    ['value' => 'average', 'label' => 'Average'],
+                    ['value' => 'curvy', 'label' => 'Curvy / athletic'],
+                    ['value' => 'heavier', 'label' => 'Heavier set'],
+                    ['value' => 'unsure', 'label' => 'Not sure'],
+                ],
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_smoking',
+                'type' => 'select',
+                'label' => 'Do you smoke or use nicotine products?',
+                'required' => true,
+                'options' => [
+                    ['value' => 'never', 'label' => 'Never'],
+                    ['value' => 'quit_past', 'label' => 'Quit more than 6 months ago'],
+                    ['value' => 'quit_recent', 'label' => 'Quit within the last 6 months'],
+                    ['value' => 'social', 'label' => 'Occasionally / socially'],
+                    ['value' => 'regular', 'label' => 'Regularly'],
+                ],
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_pregnancy_status',
+                'type' => 'select',
+                'label' => 'Are you currently pregnant, breastfeeding, or have you recently been pregnant?',
+                'required' => true,
+                'options' => [
+                    ['value' => 'none', 'label' => 'None of the above'],
+                    ['value' => 'pregnant', 'label' => 'Currently pregnant'],
+                    ['value' => 'breastfeeding', 'label' => 'Currently breastfeeding'],
+                    ['value' => 'recent_birth', 'label' => 'Gave birth within the last 6 months'],
+                    ['value' => 'recent_loss', 'label' => 'Recent pregnancy loss'],
+                ],
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_medical_history',
+                'type' => 'multiselect',
+                'label' => 'Do you have any of the following medical conditions? (Select all that apply)',
+                'required' => true,
+                'options' => [
+                    ['value' => 'none', 'label' => 'None'],
+                    ['value' => 'diabetes', 'label' => 'Diabetes'],
+                    ['value' => 'thyroid', 'label' => 'Thyroid disorder'],
+                    ['value' => 'hypertension', 'label' => 'High blood pressure'],
+                    ['value' => 'heart_lung', 'label' => 'Heart or lung disease'],
+                    ['value' => 'clotting', 'label' => 'Blood clotting disorder'],
+                    ['value' => 'bleeding', 'label' => 'Bleeding disorder'],
+                    ['value' => 'autoimmune', 'label' => 'Autoimmune disease'],
+                    ['value' => 'seizures', 'label' => 'Seizures / epilepsy'],
+                    ['value' => 'stroke', 'label' => 'History of stroke'],
+                    ['value' => 'sickle_cell', 'label' => 'Sickle cell disease or trait'],
+                ],
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_medications',
+                'type' => 'text',
+                'label' => 'List any medications, supplements, or herbal products you currently take. (Type "none" if none.)',
+                'required' => true,
+                'branches' => [],
+            ],
+            [
+                'id' => 'q_allergies',
+                'type' => 'text',
+                'label' => 'List any drug, food, or material allergies. (Type "none" if none.)',
+                'required' => true,
+                'branches' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Buttock-injection safety gate prepended to BBL-family procedures
+     * (BBL, Lipo 360, Skinny BBL, Reverse BBL). Asks if the patient has
+     * had prior buttock injections (silicone, biopolymers, etc.) and
+     * branches to a follow-up text question if yes.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buttockInjectionQuestions(): array
+    {
+        return [
+            [
+                'id' => 'q_buttock_injections',
+                'type' => 'boolean',
+                'label' => 'Have you ever had injections to your buttocks (silicone, biopolymers, PMMA, hydrogel, or any non-fat filler)?',
+                'required' => true,
+                'branches' => [
+                    'true' => ['next' => 'q_buttock_injection_details'],
+                    'false' => ['next' => 'q_concerns'],
+                ],
+            ],
+            [
+                'id' => 'q_buttock_injection_details',
+                'type' => 'text',
+                'label' => 'Please describe what was injected, when, and by whom (if known).',
+                'required' => false,
+                'branches' => ['*' => ['next' => 'q_concerns']],
+            ],
+        ];
     }
 }
