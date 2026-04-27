@@ -1,533 +1,152 @@
-# ARCHITECTURE.md — System Design
-
-> AestheticAI is a multi-tenant SaaS platform. This document defines the system boundaries, data flow, tenant isolation model, and key architectural decisions.
+# Technical Architecture — Aesthetic AI SaaS Platform
 
 ---
 
-## System Overview
+## 1. System Overview
+
+The platform is a **multi-tenant SaaS application** where each clinic (tenant) operates in a fully isolated data environment. The system is composed of four primary layers: the Patient-Facing Intake Layer, the AI Processing Layer, the Clinic Operations Layer, and the Infrastructure & Security Layer.
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Patient-Facing Layer                          │
-│                                                                       │
-│   Clinic Website ──embed──► AestheticAI Widget (iFrame/JS SDK)      │
-│                                    │                                  │
-│                           Intake Wizard Flow                          │
-│                    Quiz → Photo Capture → Submission                  │
-└─────────────────────────────────┬───────────────────────────────────┘
-                                  │ HTTPS (TLS 1.3)
-┌─────────────────────────────────▼───────────────────────────────────┐
-│                         Application Layer                             │
-│                                                                       │
-│   Laravel 13 (PHP 8.5)           React 19 + Inertia.js v3           │
-│   ├── API Routes                 ├── Patient Portal                  │
-│   ├── Inertia Routes             ├── Clinic Dashboard                │
-│   ├── Webhook Receivers          └── Embed Widget                    │
-│   └── Queue Workers                                                   │
-└───────────┬──────────────────────────────────────────┬──────────────┘
-            │                                          │
-┌───────────▼──────────┐                 ┌────────────▼──────────────┐
-│    Data Layer        │                 │    AI Processing Layer     │
-│                      │                 │                            │
-│  PostgreSQL (RLS)    │                 │  Laravel Horizon (Redis)           │
-│  ├── tenants         │                 │  ├── ValidatePhotoQualityJob       │
-│  ├── patients        │                 │  ├── ExtractFacialLandmarksJob     │
-│  ├── evaluations     │                 │  ├── ExtractBodyLandmarksJob       │
-│  ├── audit_logs      │                 │  ├── CalculateProportionsJob       │
-│  └── webhooks        │                 │  ├── CalculateBodyProportionsJob   │
-│                      │                 │  ├── GenerateRecommendationsJob    │
-│  S3 (KMS encrypted)  │                 │  ├── GenerateSimulationJob         │
-│  └── patient-photos/ │                 │  └── NotifyClinicNewEvalJob        │
-│                      │                 │                                    │
-│                      │                 │  AWS Rekognition                   │
-│                      │                 │  laravel/ai → OpenAI gpt-image-1   │
-└──────────────────────┘                 └────────────────────────────┘
-            │
-┌───────────▼──────────────────────────────────────────────────────────┐
-│                    External Integration Layer                          │
-│                                                                        │
-│  Nextech CRM ◄─── Webhooks ───► PatientNow ◄─── Webhooks ──► Others │
-│  Google Calendar ◄── Booking Sync                                     │
-│  SendGrid ◄── Transactional Email                                     │
-│  Twilio ◄── SMS Notifications                                         │
-└────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Patient-Facing Layer                      │
+│        Smart Intake Portal  ·  AI Photo Capture Tool        │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                    AI Processing Layer                       │
+│     Computer Vision API  ·  Proportion Engine  ·  Scoring   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                  Clinic Operations Layer                     │
+│    Multi-Tenant Dashboard  ·  Lead Queue  ·  Clinical Brief  │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│              Infrastructure & Security Layer                 │
+│     AWS HealthLake / GCP Healthcare  ·  BAA  ·  Audit Log   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Multi-Tenancy Model
+## 2. Technology Stack
 
-### Tenant Isolation Strategy: Shared Database, Separate Schemas via RLS
+### Backend
 
-Each clinic (tenant) shares the same PostgreSQL database but data is isolated at multiple levels:
+- **Framework:** Laravel 12 (PHP 8.3+)
+- **API:** RESTful JSON API + Inertia.js server-side rendering
+- **Queue:** Laravel Horizon (Redis) for async AI job processing
+- **Jobs:** Photo analysis, lead scoring, notification dispatch
 
-**Level 1 — Application Layer (Eloquent Global Scope)**
+### Frontend
 
-```php
-// Automatically applied to every query via HasTenantScope trait
-WHERE table.tenant_id = 'resolved-tenant-uuid'
-```
+- **Framework:** React 18 + Inertia.js (no separate SPA build pipeline)
+- **Styling:** TailwindCSS (luxury/premium UI system)
+- **3D Mapping:** Three.js for anatomical model interaction
+- **Mobile Capture:** Custom PWA camera overlay with ghosting/transparency
 
-**Level 2 — Database Layer (PostgreSQL Row-Level Security)**
+### Database
 
-```sql
--- Set once per connection from application
-SET LOCAL app.current_tenant_id = 'resolved-tenant-uuid';
+- **Engine:** MySQL 8.x with Row-Level Security enforced via Laravel Global Scopes
+- **Multi-Tenancy:** `tenant_id` column on all patient/lead tables; middleware resolves tenant from subdomain
+- **Migrations:** All schema changes version-controlled via Laravel Migrations
 
--- RLS Policy on patients table
-CREATE POLICY tenant_isolation ON patients
-    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
-```
+### AI / Computer Vision
 
-**Level 3 — Network Layer (Subdomain Routing)**
-
-```
-clinic-a.aestheticai.com → TenantResolver → tenant_id: uuid-a
-clinic-b.aestheticai.com → TenantResolver → tenant_id: uuid-b
-```
-
-**Tenant Resolution Order (`TenantMiddleware`):**
-
-1.  Subdomain: `{slug}.symetrihealth.com` (production) / `{slug}.aesthetic-ai.test` (local) — resolved from `APP_URL`
-2.  `X-Clinic-ID` header: REST API routes with Bearer token
-3.  Authenticated user: Staff on main domain — resolved from `user.tenant_id`
-
-> **Important for production:** `APP_URL` must be set to the root domain (e.g. `https://symetrihealth.com`) so subdomain resolution works correctly for unauthenticated requests (patient intake).
-
-> **Octane note:** `TenantContext`, `AuditLog`, and `SecureFileService` are bound as `scoped()` (not `singleton()`) in `AppServiceProvider` so they reset between requests in long-running Octane workers. Never change these to `singleton()` — it would cause tenant context to bleed across requests.
+- **Approach:** Hybrid — custom business logic layer wrapping medical-grade third-party CV APIs
+- **Photo Analysis:** Face landmark detection, skin laxity estimation, symmetry scoring
+- **Proportion Engine:** Golden Ratio calculation, facial thirds analysis
+- **Procedure Matcher:** Rule-based + ML model that maps visual markers to procedure recommendations
 
 ---
 
-## Data Model Overview
+## 3. Multi-Tenancy Design
 
-### Core Entities
+Each clinic is a **tenant** resolved via subdomain (e.g., `miamilife.aestheticai.com`).
 
 ```
-tenants
-├── id (uuid)
-├── slug                    -- subdomain identifier
-├── name                    -- clinic display name
-├── plan_id                 -- subscription tier
-├── webhook_url             -- CRM webhook target
-├── webhook_secret          -- HMAC signing key
-└── settings (jsonb)        -- UI customization
+Request → SubdomainTenantMiddleware
+              → Resolve Tenant from DB
+              → Set App::tenant()
+              → All Eloquent queries auto-scoped via TenantScope (Global Scope)
+```
 
-patients
-├── id
-├── tenant_id               -- REQUIRED on all patient tables
-├── external_crm_id         -- ID in clinic's existing CRM
-├── email (encrypted)       -- PHI: AES-256 encrypted at rest
-├── phone (encrypted)       -- PHI: AES-256 encrypted at rest
-├── name_hash               -- For deduplication without exposing name
-└── created_via             -- 'widget' | 'import' | 'api'
+Key principles:
 
-evaluations
-├── id (uuid)
-├── tenant_id
-├── patient_id
-├── procedure_of_interest   -- e.g., 'rhinoplasty'
-├── status                  -- enum: draft|submitted|analyzing|complete|failed
-├── quiz_answers (jsonb)    -- All intake form responses
-├── analysis_data (jsonb)   -- AI vision results
-├── lead_score              -- 0-100 composite score
-├── priority                -- urgent|high|medium|standard
-├── secure_token            -- Used in magic links and webhook references
-└── completed_at
+- Every model that holds patient data implements `BelongsToTenant`
+- `tenant_id` is injected at the model boot level — never manually
+- Cross-tenant data access is architecturally impossible at the application layer
 
-photos
-├── id
-├── tenant_id
-├── evaluation_id
-├── type                    -- front|left_profile|right_profile|back|left_side|right_side|
-│                              abdomen_front|abdomen_side|chest_front|eyes_closed|arm_front|additional
-├── s3_key                  -- Encrypted path in S3
-├── quality_score           -- 0-100 from validation job
-├── analysis_status         -- pending|complete|failed
-└── taken_at
+---
 
-quiz_definitions            -- Global (no tenant_id) — managed by platform via QuizAdminController
-├── id (uuid)
-├── procedure_slug          -- FK → procedures.slug
-├── version                 -- Integer, increments on each save
-├── questions (jsonb)       -- [{id, type, label, required, options[], branches{}}]
-├── is_active               -- Unique(procedure_slug, is_active) — one active + one archived max
-└── timestamps
+## 4. Security & HIPAA Compliance
 
-audit_log_entries           -- Append-only, never deleted
-├── id
-├── tenant_id
-├── user_id                 -- null for patient actions
-├── action                  -- e.g., 'evaluation.photo.viewed'
-├── subject_type + id       -- Polymorphic reference
-├── ip_address
-└── created_at              -- No updated_at (immutable)
+### Data Storage
+
+- Patient photos and PHI stored exclusively in **AWS HealthLake** or **Google Cloud Healthcare API** (pre-certified HIPAA environments)
+- No PHI ever written to application-layer file storage (no local S3 buckets with plain access)
+
+### Data Transmission
+
+- Patient records accessed only via **time-limited, signed Magic Links** (expiry: 24–72 hours)
+- All data in transit encrypted via **TLS 1.3**
+- Inbound photo uploads use **direct-to-cloud signed URLs** — never proxied through app servers
+
+### Access Control
+
+- Role-based access: Surgeon · Coordinator · Front Desk · Admin
+- Laravel Policies enforce per-role permissions on every resource
+- All access events written to an immutable **audit log table**
+
+### Agreements
+
+- A **Business Associate Agreement (BAA)** is executed with every clinic before onboarding
+- Platform-level BAA signed with AWS / GCP
+
+---
+
+## 5. Notification & Delivery System
+
+```
+New Patient Submission
+  → AI Processing Job queued (Redis/Horizon)
+  → Photo analysis completes
+  → Lead Score computed
+  → "New Evaluation Ready" notification dispatched
+        → Clinic coordinator receives: Magic Link (encrypted portal)
+        → No PHI in email body — link only
+  → Surgeon receives: Pre-Op Clinical Brief (portal-only, role-gated)
 ```
 
 ---
 
-## Request Lifecycle
+## 6. CRM Webhook Integration
 
-### Patient Submitting Evaluation
+The platform exposes outbound webhooks to sync lead data with external CRMs:
 
-```
-1. Patient opens embed widget on clinic website
-   └── Widget loads: GET /embed/{clinic_slug}
-       └── TenantResolver identifies tenant from slug
-
-2. Patient completes wizard steps
-   └── State managed client-side (no partial saves with PHI)
-   └── Each step validates locally before advancing
-
-3. Photo capture step
-   └── MediaStream API accesses device camera
-   └── Client-side quality check (blur, angle, lighting)
-   └── Photo compressed client-side, then uploaded:
-       POST /api/evaluations/{token}/photos
-       └── SecureFileService stores to S3 with KMS encryption
-       └── AuditLog::record('photo.uploaded', $photo)
-
-4. Final submission
-   POST /api/evaluations
-   └── EvaluationService::create($data)
-   └── AI pipeline dispatched to queue
-   └── Returns: { token, portal_url }
-
-5. Queue processes asynchronously (no user waiting):
-   ValidatePhoto → ExtractLandmarks → AnalyzeProportions
-   → GenerateRecommendations → CalculateLeadScore
-   → GenerateClinicalBrief → NotifyClinic
-
-6. Clinic notification
-   └── Email: "New evaluation ready — [Lead Score: 87, High Priority]"
-   └── Webhook: POST to clinic CRM with evaluation_token
-   └── Dashboard: Real-time update via Laravel Echo + Pusher
-```
-
-### Coordinator Viewing Lead
-
-```
-1. Coordinator receives "New Evaluation" email
-   └── Email contains Magic Link (secure, one-time)
-
-2. Magic Link validation
-   GET /portal/clinic/{token}
-   └── MagicLinkService::validate($token)
-   └── Session established for coordinator
-   └── AuditLog::record('coordinator.portal.accessed', $evaluation)
-
-3. Dashboard loads evaluation
-   GET /api/evaluations/{id}
-   └── Tenant scope verified
-   └── PHI access logged
-   └── Photos returned as signed S3 URLs (15-min expiry)
-
-4. Coordinator marks as contacted
-   PATCH /api/evaluations/{id}/status
-   └── Status: analyzing → contacted
-   └── Webhook fired to CRM
-```
+CRMIntegration MethodNextechREST webhook → patient record creationPatientNowREST webhook → lead intake syncCustom CRMsGeneric webhook payload (configurable per tenant)
 
 ---
 
-## Security Architecture
-
-### Encryption
-
-Data Type
-
-Encryption Method
-
-PHI columns (name, email, phone)
-
-AES-256-GCM at application layer
-
-Patient photos in S3
-
-AES-256 with AWS KMS managed keys
-
-Database at rest
-
-AWS RDS encryption (AES-256)
-
-Data in transit
-
-TLS 1.3 minimum
-
-Magic link tokens
-
-SHA-256 hashed before storage
-
-Webhook payloads
-
-HMAC-SHA256 signature
-
-### Authentication & Authorization
+## 7. Infrastructure Diagram
 
 ```
-┌─── Auth Surfaces ─────────────────────────────────────────┐
-│                                                            │
-│  Patient Portal    → Magic Link (no password)             │
-│  Clinic Dashboard  → Email + Password + TOTP (optional)   │
-│  Admin Panel       → SSO + Hardware MFA required          │
-│  API Access        → Sanctum tokens with tenant scope     │
-│  Embed Widget      → Signed JWT (tenant + procedure)      │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
-
-**Authorization Roles per Tenant:**
-
-```
-owner        → Full access, billing, settings, all patient data
-admin        → All clinical data, user management
-coordinator  → Patient list, evaluations, booking
-surgeon      → Clinical briefs, analysis data, no PII contact info
-viewer       → Read-only dashboard metrics, no PHI
-```
-
----
-
-## Infrastructure
-
-### AWS Architecture (HIPAA Eligible)
-
-```
-Route 53 (DNS)
-    ↓
-CloudFront (CDN + WAF)
-    ↓
-Application Load Balancer
-    ↓
-ECS Fargate (Laravel + Octane)
-    ↓
-┌─────────────────────────────────────┐
-│  RDS PostgreSQL (Multi-AZ)         │
-│  ElastiCache Redis (Horizon queues) │
-│  S3 (patient photos, KMS encrypted) │
-│  AWS Rekognition (vision API)       │
-│  SES (transactional email)          │
-│  KMS (key management)               │
-└─────────────────────────────────────┘
-```
-
-**HIPAA-Eligible Services Used:** RDS, S3 with KMS, ElastiCache, ECS, SES, Rekognition, CloudTrail, CloudWatch
-
----
-
-## Architecture Decision Records (ADRs)
-
-### ADR-001: Shared Database with RLS (not separate DB per tenant)
-
-**Decision:** Use a single PostgreSQL database with Row-Level Security + application-layer scoping.
-
-**Rationale:**
-
--   Simpler operations (no per-tenant migrations, backups)
--   RLS provides database-enforced isolation as a safety net
--   Expected tenant count (hundreds, not thousands) makes shared DB appropriate
--   Easier cross-tenant analytics for internal reporting
-
-**Trade-offs:**
-
--   Noisy neighbor risk (mitigated by query optimization and connection pooling)
--   A bug that removes tenant scoping could expose cross-tenant data (mitigated by RLS as safety net)
-
----
-
-### ADR-002: Queued AI Processing (no sync API calls)
-
-**Decision:** All AI vision processing runs in background queues. User never waits for AI.
-
-**Rationale:**
-
--   Photo analysis can take 3–15 seconds — unacceptable for synchronous UX
--   Queue allows retry on failure without user impact
--   Decouples frontend availability from AI service availability
--   Enables processing optimization (batching, priority queues)
-
----
-
-### ADR-003: No PHI in Webhooks
-
-**Decision:** Webhooks to clinic CRMs contain only reference tokens, not patient data.
-
-**Rationale:**
-
--   Clinic CRM webhooks may not be HIPAA-compliant endpoints
--   Reference token allows clinic to fetch PHI from our HIPAA-compliant API
--   BAA only covers our platform — we cannot control CRM's handling of received data
--   Minimizes liability if webhook payload is intercepted or logged
-
----
-
-### ADR-004: Client-Side Photo Quality Check
-
-**Decision:** Validate photo quality (blur, angle, lighting) on the device before upload.
-
-**Rationale:**
-
--   Saves bandwidth — bad photos never hit S3
--   Faster feedback loop for patient (instant, not after upload)
--   Reduces AI processing failures from poor quality inputs
--   Implementation: MediaPipe Face Detection + custom quality heuristics in WebAssembly
-
-**Trade-offs:**
-
--   Adds ~2 MB to initial widget bundle (WASM model) — acceptable for the UX gain
--   Mobile WebAssembly support is near-universal as of 2024
-
----
-
-### ADR-005: MediaPipe for Client-Side Face Detection
-
-**Decision:** Use Google MediaPipe Face Detection (WASM) for the in-browser photo quality and angle validation step.
-
-**Rationale:**
-
--   Runs entirely in the browser — no photos leave the device during validation
--   Provides face bounding box and keypoints sufficient for angle guidance overlay
--   Apache 2.0 license, actively maintained
--   ~1.8 MB WASM bundle (acceptable for a full-screen intake flow)
--   Avoids sending potentially blurry/unusable photos to S3 and AWS Rekognition
-
-**Trade-offs:**
-
--   Requires a browser that supports WebAssembly (covers >97% of mobile browsers)
--   First-time load includes model download — mitigated by CDN caching
--   MediaPipe is a runtime dependency, not a build-time one — version pinned via CDN URL
-
-**Alternatives considered:**
-
--   TensorFlow.js face-api: heavier bundle, slower inference on low-end phones
--   Server-side pre-validation: adds a round-trip and exposes a pre-upload endpoint to abuse
--   No client validation: too many poor-quality photos would degrade AI pipeline results
-
----
-
-### ADR-006: ProcedureRegistry as Single Source of Truth
-
-**Decision:** All procedure slug definitions, pipeline type routing, and high-revenue flags live in `App\Services\ProcedureRegistry` as `public const` arrays.
-
-**Rationale:**
-
--   Adding a new procedure previously required changes in 5+ places (controller, simulation job, recommendations job, lead scoring, seeder). Now it requires adding the slug to one const array.
--   `isBodyProcedure()` / `isFaceProcedure()` drive which AI job chain fires (`ExtractBodyLandmarksJob` vs `ExtractFacialLandmarksJob`).
--   `isHighRevenue()` drives minimum priority tier in `LeadScoringService` (Mommy Makeover, Tummy Tuck, Facelift, Face & Neck Lift, Breast Augmentation always get at least High priority).
--   26 procedures currently registered (19 body, 7 face).
-
-**Adding a new procedure:**
-
-1.  Add slug to `BODY_PROCEDURES` or `FACE_PROCEDURES` in `ProcedureRegistry`.
-2.  Add a prompt method in `GenerateSimulationJob::buildPrompt()`.
-3.  Add a recommendations method in `GenerateBasicRecommendationsJob`.
-4.  Add the procedure row + photo protocol + quiz in `ProcedureSeeder` (or use the Quiz Editor at `/admin/quizzes`).
-
----
-
-### ADR-007: Procedure-Specific Photo Slots (PhotoSlot over PhotoType string)
-
-**Decision:** The `photo_protocol` column stores rich slot objects `{type, required, guide_label}` rather than bare type strings. `ProcedureResource` transforms these into `PhotoSlot[]` with `{type, label, tip}` for the frontend.
-
-**Rationale:**
-
--   Each procedure needs different patient instructions for the same physical angle (a BBL rear shot vs. a scar revision rear shot have different guidance). Embedding guidance in the slot avoids a parallel lookup table.
--   The frontend `PhotoCapture.tsx` is fully data-driven — no hardcoded labels or tips.
--   `Procedure::simulationPhotoType()` derives the primary AI photo from the first required slot, keeping the simulation job in sync with the seeder automatically without a separate DB column.
-
-**PhotoType values (12 total):**
-
-`front`, `left_profile`, `right_profile`, `back`, `left_side`, `right_side`, `abdomen_front`, `abdomen_side`, `chest_front`, `eyes_closed`, `arm_front`, `additional` (legacy — kept for backward compatibility)
-
----
-
-### ADR-008: Global Quiz Versioning with Single-Archive Constraint
-
-**Decision:** `quiz_definitions` has a `UNIQUE(procedure_slug, is_active)` constraint, allowing at most one active and one archived (previous) version per procedure. Saving via the Quiz Editor creates a new version record.
-
-**Rationale:**
-
--   The unique constraint was intentional to enforce one canonical quiz per procedure and prevent stale definitions from being served.
--   Keeping exactly one rollback copy (the previous version) is sufficient for operational needs (typo correction, accidental deletion) without relaxing the constraint or adding a migration.
--   The `QuizAdminController::update()` three-step pattern (delete archive → set active to inactive → insert new active) satisfies the constraint while preserving history.
-
-**Version swap order (must be respected to avoid constraint violations):**
-
-```php
-// CORRECT — frees the is_active=false slot before creating another
-QuizDefinition::where(...)->where('is_active', false)->delete();
-$existing->update(['is_active' => false]);
-QuizDefinition::create([..., 'is_active' => true]);
-
-// WRONG — two is_active=false rows would exist momentarily → constraint violation
-$existing->update(['is_active' => false]); // ← fails if an archived row already exists
-```
-
-**Universal keys (must always be present):**
-
-`q_timeline`, `q_budget`, `q_concerns`, `q_referral` — required by `LeadScoringService`. The Quiz Editor UI locks these as read-only and warns when any are missing.
-
----
-
-## Caching Strategy
-
-Redis (ElastiCache) serves two roles: queue backend and response cache. Cache TTLs are chosen conservatively for PHI sensitivity.
-
-Cache Key
-
-TTL
-
-Invalidated By
-
-Notes
-
-`tenant:{slug}`
-
-15 min
-
-Tenant settings update
-
-Tenant resolution on every request
-
-`procedures:{tenant_id}`
-
-60 min
-
-Procedure config change
-
-Procedure list for quiz engine
-
-`quiz_definition:{procedure_slug}`
-
-60 min
-
-Quiz config update
-
-Quiz branching definition
-
-`lead_score:{eval_id}`
-
-Until analysis complete
-
-Score recalculation job
-
-Avoid re-computing during dashboard load
-
-`evaluation_list:{tenant_id}`
-
-30 sec
-
-Any evaluation status change
-
-Dashboard list — short TTL for coordinator UX
-
-**PHI is never cached.** Patient names, emails, phone numbers, and photos are never written to Redis. The evaluation list cache contains only IDs, scores, priorities, and statuses.
-
-```php
-// Example: Tenant resolution caching
-Cache::remember("tenant:{$slug}", now()->addMinutes(15), fn() =>
-    Tenant::where('slug', $slug)->firstOrFail()
-);
-
-// Cache MUST be tagged for selective invalidation
-Cache::tags(["tenant:{$tenantId}"])->flush(); // On tenant settings change
+[Patient Mobile/Web]
+       │  HTTPS / TLS 1.3
+       ▼
+[AWS ALB / CloudFront CDN]
+       │
+       ▼
+[Laravel App Servers (EC2 / ECS)]
+       │               │
+       ▼               ▼
+[MySQL RDS]       [Redis (Horizon)]
+                        │
+                        ▼
+              [AI Processing Workers]
+                        │
+                        ▼
+              [AWS HealthLake / GCP Healthcare API]
+                  (HIPAA-certified PHI storage)
 ```
