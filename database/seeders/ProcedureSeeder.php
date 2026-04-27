@@ -2507,9 +2507,9 @@ class ProcedureSeeder extends Seeder
         QuizDefinition::updateOrCreate(
             ['procedure_slug' => $slug, 'is_active' => true],
             [
-                'version' => 1,
+                'version' => 2,
                 'is_active' => true,
-                'questions' => [
+                'questions' => array_merge($this->universalSafetyQuestions(), [
                     [
                         'id' => 'q_concerns',
                         'type' => 'text',
@@ -2574,7 +2574,7 @@ class ProcedureSeeder extends Seeder
                         ],
                         'branches' => [],
                     ],
-                ],
+                ]),
             ]
         );
     }
