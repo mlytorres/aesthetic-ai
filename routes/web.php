@@ -19,6 +19,7 @@ use App\Http\Controllers\Clinic\AffiliatePayoutController;
 use App\Http\Controllers\Clinic\BillingController;
 use App\Http\Controllers\Clinic\CampaignAssetUploadController;
 use App\Http\Controllers\Clinic\ClinicController;
+use App\Http\Controllers\Clinic\ApiDocumentationController;
 use App\Http\Controllers\Clinic\IntegrationController;
 use App\Http\Controllers\Clinic\TeamController;
 use App\Http\Controllers\Clinic\WebhookDeliveryController;
@@ -189,6 +190,8 @@ Route::middleware(['auth', 'verified', 'privileged.2fa', 'tenant', 'billing.acce
             Route::post('/team', [TeamController::class, 'store'])->name('team.store');
             Route::patch('/team/{user}', [TeamController::class, 'update'])->name('team.update');
             Route::delete('/team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
+
+            Route::get('/api-docs', ApiDocumentationController::class)->name('api-docs');
 
             Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations.index');
             Route::patch('/integrations/webhook', [IntegrationController::class, 'updateWebhook'])->name('integrations.webhook.update');

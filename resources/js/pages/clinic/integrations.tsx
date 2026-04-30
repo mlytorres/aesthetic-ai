@@ -30,6 +30,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import clinic from '@/routes/clinic';
 
 interface ApiTokenData {
     id: string;
@@ -769,8 +770,16 @@ export default function Integrations({
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Send this as the <code>X-Clinic-ID</code> header on
-                            every API request alongside your Bearer token.
+                            Send on every API request alongside your token: prefer{' '}
+                            <code>X-Api-Key</code> for server-to-server calls, or{' '}
+                            <code>Authorization: Bearer</code> for legacy clients. Full reference:{' '}
+                            <a
+                                href={clinic.apiDocs.url()}
+                                className="font-medium text-[#0E9E8E] underline-offset-2 hover:underline"
+                            >
+                                CRM API documentation
+                            </a>
+                            .
                         </p>
                     </div>
 

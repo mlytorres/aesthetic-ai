@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
  * External REST API v1 — Evaluation endpoints.
  *
  * Used by Zapier, CRM integrations, and clinic backend servers.
- * Auth: Bearer token (Sanctum) + X-Clinic-ID header.
+ * Auth: Bearer token or matching `X-Api-Key` (same raw `aai_live_…` value) + `X-Clinic-ID` header (`AuthenticateApiToken`).
  * Tenant scoping is handled by TenantMiddleware (already runs before this).
  */
 class EvaluationController extends Controller

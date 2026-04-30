@@ -1,232 +1,184 @@
-# Aesthetic AI — Digital Consultation Concierge
-## Owner Presentation · April 2026
+# SymetriHealth / Aesthetic AI
+## Digital Consultation Concierge — Pre-Evaluation Intelligence
+
+### Owner approval & ecosystem enrollment deck · April 2026
+
+**Print this deck** for board or operating-partner review alongside the **MiamiLife CRM hub** deck and companion **RecoverIQ** and **SalesNeural** presentations. Together they describe one **governed enrollment** into the MiamiLife **ecosystem platform** — four coordinated products, four approval decisions.
 
 ---
 
-> *"We don't just capture leads. We deliver pre-qualified patients."*
+> *We don't only capture leads. We deliver clinically structured, prioritized patients — **before** the first coordinated call.*
 
 ---
 
-## The Problem We're Solving
+## Executive summary (for approval meetings)
 
-Every aesthetic clinic faces the same friction between inquiry and consultation:
+**Aesthetic AI (SymetriHealth)** sits **upstream** of conversion: intake, standardized imaging, anatomical structuring, lead scoring, and surgeon-ready briefing. It complements **MiamiLife CRM** (system of record) and feeds better consults; it does **not** replace surgeons or coordinators — it prepares them.
 
-- A patient submits a contact form with just a name and phone number
-- A coordinator calls — often days later — to qualify them manually
-- The surgeon meets the patient for the first time with zero clinical context
-- 30–40% of consultations result in no-shows or unqualified patients
-
-**The result:** wasted surgeon time, overwhelmed coordinators, and revenue left on the table.
+**Enrollment ask:** authorize implementation of this product plus **credential separation**: your clinic receives its **own SymetriHealth / Aesthetic API credentials**, distinct from RecoverIQ and SalesNeural (**three keys total per clinic** — see MiamiLife **`ECOSYSTEM-INTEGRATION-SPEC`**).
 
 ---
 
-## Our Solution
+## The problem we're solving
 
-**Aesthetic AI** is a **pre-evaluation SaaS platform** that transforms the moment a patient expresses interest into a complete, AI-analyzed clinical profile — before the clinic ever makes first contact.
+Every aesthetic clinic faces friction between inquiry and consultation:
 
-By the time a coordinator picks up the phone, they already know:
-- What procedure the patient is interested in
-- Their anatomical profile and AI-assessed candidacy
-- Their lead score (High / Medium / Low priority)
-- Standardized clinical-quality "before" photos
+| Friction point | Operational cost |
+|----------------|-------------------|
+| Static forms — name + phone only | Coordinators re-qualify on every call |
+| Slow first response | Competitors engage first |
+| Surgeons walk in cold | Lost time and weaker close rates |
+| No-shows and low-intent consults | Wasted chair time |
 
-And by the time the surgeon walks into the consultation room, they have a full **Pre-Op Clinical Brief** waiting for them.
+**You still run the clinic.** This platform standardizes **how intent and anatomy enter your CRM**.
 
 ---
 
-## The Platform at a Glance
+## Our solution — in one paragraph
+
+**Aesthetic AI** transforms the first touch into a **structured clinical profile**: procedure intent, adaptive questionnaire data, **AI-guided “before” photos**, proportion / symmetry signals, and a **Pre-Op Clinical Brief** for the surgeon — delivered through **encrypted, time-limited access patterns** appropriate for regulated data.
+
+---
+
+## Where this product sits in the ecosystem
+
+| Layer | Product | Role |
+|-------|---------|------|
+| **Hub** | **MiamiLife CRM** | Source of truth; schedules; surgical milestones; outbound webhooks |
+| **Pre-consult** | **Aesthetic AI** (this product) | Structured intake · imaging · briefing |
+| **Post-op** | **RecoverIQ** | Recovery automation · triage · milestone-driven growth |
+| **Pipeline** | **SalesNeural** | AI-augmented sales conversations on your channels |
+
+CRM staff documentation for **this product only**: authenticated **`/clinic/api-docs`**. Canonical **cross-product** keys and HMAC rules: **MiamiLife CRM · `docs/ECOSYSTEM-INTEGRATION-SPEC.md`**.
+
+---
+
+## The platform at a glance
 
 ```
-PATIENT JOURNEY                        CLINIC JOURNEY
-──────────────────                     ───────────────────────
-1. Patient selects procedure      →    Coordinator receives
-2. Answers adaptive quiz               priority-scored lead queue
-3. Submits AI-guided photos       →    Opens encrypted clinical
-4. Receives "Beauty Roadmap"           profile via Magic Link
-5. Books paid consultation        →    Surgeon reviews Pre-Op
-                                       Clinical Brief
+ PATIENT SIDE                         CLINIC SIDE
+ ───────────────                      ──────────────────────────
+ Pick procedure                   →    Scored queue (High / Medium / Low)
+ Adaptive quiz                    →    No PHI in unsecured email —
+ AI-guided standardized photos      “New evaluation ready” + magic link
+ Personal report (“Beauty Roadmap”)→    Surgeon: Pre-Op Clinical Brief
+ Book consult                     →    CRM synced per integration
 ```
 
 ---
 
-## Module 1: Smart Intake Engine
+## Module 1 — Smart intake engine
 
-### Anatomical 3D Mapping
-Instead of a text field asking "what bothers you?", patients interact with a **3D anatomical model** and drop pins directly on their areas of concern — the nasal tip, jawline, abdomen, etc. This produces structured, machine-readable clinical data from the very first touchpoint.
+### Anatomical mapping
+Patients mark **regions of concern** on guided models where applicable — structured data replaces free-text guesses.
 
-### Dynamic Branching Quiz
-The quiz adapts in real time based on the selected procedure:
-- **BBL patient?** → Questions about BMI, skin quality, donor site volume
-- **Facelift patient?** → Questions about skin laxity, prior procedures, healing history
-- **Rhinoplasty patient?** → Questions about functional vs. cosmetic goals, prior trauma
-
-No two patients see the same intake flow. Every answer sharpens the clinical profile.
+### Dynamic branching quiz
+Flows adapt by procedure (**BBL, facelift, rhinoplasty**, etc.) so coordinators receive **consistent clinical context**.
 
 ---
 
-## Module 2: AI Computer Vision Suite
+## Module 2 — AI computer vision suite
 
-### AI-Guided Photo Capture
-Patients use their phone camera with a **ghosting/transparency overlay** — a semi-transparent silhouette guide that ensures every photo is taken at the correct angle, distance, and lighting. The result is surgeon-quality standardized "before" photos captured by the patient themselves, at home.
+### Guided capture
+**Ghost overlays** steer angle, framing, and distance — fewer unusable uploads.
 
-No more blurry selfies. No more unusable angles.
+### Proportion narrative
+Landmarks → symmetry / proportion summaries → patient-facing **roadmap-style** artifact that increases consultation commitment (**not a surgical guarantee**).
 
-### Proportion Analysis & Beauty Roadmap
-Once photos are submitted, the AI engine:
-1. Detects facial landmarks and anatomical markers
-2. Calculates **symmetry scores** and **Golden Ratio metrics**
-3. Generates a personalized **"Beauty Roadmap"** — a visual report the patient receives showing their current profile and the areas that would benefit most from aesthetic treatment
-
-This is not just data collection. It's a **patient engagement tool** that dramatically increases commitment to consultation.
-
-### Anatomic Procedure Matching
-The AI automatically recommends the most clinically appropriate procedure based on what it sees:
-
-| Visual Signal Detected | AI Recommendation |
-|---|---|
-| Mild skin laxity, good volume | Dermal Fillers / Morpheus8 |
-| Moderate jowling, neck laxity | Mini Facelift |
-| Significant skin redundancy | Deep Plane Facelift |
-| Nasal asymmetry, dorsal hump | Rhinoplasty |
-| Abdominal skin excess + fat | Lipo 360 + J-Plasma |
-
-The surgeon always makes the final clinical decision — the AI provides the **starting brief**, not the diagnosis.
+### Procedure hints (clinical judgment stays with MD)
+Suggested directions based on imaging signals — **final determination by your surgeon.**
 
 ---
 
-## Module 3: Clinic Dashboard (Multi-Tenant)
+## Module 3 — Clinic dashboard
 
-### Lead Scoring & Priority Queues
-Every incoming patient profile is automatically scored based on:
-- Procedure type (facelift = higher value than consultation-only)
-- Photo quality and AI-assessed candidacy
-- Quiz completion rate and engagement depth
-- Booking intent signals
-
-High-value leads are automatically placed at the **top of the coordinator's call queue** — no manual sorting required.
-
-### Secure Magic Links & HIPAA Compliance
-Patient data, photos, and clinical profiles are **never sent via standard email**. The clinic receives only a notification: *"New Evaluation Ready."* All clinical data is accessed through a **time-limited, encrypted portal link** — 100% HIPAA-compliant by design.
-
-### Pre-Op Clinical Brief
-Before each consultation, the surgeon receives a structured brief containing:
-- Patient demographics and procedure goal
-- AI-analyzed photo set (standardized angles)
-- Symmetry scores and proportion analysis
-- Procedure recommendation rationale
-- Quiz responses and medical history flags
-
-**This saves 15–20 minutes of in-room assessment per consultation.**
+- **Queues** prioritized by engagement, procedure weight, and model confidence  
+- **Magic-link / portal access patterns** instead of PHI in plaintext email (**configure per BAAs**)  
+- **Pre-Op Clinical Brief**: demographics, quiz flags, standardized images, summaries — targets **meaningful surgeon prep time recovered per block**
 
 ---
 
-## Technology & Security
+## Technology, integration & security — owner-facing facts
 
-### Tech Stack
-Built on the same proven, enterprise-grade stack used in leading aesthetic CRM platforms:
+### Engineering stack
 
-| Component | Technology |
-|---|---|
-| Backend | Laravel 12 (PHP) |
+| Layer | Technology |
+|-------|------------|
+| Backend | Laravel (PHP), multi-tenant |
 | Frontend | React + Inertia.js |
-| UI System | TailwindCSS — luxury, premium aesthetic |
-| Infrastructure | AWS HealthLake / Google Cloud Healthcare API |
-| Multi-Tenancy | Subdomain-based, Row-Level Security |
-| AI / CV | Medical-grade APIs + custom logic |
+| UI | Tailwind — premium aesthetic |
+| Credentials | Tenant-scoped — **never** shared with RecoverIQ or SalesNeural keys |
 
-### HIPAA Compliance — Built In, Not Bolted On
-- Patient data stored exclusively in **HIPAA-certified cloud environments** (AWS HealthLake / GCP Healthcare)
-- **Business Associate Agreement (BAA)** executed with every clinic before onboarding
-- All PHI accessed through **encrypted, time-limited portal links** — never via email
-- Complete **audit logging** for every access event
-- Role-based access: Surgeon, Coordinator, Front Desk, Admin
+### CRM integration (what IT approves)
 
----
+| Item | Detail |
+|------|--------|
+| **Staff docs** | **`/clinic/api-docs`** (authenticated) — **this product + CRM only** |
+| **Inbound** | **`X-Api-Key`** preferred; **`X-Clinic-ID`**; Bearer legacy where documented |
+| **Outbound webhooks** | Verify **`X-SymetriHealth-Signature`** (HMAC-SHA256 of **raw JSON body**) against your **`webhook_secret`** |
 
-## Market Opportunity
+### HIPAA posture (architecture-first)
 
-### Why Miami, Why Now
-Miami is one of the highest-volume aesthetic surgery markets in the United States. Target clinics are already handling hundreds of procedure inquiries per month — and losing a significant percentage to slow follow-up, unqualified leads, and no-shows.
+Execute **Business Associate Agreements (BAAs)** with your clinic where required. PHI handling follows **minimum necessary**, **encryption in transit**, **access controls**, **audit trails**, **time-bound links** — **exact cloud regions** and subprocessors finalized during enterprise onboarding.
 
-**Our initial targets:**
-- Miami Life Plastic Surgery
-- 305 Plastic Surgery
-- Other high-volume South Florida practices
-
-### Value Delivered to Clinics
-
-| Metric | Impact |
-|---|---|
-| Speed-to-Lead | AI qualifies and scores leads 24/7, instantly |
-| No-Show Reduction | Interactive pre-consult tools reduce no-shows by 25–40% |
-| Consult Prep Time | Surgeons save 15–20 min per consult with Pre-Op Brief |
-| Lead Quality | Only high-intent, pre-qualified patients reach the call queue |
-| Operational Load | Coordinators focus on booked patients, not cold outreach |
+*(Avoid storing PHI in general-purpose ticketing or chat tools.)*
 
 ---
 
-## Development Roadmap
+## Market fit (illustrative)
 
-| Phase | Deliverable | Timeline |
-|---|---|---|
-| **Phase 0** | HIPAA infrastructure, multi-tenant foundation | Weeks 1–4 |
-| **Phase 1 (MVP)** | AI Photo Capture + Secure Intake (Rhinoplasty) | Weeks 5–12 |
-| **Phase 2** | Full Smart Intake + CV Suite (all 5 procedures) | Weeks 13–22 |
-| **Phase 3** | Clinic Dashboard, Lead Scoring, Pre-Op Briefs | Weeks 23–30 |
-| **Phase 4** | SaaS billing, CRM webhooks, self-serve onboarding | Weeks 31–38 |
-| **Phase 5** | AI simulations, expanded procedures, analytics | Ongoing |
-
-**Total time to a fully monetizable, multi-tenant SaaS product: ~9–10 months.**
+High-volume aesthetic markets combine **conversion pressure** + **premium consult expense** — structured pre-consult intake has outsized ROI. Pilot targets remain **discussion-only** until contracts are countersigned.
 
 ---
 
-## Revenue Model
+## Commercial model (framework)
 
-### SaaS Subscription (Per Clinic)
-- **Starter** — 1 provider, up to 100 evaluations/month
-- **Growth** — up to 5 providers, unlimited evaluations
-- **Enterprise** — custom pricing, white-label, dedicated infrastructure
+| Tier | Orientation |
+|------|-------------|
+| **Starter** | Limited providers / monthly evaluation cap |
+| **Growth** | Multi-provider, higher volume |
+| **Enterprise** | White-label, custom integrations, dedicated review |
 
-### Usage-Based Add-Ons
-- AI analysis credits (bulk pricing for high-volume clinics)
-- Advanced simulation features (AI result previews)
-- CRM integration connectors (Nextech, PatientNow)
+**Usage add-ons:** AI analysis packs, simulation features, additional CRM connectors — **aligned to your stage of rollout**.
 
 ---
 
-## Competitive Differentiators
+## Why approve this now
 
-Unlike generic intake forms or standard CRM lead capture, Aesthetic AI delivers:
+1. **Differentiated conversion** — better first touch than static forms.  
+2. **Ecosystem alignment** — same MiamiLife operating model as RecoverIQ / SalesNeural.
 
-1. **Clinical-grade photo standardization** — not selfies, not random angles
-2. **Procedure-specific adaptive intake** — not a one-size-fits-all form
-3. **AI anatomical analysis** — not just data collection, but clinical intelligence
-4. **HIPAA compliance by architecture** — not a compliance checkbox, a design principle
-5. **Pre-Op Clinical Brief** — value delivered to the surgeon, not just the front desk
+3. **Clear security story** — separate credentials; cross-product spec in **one** CRM document.
 
 ---
 
-## What We're Building Toward
+## Owner approval — what you are endorsing
 
-The MVP is Rhinoplasty intake + AI photo capture. The vision is a platform where any aesthetic clinic in the country can:
-
-- Deploy a branded, AI-powered patient intake experience in minutes
-- Receive pre-qualified, clinically profiled leads 24/7
-- Have surgeons walk into consultations fully briefed
-- Sync everything automatically into their existing CRM
-
-**The long-term play:** become the standard pre-evaluation layer for aesthetic surgery — the platform that sits upstream of every CRM in the market.
+- [ ] Budget and **BAA / compliance** path for this product.  
+- [ ] **Dedicated API credentials** for SymetriHealth / Aesthetic (**not** reused from other SaaS).  
+- [ ] IT participation: **`/clinic/api-docs`**, webhook verification, staging **before** production.  
+- [ ] Alignment with **MiamiLife CRM** as integration owner (**`docs/ECOSYSTEM-INTEGRATION-SPEC.md`** in the CRM repo).
 
 ---
 
-## Next Steps
+## Next steps after sign-off
 
-1. **Finalize tech infrastructure** — execute BAA with AWS/GCP, provision environments
-2. **Begin Phase 1 development** — AI Photo Capture tool + Rhinoplasty intake portal
-3. **Pilot with 1–2 Miami clinics** — validate the patient experience and lead quality
-4. **Iterate toward Phase 2** — expand to full procedure suite based on pilot feedback
-5. **Launch SaaS billing** — convert pilot clinics to paying subscribers
+1. **Staging** tenant + keys + smoke test (`X-Api-Key` + sample evaluation).  
+2. **CRM mapping** — which leads / procedures flow into MiamiLife.  
+3. **Pilot cohort** — 1–2 locations, success metrics (show rate, prep time, lead quality).  
+4. **Production** cutover with monitoring on auth and webhook logs.
 
 ---
 
-*Aesthetic AI SaaS Platform · Confidential · April 2026*
+## Companion documents
+
+| Document | Location |
+|----------|----------|
+| Cross-product integration | **MiamiLife CRM** — `docs/ECOSYSTEM-INTEGRATION-SPEC.md` |
+| Webhook verification | **MiamiLife CRM** — `docs/CRM-WEBHOOK-VERIFICATION.md` |
+| Runbook | **MiamiLife CRM** — `docs/INTEGRATION-RUNBOOK.md` |
+| Hub deck | **MiamiLife CRM** — `presentation.md` |
+
+---
+
+*SymetriHealth / Aesthetic AI · Confidential · April 2026 · For owner approval and ecosystem enrollment*

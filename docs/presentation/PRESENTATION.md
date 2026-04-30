@@ -1,4 +1,9 @@
 # AestheticAI: Clinic Presentation
+
+> **Canonical stakeholder deck:** use the repo-root **[`presentation.md`](../presentation.md)**. This clinic-focused narrative may lag updates.
+
+---
+
 **The Intelligent Intake Platform for Modern Aesthetic Practices.**
 
 ---

@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 
-const LAST_UPDATED = 'April 18, 2026';
+const LAST_UPDATED = 'April 30, 2026';
 
 export default function PrivacyPolicy() {
     return (
@@ -110,19 +110,40 @@ export default function PrivacyPolicy() {
                             <p>
                                 We highly value the privacy of your mobile number. By opting into SMS
                                 notifications during your intake, you consent to receive transactional
-                                updates regarding your evaluation status and scheduling.
+                                updates regarding your evaluation status and secure report links on behalf
+                                of your selected clinic. This consent is collected via a dedicated,
+                                unchecked checkbox on the final step of our intake form and is{' '}
+                                <strong>never</strong> a condition of receiving our services.
                             </p>
                             <div className="mt-4 rounded-r-md border-l-4 border-[#0E9E8E] bg-muted/30 p-4">
                                 <p className="font-medium">
-                                    We do not share, sell, or trade your mobile phone number, personal
-                                    information, or SMS consent with any third parties or affiliates for
-                                    marketing purposes.
+                                    No mobile information, including your phone number and SMS opt-in
+                                    consent, will be shared with third parties or affiliates for marketing
+                                    or promotional purposes. All the above categories exclude text messaging
+                                    originator opt-in data and consent; this information will not be shared
+                                    with any third parties.
                                 </p>
                             </div>
-                            <p className="mt-4">
-                                You may opt-out of SMS communications at any time by replying{' '}
-                                <strong>STOP</strong>. Standard message and data rates may apply.
-                            </p>
+                            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm">
+                                <li>
+                                    <strong>Program:</strong> SymetriHealth — Aesthetic Evaluation Status &amp; Secure Report Delivery
+                                </li>
+                                <li>
+                                    <strong>Message Frequency:</strong> Varies based on your evaluation activity (typically 2–5 messages per evaluation).
+                                </li>
+                                <li>
+                                    <strong>Opt-Out:</strong> Reply <strong>STOP</strong> at any time to unsubscribe from all SMS communications.
+                                </li>
+                                <li>
+                                    <strong>Help:</strong> Reply <strong>HELP</strong> or contact us at{' '}
+                                    <a href="mailto:info@symetrihealth.com" className="text-[#0E9E8E] hover:underline">
+                                        info@symetrihealth.com
+                                    </a>
+                                </li>
+                                <li>
+                                    <strong>Rates:</strong> Standard message and data rates may apply depending on your mobile carrier.
+                                </li>
+                            </ul>
                         </section>
 
                         <section>

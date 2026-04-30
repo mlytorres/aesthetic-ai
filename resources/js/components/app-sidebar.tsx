@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
+import clinic from '@/routes/clinic';
 import { index as affiliatePayoutsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliatePayoutController';
 import { index as affiliateAnalyticsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliateAnalyticsController';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
@@ -99,6 +100,11 @@ const clinicNavItems: NavItem[] = [
         title: 'Integrations',
         href: integrationsIndex.url(),
         icon: Webhook,
+    },
+    {
+        title: 'CRM API docs',
+        href: clinic.apiDocs.url(),
+        icon: BookOpen,
     },
     {
         title: 'Webhooks Hub',

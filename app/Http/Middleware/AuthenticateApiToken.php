@@ -12,18 +12,18 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Authenticates External REST API v1 requests via Bearer token.
+ * Authenticates External REST API v1 requests via Bearer token or ecosystem-style API key header.
  *
  * Accepts either:
- *   - Bearer token in Authorization header: `Authorization: Bearer aai_live_xxx`
+ *   - Bearer token: `Authorization: Bearer aai_live_xxx`
+ *   - Same raw token via `X-Api-Key` (MiamiLife-style integrations; matches Bearer lookup)
  *   - Session auth (for clinic dashboard users calling the API directly)
  *
- * When a Bearer token is used, the associated tenant is loaded and set in
- * TenantContext — the X-Clinic-ID header is still required so the tenant
- * can be resolved before this middleware runs, or we can resolve from the token.
+ * When a token is used, the associated tenant is loaded and set in TenantContext —
+ * the X-Clinic-ID header is required for Bearer/X-Api-Key calls unless resolving from session.
  *
  * Token validation:
- *   1. Hash the raw Bearer value with SHA-256
+ *   1. Hash the raw token with SHA-256 (from Bearer or X-Api-Key)
  *   2. Look up matching non-revoked, non-expired api_tokens row
  *   3. If the tenant_id on the token does not match the TenantContext, reject
  *   4. Touch last_used_at
@@ -48,18 +48,22 @@ class AuthenticateApiToken
         }
 
         $bearer = $request->bearerToken();
+        $headerApiKey = $request->header('X-Api-Key');
+        $credential = (is_string($headerApiKey) && $headerApiKey !== '')
+            ? $headerApiKey
+            : (! blank($bearer) ? $bearer : null);
 
-        if (blank($bearer)) {
+        if (blank($credential)) {
             return response()->json([
                 'error' => [
                     'code' => 'UNAUTHENTICATED',
-                    'message' => 'An API token is required. Pass it as: Authorization: Bearer {token}',
+                    'message' => 'An API token is required. Pass Authorization: Bearer {token}, or the same token as X-Api-Key.',
                     'status' => 401,
                 ],
             ], 401);
         }
 
-        $apiToken = ApiToken::findByRaw($bearer);
+        $apiToken = ApiToken::findByRaw($credential);
 
         if ($apiToken === null) {
             return response()->json([

@@ -69,9 +69,11 @@ Initial focus: high-volume Miami-area aesthetic clinics (Miami Life, 305 Plastic
 
 | Document | Description |
 |---|---|
+| **CRM integration (staff)** | In-app **`/clinic/api-docs`** (authenticated) — CRM `X-Api-Key`, REST v1, outbound webhook HMAC. |
+
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Technical architecture, infrastructure, and security design |
 | [`ROADMAP.md`](./ROADMAP.md) | Development phases, milestones, and timelines |
-| [`PRESENTATION.md`](./PRESENTATION.md) | Executive platform overview for stakeholders |
+| [`presentation.md`](./presentation.md) | Owner / board approval deck — ecosystem enrollment (print with companion product decks) |
 | [`CLAUDE.md`](./CLAUDE.md) | Project instructions and AI context |
 
 ---

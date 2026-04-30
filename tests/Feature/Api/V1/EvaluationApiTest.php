@@ -66,6 +66,22 @@ test('invalid Bearer token returns 401', function (): void {
         ->assertUnauthorized();
 });
 
+test('same token may be passed as X-Api-Key for CRM integrations', function (): void {
+    $raw = ApiToken::generateRaw();
+    ApiToken::create([
+        'tenant_id' => $this->tenant->id,
+        'name' => 'CRM Via Header',
+        'token_hash' => $raw['hash'],
+        'scopes' => ['evaluations:read', 'phi:read'],
+    ]);
+
+    $this->withHeader('X-Api-Key', $raw['raw'])
+        ->withHeader('X-Clinic-ID', $this->tenant->id)
+        ->getJson("/api/v1/evaluations/{$this->evaluation->secure_token}")
+        ->assertOk()
+        ->assertJsonPath('data.evaluation_token', $this->evaluation->secure_token);
+});
+
 test('authenticated user without X-Clinic-ID resolves tenant from session', function (): void {
     // TenantMiddleware falls back to the user's own tenant_id when X-Clinic-ID is absent.
     // This covers clinic dashboard users calling the API directly.

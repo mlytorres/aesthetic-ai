@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 
-const LAST_UPDATED = 'April 18, 2026';
+const LAST_UPDATED = 'April 30, 2026';
 
 export default function TermsOfService() {
     return (
@@ -72,19 +72,33 @@ export default function TermsOfService() {
                         </section>
 
                         <section>
-                            <h2 className="mb-3 text-xl font-semibold">3. SMS Communications</h2>
+                            <h2 className="mb-3 text-xl font-semibold text-[#0E9E8E]">3. SMS Communications</h2>
                             <p>
-                                When you provide your phone number and opt-in during the intake process,
-                                you consent to receive SMS notifications (such as status updates and secure
-                                report links) on behalf of your clinic.
+                                When you provide your phone number and check the SMS opt-in box during
+                                the intake process, you agree to receive automated text messages from
+                                SymetriHealth on behalf of your selected clinic. Messages may include
+                                evaluation status updates, secure links to your Beauty Roadmap report,
+                                and consultation scheduling notifications.
                             </p>
-                            <p className="mt-2">
-                                <strong>Message Frequency:</strong> Varies based on your evaluation status.<br />
-                                <strong>Opt-Out:</strong> Reply <strong>STOP</strong> at any time to cancel.<br />
-                                <strong>Help:</strong> Reply <strong>HELP</strong> for support.<br />
-                                <strong>Rates:</strong> Standard message and data rates may apply depending
-                                on your mobile carrier.
-                            </p>
+                            <div className="mt-4 rounded-r-md border-l-4 border-[#0E9E8E] bg-muted/30 p-4 text-sm space-y-1">
+                                <p><strong>Program Name:</strong> SymetriHealth Aesthetic Evaluation Notifications</p>
+                                <p><strong>Message Frequency:</strong> Varies based on your evaluation status (typically 2–5 messages per evaluation).</p>
+                                <p><strong>Opt-Out:</strong> Reply <strong>STOP</strong> at any time to cancel all SMS messages. You will receive a one-time confirmation and no further messages will be sent.</p>
+                                <p><strong>Help:</strong> Reply <strong>HELP</strong> or email{' '}
+                                    <a href="mailto:info@symetrihealth.com" className="text-[#0E9E8E] hover:underline">
+                                        info@symetrihealth.com
+                                    </a>
+                                </p>
+                                <p><strong>Rates:</strong> Standard message and data rates may apply depending on your mobile carrier.</p>
+                                <p><strong>Consent:</strong> Opting into SMS notifications is never required as a condition of using our services or receiving your evaluation.</p>
+                            </div>
+                            <div className="mt-4 rounded-md border border-[#0E9E8E]/20 bg-[#0E9E8E]/5 p-4 text-sm">
+                                <p className="font-medium">
+                                    Your SMS opt-in consent and mobile phone number will not be shared,
+                                    sold, or transferred to any third party or affiliate for marketing
+                                    or promotional purposes.
+                                </p>
+                            </div>
                         </section>
 
                         <section>
