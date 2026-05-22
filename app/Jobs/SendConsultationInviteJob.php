@@ -90,21 +90,49 @@ class SendConsultationInviteJob implements ShouldQueue
 
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
-        $from = config('services.twilio.from');
+        $smsFrom = config('services.twilio.from');
+        $whatsappFrom = config('services.twilio.whatsapp_from');
 
-        $response = Http::withBasicAuth($sid, $token)
-            ->asForm()
-            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                'From' => $from,
-                'To' => $phone,
-                'Body' => $body,
-            ]);
+        $smsSent = false;
 
-        if ($response->failed()) {
-            Log::warning('SendConsultationInviteJob: SMS failed', [
-                'consultation_id' => $this->consultationId,
-                'status' => $response->status(),
-            ]);
+        if (!blank($smsFrom)) {
+            $response = Http::withBasicAuth($sid, $token)
+                ->asForm()
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
+                    'From' => $smsFrom,
+                    'To' => $phone,
+                    'Body' => $body,
+                ]);
+
+            if ($response->successful()) {
+                $smsSent = true;
+            } else {
+                Log::warning('SendConsultationInviteJob: SMS failed', [
+                    'consultation_id' => $this->consultationId,
+                    'status' => $response->status(),
+                ]);
+            }
+        }
+
+        // Fallback to WhatsApp if SMS failed or was not configured
+        if (!$smsSent && !blank($whatsappFrom)) {
+            $whatsappTo = str_starts_with($phone, 'whatsapp:') ? $phone : "whatsapp:{$phone}";
+            $whatsappSender = str_starts_with($whatsappFrom, 'whatsapp:') ? $whatsappFrom : "whatsapp:{$whatsappFrom}";
+
+            $waResponse = Http::withBasicAuth($sid, $token)
+                ->asForm()
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
+                    'From' => $whatsappSender,
+                    'To' => $whatsappTo,
+                    'Body' => $body,
+                ]);
+
+            if ($waResponse->failed()) {
+                Log::warning('SendConsultationInviteJob: WhatsApp fallback failed', [
+                    'consultation_id' => $this->consultationId,
+                    'status' => $waResponse->status(),
+                ]);
+            }
         }
     }
 

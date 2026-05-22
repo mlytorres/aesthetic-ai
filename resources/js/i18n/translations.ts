@@ -208,9 +208,9 @@ export const translations: Translations = {
         'consent.photo_label': 'AI Photo Analysis Consent',
         'consent.photo_text':
             'I consent to my photos being analysed by artificial intelligence to assist in generating my evaluation report. Photos are encrypted and accessible only to clinic staff.',
-        'consent.sms_label': 'SMS Notifications',
+        'consent.sms_label': 'SMS & WhatsApp Notifications',
         'consent.sms_text':
-            'I agree to receive SMS notifications regarding my evaluation status and secure links to my reports. Consent is not a condition of service. Message frequency varies. Msg & data rates may apply.',
+            'I agree to receive SMS and WhatsApp notifications regarding my evaluation status and secure links to my reports. Consent is not a condition of service. Message frequency varies. Msg & data rates may apply.',
         'consent.optional_badge': 'optional',
         'consent.submit_cta': 'Submit My Evaluation ✓',
         'consent.submitting': 'Submitting…',
@@ -337,9 +337,9 @@ export const translations: Translations = {
         'consent.photo_label': 'Consentimiento de Análisis de Fotos por IA',
         'consent.photo_text':
             'Doy mi consentimiento para que mis fotos sean analizadas por inteligencia artificial para ayudar a generar mi informe de evaluación. Las fotos están encriptadas y son accesibles solo para el personal de la clínica.',
-        'consent.sms_label': 'Notificaciones por SMS',
+        'consent.sms_label': 'Notificaciones por SMS y WhatsApp',
         'consent.sms_text':
-            'Acepto recibir notificaciones por SMS sobre el estado de mi evaluación y enlaces seguros a mis informes. El consentimiento no es una condición de servicio. La frecuencia de los mensajes varía. Pueden aplicar tarifas de mensajes y datos.',
+            'Acepto recibir notificaciones por SMS y WhatsApp sobre el estado de mi evaluación y enlaces seguros a mis informes. El consentimiento no es una condición de servicio. La frecuencia de los mensajes varía. Pueden aplicar tarifas de mensajes y datos.',
         'consent.optional_badge': 'opcional',
         'consent.submit_cta': 'Enviar Mi Evaluación ✓',
         'consent.submitting': 'Enviando…',

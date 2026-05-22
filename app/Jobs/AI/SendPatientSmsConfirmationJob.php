@@ -64,22 +64,52 @@ class SendPatientSmsConfirmationJob implements ShouldQueue
 
         $sid = config('services.twilio.sid');
         $token = config('services.twilio.token');
-        $from = config('services.twilio.from');
+        $smsFrom = config('services.twilio.from');
+        $whatsappFrom = config('services.twilio.whatsapp_from');
 
-        $response = Http::withBasicAuth($sid, $token)
-            ->asForm()
-            ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
-                'From' => $from,
-                'To' => $phone,
-                'Body' => $message,
-            ]);
+        $smsSent = false;
 
-        if ($response->failed()) {
-            Log::warning('SMS confirmation failed', [
-                'evaluation_id' => $this->evaluationId,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+        // Try SMS first
+        if (!blank($smsFrom)) {
+            $response = Http::withBasicAuth($sid, $token)
+                ->asForm()
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
+                    'From' => $smsFrom,
+                    'To' => $phone,
+                    'Body' => $message,
+                ]);
+
+            if ($response->successful()) {
+                $smsSent = true;
+            } else {
+                Log::warning('SMS confirmation failed', [
+                    'evaluation_id' => $this->evaluationId,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
+        }
+
+        // Fallback to WhatsApp if SMS failed or was not configured
+        if (!$smsSent && !blank($whatsappFrom)) {
+            $whatsappTo = str_starts_with($phone, 'whatsapp:') ? $phone : "whatsapp:{$phone}";
+            $whatsappSender = str_starts_with($whatsappFrom, 'whatsapp:') ? $whatsappFrom : "whatsapp:{$whatsappFrom}";
+
+            $waResponse = Http::withBasicAuth($sid, $token)
+                ->asForm()
+                ->post("https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json", [
+                    'From' => $whatsappSender,
+                    'To' => $whatsappTo,
+                    'Body' => $message,
+                ]);
+
+            if ($waResponse->failed()) {
+                Log::warning('WhatsApp confirmation fallback failed', [
+                    'evaluation_id' => $this->evaluationId,
+                    'status' => $waResponse->status(),
+                    'body' => $waResponse->body(),
+                ]);
+            }
         }
     }
 
