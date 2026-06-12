@@ -16,10 +16,10 @@ use App\Http\Controllers\Clinic\AffiliateFraudQueueController;
 use App\Http\Controllers\Clinic\AffiliateLinkController;
 use App\Http\Controllers\Clinic\AffiliatePartnerController;
 use App\Http\Controllers\Clinic\AffiliatePayoutController;
+use App\Http\Controllers\Clinic\ApiDocumentationController;
 use App\Http\Controllers\Clinic\BillingController;
 use App\Http\Controllers\Clinic\CampaignAssetUploadController;
 use App\Http\Controllers\Clinic\ClinicController;
-use App\Http\Controllers\Clinic\ApiDocumentationController;
 use App\Http\Controllers\Clinic\IntegrationController;
 use App\Http\Controllers\Clinic\TeamController;
 use App\Http\Controllers\Clinic\WebhookDeliveryController;
@@ -33,6 +33,7 @@ use App\Http\Controllers\Dashboard\EvaluationExportController;
 use App\Http\Controllers\Dashboard\OnboardingController;
 use App\Http\Controllers\Dashboard\PhotoStreamController;
 use App\Http\Controllers\Dashboard\SimulationController;
+use App\Http\Controllers\Help\HelpController;
 use App\Http\Controllers\Intake\AffiliateAttributionController;
 use App\Http\Controllers\Intake\AffiliateShortLinkController;
 use App\Http\Controllers\Intake\EvaluationController;
@@ -107,6 +108,10 @@ Route::middleware(['auth', 'verified', 'privileged.2fa', 'tenant', 'role:'.implo
 // ── All other authenticated clinic routes — gated by active billing ──────────
 Route::middleware(['auth', 'verified', 'privileged.2fa', 'tenant', 'billing.access'])->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // ── Help center — staff handbook rendered in-app ──────────────────────
+    Route::get('help', [HelpController::class, 'index'])->name('help.index');
+    Route::get('help/{slug}', [HelpController::class, 'show'])->name('help.show');
     Route::post('onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
 
     // ── Session keepalive (HIPAA inactivity timer) ────────────────────────

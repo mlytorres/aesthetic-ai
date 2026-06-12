@@ -12,13 +12,13 @@ import {
     Users,
     Webhook,
     HelpCircle,
+    LifeBuoy,
     Megaphone,
 } from 'lucide-react';
+import { index as affiliateAnalyticsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliateAnalyticsController';
+import { index as affiliatePayoutsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliatePayoutController';
 import { index as billingIndex } from '@/actions/App/Http/Controllers/Clinic/BillingController';
 import { index as integrationsIndex } from '@/actions/App/Http/Controllers/Clinic/IntegrationController';
-import clinic from '@/routes/clinic';
-import { index as affiliatePayoutsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliatePayoutController';
-import { index as affiliateAnalyticsIndex } from '@/actions/App/Http/Controllers/Clinic/AffiliateAnalyticsController';
 import { index as webhooksIndex } from '@/actions/App/Http/Controllers/Clinic/WebhookDeliveryController';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { analytics, dashboard } from '@/routes';
+import clinic from '@/routes/clinic';
 import { index as affiliateCampaignsIndex } from '@/routes/clinic/affiliates/campaigns';
 import { index as affiliatePartnersIndex } from '@/routes/clinic/affiliates/partners';
 import { edit as clinicSettingsEdit } from '@/routes/clinic/settings';
@@ -59,6 +60,11 @@ const mainNavItems: NavItem[] = [
         title: 'Analytics',
         href: analytics.url(),
         icon: BarChart3,
+    },
+    {
+        title: 'Help',
+        href: '/help',
+        icon: LifeBuoy,
     },
 ];
 
