@@ -23,7 +23,11 @@ final class AllowFramesMiddleware
     {
         $response = $next($request);
 
-        $tenant = TenantContext::get();
+        // Token-gated intake routes (patient portal, simulation share) resolve their
+        // tenant from the token itself, not from TenantMiddleware's subdomain/header/auth
+        // resolution — so TenantContext may legitimately be unset here. Fail safe to
+        // frame-ancestors 'none' rather than a 500 when that's the case.
+        $tenant = TenantContext::isSet() ? TenantContext::get() : null;
 
         $response->headers->remove('X-Frame-Options');
 

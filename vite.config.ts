@@ -9,6 +9,12 @@ export default defineConfig({
     server: {
         hmr: false,
     },
+    build: {
+        // Mermaid's shared core (dynamically imported only in the help-center
+        // diagram renderer) is a lazy-loaded ~600kB chunk — not part of the main
+        // bundle. Raise the limit so Vite stops flagging it as a false positive.
+        chunkSizeWarningLimit: 700,
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],

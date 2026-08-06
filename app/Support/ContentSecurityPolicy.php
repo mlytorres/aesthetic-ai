@@ -65,9 +65,10 @@ final class ContentSecurityPolicy
 
     /**
      * Full CSP for tenant intake routes that may be embedded in a clinic site iframe.
-     * frame-ancestors is restricted to configured parent origins, or 'none' when unset.
+     * frame-ancestors is restricted to configured parent origins, or 'none' when unset
+     * (including when no tenant has been resolved — the safe default is to deny framing).
      */
-    public static function forIntakeEmbed(Tenant $tenant): string
+    public static function forIntakeEmbed(?Tenant $tenant): string
     {
         return self::baseDirectives().self::frameAncestorsDirective($tenant);
     }
@@ -75,8 +76,12 @@ final class ContentSecurityPolicy
     /**
      * @return list<string>
      */
-    public static function parentOriginsForTenant(Tenant $tenant): array
+    public static function parentOriginsForTenant(?Tenant $tenant): array
     {
+        if ($tenant === null) {
+            return [];
+        }
+
         $fromSettings = $tenant->settings['embed_parent_origins'] ?? [];
 
         if (! is_array($fromSettings)) {
@@ -108,7 +113,7 @@ final class ContentSecurityPolicy
         return array_keys($normalized);
     }
 
-    private static function frameAncestorsDirective(Tenant $tenant): string
+    private static function frameAncestorsDirective(?Tenant $tenant): string
     {
         $origins = self::parentOriginsForTenant($tenant);
 
